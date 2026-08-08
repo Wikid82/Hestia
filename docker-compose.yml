@@ -1,0 +1,13 @@
+services:
+  hestia:
+    build: .
+    image: hestia:latest
+    container_name: hestia
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      DATABASE_PATH: /data/hestia.db
+      # AUTH_SECRET: changeme   # required once auth is wired up
