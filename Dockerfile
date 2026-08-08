@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22-slim AS base
+FROM node:22.23.2-slim AS base
 
 # --- deps: install deps once, with build tools available for better-sqlite3's
 # native module in case no prebuilt binary exists for the target arch ---
