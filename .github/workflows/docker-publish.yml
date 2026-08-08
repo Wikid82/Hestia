@@ -1,0 +1,54 @@
+name: Publish Docker image
+
+# Fires when release-please cuts an actual GitHub Release (i.e. once the
+# release PR is merged to main), not on every push.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Derive image version from release tag
+        id: version
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            wikid82/hestia:latest
+            wikid82/hestia:${{ steps.version.outputs.version }}
+            ghcr.io/wikid82/hestia:latest
+            ghcr.io/wikid82/hestia:${{ steps.version.outputs.version }}
