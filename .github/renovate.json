@@ -1,0 +1,59 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":separateMultipleMajorReleases",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "baseBranchPatterns": ["main"],
+  "postUpdateOptions": ["npmDedupe"],
+  "skipInstalls": false,
+  "timezone": "America/New_York",
+  "dependencyDashboard": true,
+  "dependencyDashboardApproval": true,
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 0,
+  "labels": ["dependencies"],
+  "minimumReleaseAge": null,
+  "rebaseWhen": "auto",
+  "rangeStrategy": "bump",
+  "automerge": false,
+  "automergeType": "pr",
+  "platformAutomerge": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "dependencyDashboardApproval": false,
+    "automerge": false,
+    "labels": ["security", "vulnerability"]
+  },
+  "packageRules": [
+    {
+      "description": "Group GitHub Actions non-major updates into one PR",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "github-actions-non-major",
+      "groupSlug": "github-actions-non-major"
+    },
+    {
+      "description": "Group npm non-major updates into one PR",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "npm-non-major",
+      "groupSlug": "npm-non-major"
+    },
+    {
+      "description": "Group Dockerfile base image non-major updates into one PR",
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "dockerfile-non-major",
+      "groupSlug": "dockerfile-non-major"
+    },
+    {
+      "description": "Safety: keep major updates separate and require manual review",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["manual-review"]
+    }
+  ]
+}

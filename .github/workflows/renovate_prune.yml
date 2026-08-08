@@ -1,0 +1,89 @@
+name: "Prune Renovate Branches"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'   # daily at 03:00 UTC
+
+permissions:
+  contents: write       # required to delete branch refs
+  pull-requests: read
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: prune-renovate-branches
+      cancel-in-progress: true
+
+    env:
+      BRANCH_PREFIX: "renovate/"  # adjust if you use a different prefix
+
+    steps:
+      - name: Prune renovate branches
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const branchPrefix = (process.env.BRANCH_PREFIX || 'renovate/').replace(/^refs\/heads\//, '');
+            const refPrefix = `heads/${branchPrefix}`; // e.g. "heads/renovate/"
+
+            core.info(`Searching for refs with prefix: ${refPrefix}`);
+
+            let refs;
+            try {
+              refs = await github.rest.git.listMatchingRefs({
+                owner,
+                repo,
+                ref: refPrefix
+              });
+            } catch (err) {
+              core.info(`No matching refs or API error: ${err.message}`);
+              refs = { data: [] };
+            }
+
+            for (const r of refs.data) {
+              const fullRef = r.ref; // "refs/heads/renovate/..."
+              const branchName = fullRef.replace('refs/heads/', '');
+              core.info(`Evaluating branch: ${branchName}`);
+
+              const prs = await github.rest.pulls.list({
+                owner,
+                repo,
+                head: `${owner}:${branchName}`,
+                state: 'all',
+                per_page: 100
+              });
+
+              let shouldDelete = false;
+              if (!prs.data || prs.data.length === 0) {
+                core.info(`No PRs found for ${branchName} — marking for deletion.`);
+                shouldDelete = true;
+              } else {
+                const hasOpen = prs.data.some(p => p.state === 'open');
+                if (!hasOpen) {
+                  core.info(`All PRs for ${branchName} are closed — marking for deletion.`);
+                  shouldDelete = true;
+                } else {
+                  core.info(`Open PR(s) exist for ${branchName} — skipping deletion.`);
+                }
+              }
+
+              if (shouldDelete) {
+                try {
+                  await github.rest.git.deleteRef({
+                    owner,
+                    repo,
+                    ref: `heads/${branchName}`
+                  });
+                  core.info(`Deleted branch: ${branchName}`);
+                } catch (delErr) {
+                  core.warning(`Failed to delete ${branchName}: ${delErr.message}`);
+                }
+              }
+            }
+
+      - name: Done
+        run: echo "Prune run completed."
