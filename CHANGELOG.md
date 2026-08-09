@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/Wikid82/hestia/compare/hestia-v0.1.2...hestia-v0.2.0) (2026-08-09)
+
+
+### Features
+
+* allow admins to rename the household ([632a636](https://github.com/Wikid82/hestia/commit/632a6360a82ba47eb418c5210e94703eb0cdc9af))
+* household auth, chore-chart data model, and full app UI ([691b644](https://github.com/Wikid82/hestia/commit/691b6440f4a871125e289f7bc5db199510f7b615))
+
+
+### Bug Fixes
+
+* add TZ env var, defaulting to UTC ([d570d12](https://github.com/Wikid82/hestia/commit/d570d1235bd069a3b70e19a59de1363e1341d9f6))
+* keep public/ tracked so the Docker build doesn't fail ([d79c4d0](https://github.com/Wikid82/hestia/commit/d79c4d0e34e669e7a2d1c5904f7b9aafe9479552))
+
 ## [0.1.2](https://github.com/Wikid82/hestia/compare/hestia-v0.1.1...hestia-v0.1.2) (2026-08-08)
 
 
