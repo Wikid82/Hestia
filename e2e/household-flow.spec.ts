@@ -22,6 +22,22 @@ test("household signup through chores, rewards, and reminders", async ({
     await expect(page.getByRole("heading", { name: /Hi, .*Admin Parent/ })).toBeVisible();
   });
 
+  await test.step("rename the household", async () => {
+    await page.goto("/household");
+    await page.getByRole("button", { name: "Edit" }).first().click();
+    const renameForm = page.locator("form", { hasText: "Save" });
+    await renameForm.locator('input[name="name"]').fill("The Testfields (fixed typo)");
+    await renameForm.getByRole("button", { name: "Save" }).click();
+    await expect(
+      page.getByRole("heading", { name: "The Testfields (fixed typo)" }),
+    ).toBeVisible();
+    // The header nav also shows the household name — confirms
+    // revalidatePath("/") actually propagated the rename.
+    await expect(page.locator("header")).toContainText(
+      "The Testfields (fixed typo)",
+    );
+  });
+
   await test.step("add a kid profile and a PIN-protected admin profile", async () => {
     await page.goto("/household");
     const addForm = page.locator("form", { hasText: "Add member" });
