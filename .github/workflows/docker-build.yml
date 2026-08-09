@@ -1,0 +1,158 @@
+name: Docker Build & Publish
+
+# - Pull requests: build + push to GHCR only, tagged pr-<number>. Keeps
+#   Docker Hub's download count meaningful for real releases, while still
+#   giving PRs a pullable, taggable image to test against.
+# - Push to main: build + push to both registries, tagged latest (+ short
+#   sha for traceability).
+# - Release published: build + push to both registries, tagged with the
+#   released semver (and latest, since a fresh release should be latest).
+#
+# Every build is scanned for image vulnerabilities (Trivy) and supply-chain
+# risk (Syft SBOM + Grype), uploaded to the Security tab as SARIF. Neither
+# blocks the build right now — this is meant for visibility (know where and
+# when to patch) rather than enforcement; revisit once there's a branch
+# strategy to gate against.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      - name: Checkout (release)
+        if: github.event_name == 'release'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Checkout
+        if: github.event_name != 'release'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4
+
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine target registries
+        id: registries
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            printf 'images<<EOF\nghcr.io/wikid82/hestia\nEOF\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'images<<EOF\nwikid82/hestia\nghcr.io/wikid82/hestia\nEOF\n' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.registries.outputs.images }}
+          tags: |
+            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Trivy vulnerability scan (table)
+        if: always() && steps.build.outcome == 'success'
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: ghcr.io/wikid82/hestia@${{ steps.build.outputs.digest }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Trivy vulnerability scan (SARIF)
+        if: always() && steps.build.outcome == 'success'
+        uses: aquasecurity/trivy-action@0.36.0
+        continue-on-error: true
+        with:
+          image-ref: ghcr.io/wikid82/hestia@${{ steps.build.outputs.digest }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Upload Trivy results to Security tab
+        if: always() && steps.build.outcome == 'success'
+        uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-image-scan
+
+      - name: Generate SBOM
+        if: always() && steps.build.outcome == 'success'
+        uses: anchore/sbom-action@v0.24.0
+        with:
+          image: ghcr.io/wikid82/hestia@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+
+      - name: Scan SBOM for vulnerabilities (Grype)
+        if: always() && steps.build.outcome == 'success'
+        id: grype
+        uses: anchore/scan-action@v7
+        with:
+          sbom: sbom.cyclonedx.json
+          output-format: sarif
+          severity-cutoff: high
+          fail-build: false
+
+      - name: Upload Grype results to Security tab
+        if: always() && steps.build.outcome == 'success'
+        uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true
+        with:
+          sarif_file: ${{ steps.grype.outputs.sarif }}
+          category: supply-chain-sbom
+
+      - name: Upload SBOM artifact
+        if: always() && steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.sha }}
+          path: sbom.cyclonedx.json
+          retention-days: 30
