@@ -29,99 +29,42 @@ Every entry below is suppressed in CI via [`.trivyignore`](./.trivyignore) and
 `.github/workflows/docker-build.yml`). Suppressions carry an expiry date; when one is reached,
 it's re-checked against upstream rather than silently extended forever.
 
-### [HIGH] CVE-2026-53615 · util-linux integer overflow (Debian base image)
+### [RESOLVED] 2026-08-09 · Debian base image findings (13 CVEs) + npm's bundled tooling (7 CVEs)
+
+The base image was `node:24.19.0-slim` (Debian 12/bookworm) through 2026-08-09. A side-by-side
+full-severity scan of alternatives that day showed:
+
+| Base image | Total findings | HIGH/CRITICAL |
+|---|---|---|
+| `node:24.19.0-slim` (Debian) | 152 | 0 (13 unique CVEs suppressed, see below) |
+| `gcr.io/distroless/nodejs24-debian12` | 38 | 6 |
+| `node:24.19.0-alpine` | 11 | 0 |
+
+Switched to `node:24.19.0-alpine`. That alone dropped the Debian-specific findings this file used
+to document individually (util-linux family CVE-2026-53615, ncurses CVE-2025-69720, gzip
+CVE-2026-41992, libacl1 CVE-2026-54369, perl-base's 8 CVEs, zlib1g CVE-2023-45853 — none of them
+apply on Alpine's package set). Separately, stripping the bundled npm CLI from the runtime stage
+(never invoked there — `CMD` is `node server.js`) eliminated the 7 CVEs in npm's own bundled
+`tar`/`brace-expansion`/`ip-address`/`undici`, confirmed gone by rebuilding and re-scanning rather
+than assumed.
+
+Net result verified by rescanning the built image with both scanners: 152 Trivy findings → 0.
+Remaining findings (both tools): 3 → 1 unique CVE, see below.
+
+### [MEDIUM] CVE-2025-60876 · BusyBox wget HTTP request-splitting (Alpine base image)
 
 | Field | Value |
 |---|---|
-| **Packages** | bsdutils, libblkid1, libmount1, libsmartcols1, libuuid1, mount, util-linux, util-linux-extra |
-| **Severity** | High |
+| **Packages** | busybox, busybox-binsh, ssl_client |
+| **Severity** | Medium (CVSS 6.5) |
 | **Status** | Awaiting upstream · review by 2026-09-20 |
 
-Integer overflow/wraparound in the util-linux source package (all 8 listed binaries are built from
-it). No patched Debian 12 (bookworm) package as of 2026-08-09.
+BusyBox `wget` accepts raw CR/LF and other control bytes in the HTTP request-target, allowing
+request-line splitting and attacker-controlled header injection. No fix version published as of
+2026-08-09.
 
-**Why it's low-risk here**: the container's only running process is `node server.js` (see
-Dockerfile `CMD`) — none of these binaries are ever invoked by Hestia's application code.
-
-### [HIGH] CVE-2025-69720 · ncurses buffer overflow (Debian base image)
-
-| Field | Value |
-|---|---|
-| **Packages** | libtinfo6, ncurses-base, ncurses-bin |
-| **Severity** | High |
-| **Status** | Awaiting upstream · review by 2026-09-20 |
-
-No patched bookworm package as of 2026-08-09. Not invoked by Hestia's Node.js runtime.
-
-### [HIGH] CVE-2026-41992 · gzip global buffer overflow (Debian base image)
-
-| Field | Value |
-|---|---|
-| **Package** | gzip |
-| **Severity** | High |
-| **Status** | Awaiting upstream · review by 2026-09-20 |
-
-No patched bookworm package as of 2026-08-09. Not invoked by Hestia's Node.js runtime.
-
-### [HIGH] CVE-2026-54369 · libacl symlink traversal privilege escalation (Debian base image)
-
-| Field | Value |
-|---|---|
-| **Package** | libacl1 |
-| **Severity** | High |
-| **Status** | Awaiting upstream · review by 2026-09-20 |
-
-No patched bookworm package as of 2026-08-09. Not invoked by Hestia's Node.js runtime.
-
-### [CRITICAL/HIGH] perl-base — 8 CVEs (Debian base image)
-
-| Field | Value |
-|---|---|
-| **CVEs** | CVE-2026-13221, CVE-2026-42496, CVE-2026-57433, CVE-2026-8376 (Critical) · CVE-2026-42497, CVE-2026-48962, CVE-2026-57432, CVE-2026-9538 (High) |
-| **Package** | perl-base |
-| **Severity** | Critical / High |
-| **Status** | Awaiting upstream · review by 2026-09-20 |
-
-Perl core plus bundled-module vulnerabilities (Archive::Tar, Storable, IO::Compress). No patched
-bookworm package as of 2026-08-09.
-
-**Why it's low-risk here**: Hestia is a Node.js app. Perl is part of the Debian base image and is
-never invoked at runtime — there's no code path that reaches it.
-
-### [CRITICAL] CVE-2023-45853 · zlib integer overflow / heap buffer overflow (Debian base image)
-
-| Field | Value |
-|---|---|
-| **Package** | zlib1g |
-| **Severity** | Critical |
-| **Status** | Awaiting upstream · review by 2026-09-20 |
-
-No patched bookworm package as of 2026-08-09. Not directly invoked by Hestia's application code.
-
-### [HIGH/CRITICAL] npm's own bundled tooling — 7 CVEs
-
-| Field | Value |
-|---|---|
-| **CVEs** | CVE-2026-13149, CVE-2026-14257, CVE-2026-69152 (brace-expansion) · CVE-2026-69192 (ip-address) · CVE-2026-59873 (Critical), CVE-2026-59874 (tar) · CVE-2026-12151 (undici) |
-| **Severity** | High, one Critical (CVE-2026-59873) |
-| **Status** | **Planned fix (self-remediation)** · target 2026-08-23 |
-
-**What**: `brace-expansion`, `tar`, `ip-address`, and `undici` all resolve to
-`/usr/local/lib/node_modules/npm/node_modules/...` — confirmed by pulling the built image and
-inspecting it directly. These are npm's *own* bundled dependencies, shipped because npm itself
-comes pre-installed in the `node:24.19.0-slim` base image. They are not in Hestia's dependency
-tree (`npm ls` finds none of them from the project root) and are absent from `/app/node_modules`,
-the app's actual runtime directory.
-
-**Why there's no upstream fix to wait on**: there is one, for the standalone packages
-(`brace-expansion` ≥5.0.7/1.1.16/2.1.2, `tar` ≥7.5.18/7.5.19, `ip-address` ≥10.3.1, `undici`
-≥6.27.0) — but Hestia doesn't control which versions npm bundles internally. Waiting on npm's own
-upstream to bump its internal deps isn't a reliable timeline.
-
-**Actual fix**: strip the bundled npm CLI from the Dockerfile's runtime stage — it's never invoked
-there (`CMD` is `node server.js`), so removing it eliminates this entire category rather than
-suppressing it indefinitely. Tracked for the 2026-08-23 review; if not done by then, extend the
-suppression and note why.
+**Why it's low-risk here**: Hestia never invokes `wget` or any other busybox applet — the
+container's only process is `node server.js` (see Dockerfile `CMD`).
 
 ---
 

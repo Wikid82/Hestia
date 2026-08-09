@@ -4,133 +4,22 @@
 # Every entry here must have a matching write-up in SECURITY.md and a
 # matching ID in .trivyignore.
 # Docs: https://github.com/anchore/grype#specifying-matches-to-ignore
+#
+# History: switched the base image from node:24.19.0-slim (Debian) to
+# node:24.19.0-alpine on 2026-08-09 after a side-by-side scan showed 152
+# Trivy findings on slim vs 11 on alpine (0 HIGH/CRITICAL either way), and
+# stripped the bundled npm CLI from the runtime image (fixed the remaining
+# fixable ones — npm's own tar/undici/ip-address, never invoked at
+# runtime). The Debian-specific entries this file used to carry no longer
+# apply on Alpine and were removed rather than left stale.
 
 ignore:
-  # CVE-2026-53615: util-linux family — integer overflow/wraparound.
-  # Spans 8 co-packaged Debian binaries from the same source package, so
-  # this is matched by vulnerability ID alone rather than per-package.
-  - vulnerability: CVE-2026-53615
+  - vulnerability: CVE-2025-60876
     reason: |
-      HIGH — affects bsdutils, libblkid1, libmount1, libsmartcols1, libuuid1,
-      mount, util-linux, util-linux-extra (Debian 12 base image, all one
-      source package). No patched bookworm package available as of
-      2026-08-09. Hestia's runtime is `node server.js` only — none of these
-      binaries are invoked by the application.
+      MEDIUM (CVSS 6.5) — BusyBox wget HTTP request-splitting via CRLF
+      injection in the request-target. Affects busybox, busybox-binsh, and
+      ssl_client (all built from the same busybox source package on
+      Alpine). No fix version published as of 2026-08-09. Hestia never
+      invokes wget or any busybox applet — the container's only process is
+      `node server.js`.
     expiry: "2026-09-20"
-
-  # CVE-2025-69720: ncurses buffer overflow — spans 3 co-packaged binaries.
-  - vulnerability: CVE-2025-69720
-    reason: |
-      HIGH — affects libtinfo6, ncurses-base, ncurses-bin (Debian 12 base
-      image). No patched bookworm package available as of 2026-08-09.
-      Not invoked by Hestia's Node.js runtime.
-    expiry: "2026-09-20"
-
-  - vulnerability: CVE-2026-41992
-    package:
-      name: gzip
-      type: deb
-    reason: |
-      HIGH — gzip global buffer overflow (Debian 12 base image). No patched
-      bookworm package available as of 2026-08-09. Not invoked by Hestia's
-      Node.js runtime.
-    expiry: "2026-09-20"
-
-  - vulnerability: CVE-2026-54369
-    package:
-      name: libacl1
-      type: deb
-    reason: |
-      HIGH — symlink traversal privilege escalation via libacl (Debian 12
-      base image). No patched bookworm package available as of 2026-08-09.
-      Not invoked by Hestia's Node.js runtime.
-    expiry: "2026-09-20"
-
-  # perl-base — 8 distinct CVEs (Perl core + Archive::Tar/Storable/IO::Compress).
-  # Hestia is a Node.js app; perl is never invoked at runtime.
-  - vulnerability: CVE-2026-13221
-    package: { name: perl-base, type: deb }
-    reason: &perl_reason |
-      CRITICAL/HIGH — Perl core and bundled module (Archive::Tar, Storable,
-      IO::Compress) vulnerabilities in perl-base (Debian 12 base image). No
-      patched bookworm package available as of 2026-08-09. Hestia never
-      invokes perl at runtime.
-    expiry: &perl_expiry "2026-09-20"
-  - vulnerability: CVE-2026-42496
-    package: { name: perl-base, type: deb }
-    reason: *perl_reason
-    expiry: *perl_expiry
-  - vulnerability: CVE-2026-57433
-    package: { name: perl-base, type: deb }
-    reason: *perl_reason
-    expiry: *perl_expiry
-  - vulnerability: CVE-2026-8376
-    package: { name: perl-base, type: deb }
-    reason: *perl_reason
-    expiry: *perl_expiry
-  - vulnerability: CVE-2026-42497
-    package: { name: perl-base, type: deb }
-    reason: *perl_reason
-    expiry: *perl_expiry
-  - vulnerability: CVE-2026-48962
-    package: { name: perl-base, type: deb }
-    reason: *perl_reason
-    expiry: *perl_expiry
-  - vulnerability: CVE-2026-57432
-    package: { name: perl-base, type: deb }
-    reason: *perl_reason
-    expiry: *perl_expiry
-  - vulnerability: CVE-2026-9538
-    package: { name: perl-base, type: deb }
-    reason: *perl_reason
-    expiry: *perl_expiry
-
-  - vulnerability: CVE-2023-45853
-    package:
-      name: zlib1g
-      type: deb
-    reason: |
-      CRITICAL — zlib integer overflow / heap buffer overflow (Debian 12
-      base image). No patched bookworm package available as of 2026-08-09.
-      Not directly invoked by Hestia's application code.
-    expiry: "2026-09-20"
-
-  # --- npm's own bundled tooling (ships inside the base Node.js image) ---
-  # Confirmed via direct image inspection: these live under
-  # /usr/local/lib/node_modules/npm/node_modules/ — npm's own dependencies,
-  # not Hestia's (absent from /app/node_modules, the app's actual runtime
-  # tree). npm is never invoked at container runtime.
-  # Planned fix: strip the bundled npm CLI from the runtime image, which
-  # removes this whole category rather than waiting on npm's own upstream.
-  - vulnerability: CVE-2026-13149
-    package: { name: brace-expansion, type: npm }
-    reason: &npm_tooling_reason |
-      npm's own bundled dependency (ships inside node:24.19.0-slim), not
-      Hestia's. Confirmed absent from /app/node_modules. npm is never
-      invoked at container runtime. Planned fix: remove the bundled npm CLI
-      from the Dockerfile's runtime stage.
-    expiry: &npm_tooling_expiry "2026-08-23"
-  - vulnerability: CVE-2026-14257
-    package: { name: brace-expansion, type: npm }
-    reason: *npm_tooling_reason
-    expiry: *npm_tooling_expiry
-  - vulnerability: CVE-2026-69152
-    package: { name: brace-expansion, type: npm }
-    reason: *npm_tooling_reason
-    expiry: *npm_tooling_expiry
-  - vulnerability: CVE-2026-69192
-    package: { name: ip-address, type: npm }
-    reason: *npm_tooling_reason
-    expiry: *npm_tooling_expiry
-  - vulnerability: CVE-2026-59873
-    package: { name: tar, type: npm }
-    reason: *npm_tooling_reason
-    expiry: *npm_tooling_expiry
-  - vulnerability: CVE-2026-59874
-    package: { name: tar, type: npm }
-    reason: *npm_tooling_reason
-    expiry: *npm_tooling_expiry
-  - vulnerability: CVE-2026-12151
-    package: { name: undici, type: npm }
-    reason: *npm_tooling_reason
-    expiry: *npm_tooling_expiry
