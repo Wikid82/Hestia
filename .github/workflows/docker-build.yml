@@ -3,6 +3,8 @@ name: Docker Build & Publish
 # All events build + push to both registries (Docker Hub + GHCR):
 # - Pull requests: tagged pr-<number>
 # - Push to main: tagged latest (+ short sha for traceability)
+# - Push to development/nightly/feature/**: tagged with the (sanitized)
+#   branch name, e.g. development, nightly, feature-foo
 # - Release published: tagged with the released semver (and latest, since a
 #   fresh release should be latest)
 #
@@ -17,7 +19,7 @@ name: Docker Build & Publish
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, development, nightly, 'feature/**']
   release:
     types: [published]
 
@@ -74,6 +76,7 @@ jobs:
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=short,enable={{is_default_branch}}
+            type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
