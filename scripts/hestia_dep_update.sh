@@ -23,7 +23,15 @@ for MODULE in "${NPM_MODULES[@]}"; do
     cd "$MODULE" || exit 1
 
     # Update prod, dev, optional, and peer dependencies to latest.
-    npx --yes npm-check-updates -u
+    # Exclude typescript: v7 is a from-scratch rewrite (the "tsgo"/native
+    # compiler) with no typescript-eslint support yet, which breaks `npm run
+    # lint` outright. Keep pinned to ^6.0.3 until upstream catches up:
+    # https://github.com/typescript-eslint/typescript-eslint/issues/10940
+    # Exclude eslint: v10 changed the rule-context API (e.g. getFilename())
+    # in a way eslint-config-next's bundled eslint-plugin-react doesn't
+    # support yet, which crashes `npm run lint`. Keep pinned to ^9 until
+    # eslint-config-next ships a compatible eslint-plugin-react.
+    npx --yes npm-check-updates -u --reject typescript,eslint
 
     rm -rf node_modules package-lock.json
     npm install

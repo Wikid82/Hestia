@@ -54,6 +54,18 @@
       "matchUpdateTypes": ["major"],
       "automerge": false,
       "labels": ["manual-review"]
+    },
+    {
+      "description": "Block typescript v7 — a from-scratch rewrite with no typescript-eslint support yet, which breaks `npm run lint` outright. Re-enable once https://github.com/typescript-eslint/typescript-eslint/issues/10940 ships. Non-major 6.x updates still flow through.",
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Block eslint v10 — changed the rule-context API (e.g. getFilename()) in a way eslint-config-next's bundled eslint-plugin-react doesn't support yet, which crashes `npm run lint`. Re-enable once eslint-config-next ships a compatible eslint-plugin-react. Non-major 9.x updates still flow through.",
+      "matchPackageNames": ["eslint"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }
