@@ -62,7 +62,7 @@ jobs:
             const pr = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Propagate main into development',
+              title: 'chore: propagate main into development',
               head: 'main',
               base: 'development',
               body: [
