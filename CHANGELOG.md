@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/Wikid82/hestia/compare/hestia-v0.2.1...hestia-v0.2.2) (2026-08-09)
+
+
+### Bug Fixes
+
+* point Renovate base branch to development instead of main ([dda7656](https://github.com/Wikid82/hestia/commit/dda7656780bdf029f432377b35efa72b7aeaf1c6))
+
 ## [0.2.1](https://github.com/Wikid82/hestia/compare/hestia-v0.2.0...hestia-v0.2.1) (2026-08-09)
 
 
