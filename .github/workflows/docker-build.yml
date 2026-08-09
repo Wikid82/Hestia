@@ -63,7 +63,7 @@ jobs:
 
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: |
             wikid82/hestia
@@ -107,7 +107,7 @@ jobs:
 
       - name: Upload Trivy results to Security tab
         if: always() && steps.build.outcome == 'success'
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4
         continue-on-error: true
         with:
           sarif_file: trivy-results.sarif
@@ -115,7 +115,7 @@ jobs:
 
       - name: Generate SBOM
         if: always() && steps.build.outcome == 'success'
-        uses: anchore/sbom-action@v0.24.0
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           image: ghcr.io/wikid82/hestia@${{ steps.build.outputs.digest }}
           format: cyclonedx-json
@@ -124,7 +124,7 @@ jobs:
       - name: Scan SBOM for vulnerabilities (Grype)
         if: always() && steps.build.outcome == 'success'
         id: grype
-        uses: anchore/scan-action@v7
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7
         with:
           sbom: sbom.cyclonedx.json
           output-format: sarif
@@ -133,7 +133,7 @@ jobs:
 
       - name: Upload Grype results to Security tab
         if: always() && steps.build.outcome == 'success'
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4
         continue-on-error: true
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
@@ -141,7 +141,7 @@ jobs:
 
       - name: Upload SBOM artifact
         if: always() && steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sbom-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.sha }}
           path: sbom.cyclonedx.json
