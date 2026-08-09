@@ -1,0 +1,78 @@
+# Trivy vulnerability suppressions.
+# Every entry here must have a matching write-up in SECURITY.md explaining
+# why there's no fix yet and a matching entry in .grype.yaml.
+# Format: https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#trivyignore
+#
+# Review dates below are when each entry should be re-checked against
+# upstream — not a promise a fix will exist by then, just a forcing
+# function so these don't silently go stale forever.
+
+# --- Debian 12 (bookworm) base image — node:24.19.0-slim ---
+# None of these are reachable through Hestia's own code: the only process
+# that ever runs in the container is `node server.js` (see Dockerfile CMD).
+# perl, gzip, mount, ncurses, and libacl are inherited OS packages that
+# Hestia's application code never invokes. Debian hasn't shipped patched
+# packages for bookworm yet as of 2026-08-09.
+
+# CVE-2026-53615: util-linux family — integer overflow/wraparound
+# Affects: bsdutils, libblkid1, libmount1, libsmartcols1, libuuid1, mount,
+# util-linux, util-linux-extra (all one Debian source package)
+# exp: 2026-09-20
+CVE-2026-53615
+
+# CVE-2025-69720: ncurses buffer overflow
+# Affects: libtinfo6, ncurses-base, ncurses-bin
+# exp: 2026-09-20
+CVE-2025-69720
+
+# CVE-2026-41992: gzip global buffer overflow
+# exp: 2026-09-20
+CVE-2026-41992
+
+# CVE-2026-54369: libacl symlink traversal privilege escalation
+# exp: 2026-09-20
+CVE-2026-54369
+
+# perl-base — 8 distinct CVEs (Perl core + Archive::Tar/Storable/IO::Compress)
+# Hestia is a Node.js app; perl is never invoked at runtime.
+# exp: 2026-09-20
+CVE-2026-13221
+CVE-2026-42496
+CVE-2026-57433
+CVE-2026-8376
+CVE-2026-42497
+CVE-2026-48962
+CVE-2026-57432
+CVE-2026-9538
+
+# CVE-2023-45853: zlib integer overflow / heap buffer overflow
+# exp: 2026-09-20
+CVE-2023-45853
+
+# --- npm's own bundled tooling (ships inside the base Node.js image) ---
+# Confirmed via direct image inspection: these live under
+# /usr/local/lib/node_modules/npm/node_modules/ — they are npm's own
+# dependencies, not Hestia's (absent from /app/node_modules, the app's
+# actual runtime tree). npm itself is never invoked at container runtime.
+# Planned fix: strip the bundled npm CLI from the runtime image in the
+# Dockerfile, which removes this whole category rather than waiting on
+# npm's own upstream to bump these internally.
+
+# CVE-2026-13149, CVE-2026-14257, CVE-2026-69152: brace-expansion DoS
+# exp: 2026-08-23
+CVE-2026-13149
+CVE-2026-14257
+CVE-2026-69152
+
+# CVE-2026-69192: ip-address inconsistent IP parsing
+# exp: 2026-08-23
+CVE-2026-69192
+
+# CVE-2026-59873, CVE-2026-59874: node-tar DoS (gzip bomb / malformed archive)
+# exp: 2026-08-23
+CVE-2026-59873
+CVE-2026-59874
+
+# CVE-2026-12151: undici DoS via unbounded memory
+# exp: 2026-08-23
+CVE-2026-12151

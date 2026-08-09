@@ -10,7 +10,9 @@ name: Docker Build & Publish
 # risk (Syft SBOM + Grype), uploaded to the Security tab as SARIF. Neither
 # blocks the build right now — this is meant for visibility (know where and
 # when to patch) rather than enforcement; revisit once there's a branch
-# strategy to gate against.
+# strategy to gate against. Known findings with no fix yet are suppressed
+# via .trivyignore / .grype.yaml — see SECURITY.md for why, and the review
+# date each suppression expires.
 
 on:
   pull_request:
@@ -94,6 +96,7 @@ jobs:
           format: table
           severity: CRITICAL,HIGH
           exit-code: '0'
+          trivyignores: .trivyignore
 
       - name: Trivy vulnerability scan (SARIF)
         if: always() && steps.build.outcome == 'success'
@@ -104,6 +107,7 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
 
       - name: Upload Trivy results to Security tab
         if: always() && steps.build.outcome == 'success'
