@@ -1,0 +1,19 @@
+# Personal local overrides — not used by anyone but you.
+#
+# `docker compose up` automatically merges this file on top of
+# docker-compose.yml if it exists, no extra flags needed. Copy it once:
+#
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#
+# then edit freely — docker-compose.override.yml is gitignored.
+#
+# The base docker-compose.yml already bind-mounts ./data (repo-relative) so
+# it works out of the box for anyone cloning the repo. This override exists
+# for swapping in a persistent host path outside the repo instead — e.g. if
+# you keep all your self-hosted app data under one directory tree and don't
+# want it tied to wherever you happen to have this repo checked out.
+
+services:
+  hestia:
+    volumes:
+      - /srv/appdata/hestia:/data

@@ -38,6 +38,10 @@ yarn-error.log*
 /data/*.db
 /data/*.db-*
 
+# personal local compose overrides (paths specific to your machine) —
+# copy docker-compose.override.yml.example to get started
+docker-compose.override.yml
+
 # local Claude Code permissions (personal, not shared)
 .claude/settings.local.json
 

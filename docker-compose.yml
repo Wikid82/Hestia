@@ -10,4 +10,4 @@ services:
       - ./data:/data
     environment:
       DATABASE_PATH: /data/hestia.db
-      # AUTH_SECRET: changeme   # required once auth is wired up
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env — see .env.example}
