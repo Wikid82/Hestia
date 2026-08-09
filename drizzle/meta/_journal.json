@@ -8,6 +8,13 @@
       "when": 1786220930093,
       "tag": "0000_curved_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1786225285383,
+      "tag": "0001_bumpy_big_bertha",
+      "breakpoints": true
     }
   ]
 }
