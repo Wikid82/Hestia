@@ -11,3 +11,9 @@ services:
     environment:
       DATABASE_PATH: /data/hestia.db
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env — see .env.example}
+      # Chore due-dates and "due today" are computed from the container's
+      # local clock (see src/lib/chores/recurrence.ts) — without this,
+      # everything runs on UTC regardless of where the household actually
+      # is, and chores flip to the next day at UTC midnight instead of
+      # local midnight.
+      TZ: ${TZ:-UTC}

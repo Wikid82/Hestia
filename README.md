@@ -38,13 +38,18 @@ architecture decisions.
 ```bash
 git clone https://github.com/Wikid82/hestia.git
 cd hestia
-cp .env.example .env   # fill in AUTH_SECRET once auth is wired up
+cp .env.example .env   # set AUTH_SECRET, and TZ to your household's timezone
 docker compose up -d
 ```
 
 The app will be available at `http://localhost:3000`. The SQLite database
 lives in `./data/hestia.db` on the host, via a bind-mounted volume — back up
 that one file to back up your whole household's data.
+
+Set `TZ` to your household's IANA timezone (e.g. `America/New_York`) —
+chore due-dates are computed from the container's local clock, so without
+it everything runs on UTC regardless of where you actually are, and chores
+flip to the next day at UTC midnight instead of local midnight.
 
 ## Developing locally
 
