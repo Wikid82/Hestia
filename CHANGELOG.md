@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/Wikid82/hestia/compare/hestia-v0.2.0...hestia-v0.2.1) (2026-08-09)
+
+
+### Bug Fixes
+
+* prefix auto-created PR titles with chore: for pr-title-lint ([4b3c8b9](https://github.com/Wikid82/hestia/commit/4b3c8b91d5d74ed7f3ead0d225c15779950e86b4))
+
 ## [0.2.0](https://github.com/Wikid82/hestia/compare/hestia-v0.1.2...hestia-v0.2.0) (2026-08-09)
 
 
