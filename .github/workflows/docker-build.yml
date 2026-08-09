@@ -1,12 +1,10 @@
 name: Docker Build & Publish
 
-# - Pull requests: build + push to GHCR only, tagged pr-<number>. Keeps
-#   Docker Hub's download count meaningful for real releases, while still
-#   giving PRs a pullable, taggable image to test against.
-# - Push to main: build + push to both registries, tagged latest (+ short
-#   sha for traceability).
-# - Release published: build + push to both registries, tagged with the
-#   released semver (and latest, since a fresh release should be latest).
+# All events build + push to both registries (Docker Hub + GHCR):
+# - Pull requests: tagged pr-<number>
+# - Push to main: tagged latest (+ short sha for traceability)
+# - Release published: tagged with the released semver (and latest, since a
+#   fresh release should be latest)
 #
 # Every build is scanned for image vulnerabilities (Trivy) and supply-chain
 # risk (Syft SBOM + Grype), uploaded to the Security tab as SARIF. Neither
@@ -58,26 +56,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Determine target registries
-        id: registries
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            printf 'images<<EOF\nghcr.io/wikid82/hestia\nEOF\n' >> "$GITHUB_OUTPUT"
-          else
-            printf 'images<<EOF\nwikid82/hestia\nghcr.io/wikid82/hestia\nEOF\n' >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ steps.registries.outputs.images }}
+          images: |
+            wikid82/hestia
+            ghcr.io/wikid82/hestia
           tags: |
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
