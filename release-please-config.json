@@ -1,6 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "node",
+  "pull-request-header": "Here's what's new in Hestia",
+  "pull-request-footer": "Merge this PR to cut the release.",
   "packages": {
     ".": {}
   }
