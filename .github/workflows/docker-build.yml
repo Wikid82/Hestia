@@ -1,20 +1,33 @@
 name: Docker Build & Publish
 
 # All events build + push to both registries (Docker Hub + GHCR):
-# - Pull requests: tagged pr-<number>
+# - Pull requests: validated with a native amd64 build only (--load, no
+#   push) — PRs aren't a published artifact.
 # - Push to main: tagged latest (+ short sha for traceability)
 # - Push to development/nightly/feature/**: tagged with the (sanitized)
 #   branch name, e.g. development, nightly, feature-foo
 # - Release published: tagged with the released semver (and latest, since a
 #   fresh release should be latest)
 #
-# Every build is scanned for image vulnerabilities (Trivy) and supply-chain
-# risk (Syft SBOM + Grype), uploaded to the Security tab as SARIF. Neither
-# blocks the build right now — this is meant for visibility (know where and
-# when to patch) rather than enforcement; revisit once there's a branch
-# strategy to gate against. Known findings with no fix yet are suppressed
-# via .trivyignore / .grype.yaml — see SECURITY.md for why, and the review
-# date each suppression expires.
+# Multi-arch publishing builds each platform on its own NATIVE runner
+# (ubuntu-latest for amd64, ubuntu-24.04-arm for arm64) rather than
+# cross-building arm64 under QEMU emulation on an amd64 runner. On
+# 2026-08-09 a QEMU-emulated `npm ci` reliably crashed with "qemu: uncaught
+# target signal 4 (Illegal instruction) - core dumped" while running one of
+# esbuild's postinstall steps — deterministic on every retry, not a
+# transient hang. GitHub's Linux arm64 hosted runners are free for public
+# repos and sidestep emulation entirely for the actual build; QEMU is no
+# longer used anywhere in this workflow. Each arch pushes its image by
+# digest, then a merge job combines the digests into one multi-arch
+# manifest per tag and pushes that to both registries.
+#
+# Every published build is scanned for image vulnerabilities (Trivy) and
+# supply-chain risk (Syft SBOM + Grype), uploaded to the Security tab as
+# SARIF. Neither blocks the build right now — this is meant for visibility
+# (know where and when to patch) rather than enforcement; revisit once
+# there's a branch strategy to gate against. Known findings with no fix yet
+# are suppressed via .trivyignore / .grype.yaml — see SECURITY.md for why,
+# and the review date each suppression expires.
 
 on:
   pull_request:
@@ -30,21 +43,132 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  REGISTRY_IMAGE: ghcr.io/wikid82/hestia
+
 jobs:
-  build:
-    # Skip PR-triggered builds for our own propagate/promotion PRs
-    # (opened by github-actions[bot] — see propagate-main-to-development.yml
-    # and promote-nightly-to-main.yml). Their head is always an existing
-    # branch (main or nightly) that already got a push-triggered build for
-    # this exact commit — a second concurrent multi-arch build of identical
-    # content is pure waste, and running two QEMU-emulated arm64 builds at
-    # once is the most likely reason one of them hung for 2+ hours on
-    # 2026-08-09 instead of failing cleanly.
-    if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'github-actions[bot]'
+  # PR builds validate the Dockerfile builds cleanly on native amd64 — no
+  # push, no arm64 leg (self-hosters pull from the push/release builds
+  # below, not from a PR).
+  build-pr:
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    # Hard ceiling regardless of cause — a hang shouldn't be able to run for
-    # hours. Sized for 2 retry attempts (below) plus the scan chain after.
-    timeout-minutes: 40
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: true
+          tool-cache: false
+
+      - name: Build (validate only)
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: hestia:pr-${{ github.event.pull_request.number }}
+
+      - name: Trivy vulnerability scan (table)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: hestia:pr-${{ github.event.pull_request.number }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+          trivyignores: .trivyignore
+
+  # Push/release builds: one native runner per architecture, each pushing
+  # its single-platform image by digest. See header comment for why this
+  # replaced a single cross-platform QEMU build.
+  build:
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout (release)
+        if: github.event_name == 'release'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Checkout
+        if: github.event_name != 'release'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: true
+          tool-cache: false
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Sanitize platform for artifact name
+        id: platform-slug
+        run: echo "slug=$(echo '${{ matrix.platform }}' | tr '/' '-')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: digests-${{ steps.platform-slug.outputs.slug }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Combine the per-architecture digests into one multi-arch manifest per
+  # tag, pushed to both registries, then scan the result.
+  merge:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
@@ -60,7 +184,12 @@ jobs:
         if: github.event_name != 'release'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4
+      - name: Download all digests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
 
       - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 
@@ -85,7 +214,6 @@ jobs:
             wikid82/hestia
             ghcr.io/wikid82/hestia
           tags: |
-            type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=short,enable={{is_default_branch}}
             type=ref,event=branch
@@ -93,91 +221,42 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
 
-      - name: Determine build platforms
-        id: platforms
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
         run: |
-          # PR builds are for validation, not the published artifact — skip
-          # QEMU-emulated arm64 there entirely. It's slow and, per the
-          # 2026-08-09 incident, the most likely source of an outright hang
-          # during native module (better-sqlite3) cross-compilation. Real
-          # multi-arch images (what self-hosters actually pull) still come
-          # from push-to-main/development/nightly and releases.
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "platforms=linux/amd64" >> "$GITHUB_OUTPUT"
-          else
-            echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
-          fi
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "${{ env.REGISTRY_IMAGE }}@sha256:%s " *)
+        env:
+          DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}
 
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
-        with:
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: false
-          swap-storage: true
-          tool-cache: false
-
-      # docker/build-push-action itself has no retry support, so a build
-      # step wrapped in nick-fields/retry has to invoke buildx directly
-      # rather than as a `uses:` step. timeout_minutes bounds each attempt
-      # individually (separate from the job-level timeout-minutes above,
-      # which bounds the whole job regardless of how many attempts run).
-      - name: Build and push (with retry)
-        id: build
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
-        with:
-          timeout_minutes: 15
-          max_attempts: 2
-          retry_wait_seconds: 15
-          warning_on_retry: true
-          command: |
-            set -euo pipefail
-
-            TAG_ARGS=()
-            while IFS= read -r tag; do
-              [[ -n "$tag" ]] && TAG_ARGS+=(--tag "$tag")
-            done <<< "${{ steps.meta.outputs.tags }}"
-
-            LABEL_ARGS=()
-            while IFS= read -r label; do
-              [[ -n "$label" ]] && LABEL_ARGS+=(--label "$label")
-            done <<< "${{ steps.meta.outputs.labels }}"
-
-            docker buildx build \
-              --platform "${{ steps.platforms.outputs.platforms }}" \
-              --push \
-              "${TAG_ARGS[@]}" \
-              "${LABEL_ARGS[@]}" \
-              --iidfile /tmp/image-digest.txt \
-              .
-
-            echo "digest=$(cat /tmp/image-digest.txt)" >> "$GITHUB_OUTPUT"
+      - name: Determine digest for scanning
+        id: scan
+        run: |
+          # Either single-platform digest is representative for scanning —
+          # OS package and npm dependency findings don't differ by arch.
+          echo "digest=sha256:$(ls /tmp/digests | head -n1)" >> "$GITHUB_OUTPUT"
 
       - name: Trivy vulnerability scan (table)
-        if: always() && steps.build.outcome == 'success'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ghcr.io/wikid82/hestia@${{ steps.build.outputs.digest }}
+          image-ref: ${{ env.REGISTRY_IMAGE }}@${{ steps.scan.outputs.digest }}
           format: table
           severity: CRITICAL,HIGH
           exit-code: '0'
           trivyignores: .trivyignore
 
       - name: Trivy vulnerability scan (SARIF)
-        if: always() && steps.build.outcome == 'success'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         continue-on-error: true
         with:
-          image-ref: ghcr.io/wikid82/hestia@${{ steps.build.outputs.digest }}
+          image-ref: ${{ env.REGISTRY_IMAGE }}@${{ steps.scan.outputs.digest }}
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
           trivyignores: .trivyignore
 
       - name: Upload Trivy results to Security tab
-        if: always() && steps.build.outcome == 'success'
         uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4
         continue-on-error: true
         with:
@@ -185,15 +264,13 @@ jobs:
           category: trivy-image-scan
 
       - name: Generate SBOM
-        if: always() && steps.build.outcome == 'success'
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          image: ghcr.io/wikid82/hestia@${{ steps.build.outputs.digest }}
+          image: ${{ env.REGISTRY_IMAGE }}@${{ steps.scan.outputs.digest }}
           format: cyclonedx-json
           output-file: sbom.cyclonedx.json
 
       - name: Scan SBOM for vulnerabilities (Grype)
-        if: always() && steps.build.outcome == 'success'
         id: grype
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7
         with:
@@ -203,7 +280,6 @@ jobs:
           fail-build: false
 
       - name: Upload Grype results to Security tab
-        if: always() && steps.build.outcome == 'success'
         uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4
         continue-on-error: true
         with:
@@ -211,9 +287,8 @@ jobs:
           category: supply-chain-sbom
 
       - name: Upload SBOM artifact
-        if: always() && steps.build.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: sbom-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.sha }}
+          name: sbom-${{ github.sha }}
           path: sbom.cyclonedx.json
           retention-days: 30
