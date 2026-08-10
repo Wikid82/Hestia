@@ -14,17 +14,17 @@ export function RewardCard({
   const affordable = userPoints >= reward.pointCost;
 
   return (
-    <div className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="space-y-2 rounded-lg border border-border p-4">
       <div>
         <p className="font-medium">{reward.title}</p>
         {reward.description && (
-          <p className="text-sm text-neutral-500">{reward.description}</p>
+          <p className="text-sm text-muted-foreground">{reward.description}</p>
         )}
-        <p className="text-xs text-neutral-500">{reward.pointCost} pts</p>
+        <p className="text-xs text-muted-foreground">{reward.pointCost} pts</p>
       </div>
 
       {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {state.error}
         </p>
       )}
@@ -34,7 +34,7 @@ export function RewardCard({
         <button
           type="submit"
           disabled={pending || !affordable}
-          className="w-full rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40 dark:bg-white dark:text-neutral-900"
+          className="w-full rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-40"
         >
           {affordable ? "Redeem" : "Not enough points"}
         </button>

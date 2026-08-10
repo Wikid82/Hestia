@@ -14,7 +14,7 @@ export function RewardRow({ reward }: { reward: Reward }) {
     return (
       <form
         action={formAction}
-        className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+        className="space-y-2 rounded-lg border border-border p-4"
       >
         <input type="hidden" name="id" value={reward.id} />
         <input
@@ -22,13 +22,13 @@ export function RewardRow({ reward }: { reward: Reward }) {
           type="text"
           required
           defaultValue={reward.title}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="w-full rounded-md border border-border px-3 py-2 text-sm"
         />
         <textarea
           name="description"
           defaultValue={reward.description ?? ""}
           rows={2}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="w-full rounded-md border border-border px-3 py-2 text-sm"
         />
         <input
           name="pointCost"
@@ -36,11 +36,11 @@ export function RewardRow({ reward }: { reward: Reward }) {
           min={1}
           required
           defaultValue={reward.pointCost}
-          className="w-32 rounded-md border border-neutral-300 px-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="w-32 rounded-md border border-border px-2 py-2 text-sm"
         />
 
         {state?.error && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {state.error}
           </p>
         )}
@@ -49,14 +49,14 @@ export function RewardRow({ reward }: { reward: Reward }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             Save
           </button>
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700"
+            className="rounded-md border border-border px-3 py-1.5 text-sm"
           >
             Cancel
           </button>
@@ -66,29 +66,29 @@ export function RewardRow({ reward }: { reward: Reward }) {
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="flex items-center justify-between rounded-lg border border-border p-4">
       <div>
-        <p className={`font-medium ${reward.isActive ? "" : "text-neutral-400"}`}>
+        <p className={`font-medium ${reward.isActive ? "" : "text-muted-foreground"}`}>
           {reward.title} {!reward.isActive && "(archived)"}
         </p>
-        <p className="text-xs text-neutral-500">{reward.pointCost} pts</p>
+        <p className="text-xs text-muted-foreground">{reward.pointCost} pts</p>
       </div>
       <div className="flex items-center gap-3 text-sm">
         <button
           onClick={() => setEditing(true)}
-          className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+          className="text-muted-foreground hover:text-foreground"
         >
           Edit
         </button>
         <form action={toggleRewardActive}>
           <input type="hidden" name="id" value={reward.id} />
-          <button className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
+          <button className="text-muted-foreground hover:text-foreground">
             {reward.isActive ? "Archive" : "Unarchive"}
           </button>
         </form>
         <form action={deleteReward}>
           <input type="hidden" name="id" value={reward.id} />
-          <button className="text-red-600 hover:text-red-800">Delete</button>
+          <button className="text-danger hover:text-danger-hover">Delete</button>
         </form>
       </div>
     </div>

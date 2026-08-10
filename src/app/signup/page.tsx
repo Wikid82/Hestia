@@ -12,7 +12,7 @@ export default function SignupPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <h1 className="text-2xl font-semibold">Create your household</h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted-foreground">
             This becomes your household&apos;s one shared login. Add family
             members afterward.
           </p>
@@ -29,7 +29,7 @@ export default function SignupPage() {
               type="text"
               required
               placeholder="The Hatfields"
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
 
@@ -43,7 +43,7 @@ export default function SignupPage() {
               type="text"
               required
               autoComplete="name"
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
 
@@ -57,7 +57,7 @@ export default function SignupPage() {
               type="email"
               required
               autoComplete="email"
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
 
@@ -72,13 +72,13 @@ export default function SignupPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
             />
-            <p className="text-xs text-neutral-500">At least 8 characters.</p>
+            <p className="text-xs text-muted-foreground">At least 8 characters.</p>
           </div>
 
           {state?.error && (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-danger" role="alert">
               {state.error}
             </p>
           )}
@@ -86,13 +86,13 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+            className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {pending ? "Creating household..." : "Create household"}
           </button>
         </form>
 
-        <p className="text-center text-sm text-neutral-500">
+        <p className="text-center text-sm text-muted-foreground">
           Already have a household?{" "}
           <Link href="/login" className="font-medium underline">
             Sign in

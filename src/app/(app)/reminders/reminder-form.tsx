@@ -22,25 +22,25 @@ export function ReminderForm({
         type="text"
         required
         placeholder="Title"
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+        className="w-full rounded-md border border-border px-3 py-2 text-sm"
       />
       <textarea
         name="notes"
         placeholder="Notes (optional)"
         rows={2}
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+        className="w-full rounded-md border border-border px-3 py-2 text-sm"
       />
       <div className="flex gap-2">
         <input
           name="dueAt"
           type="date"
-          className="flex-1 rounded-md border border-neutral-300 px-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="flex-1 rounded-md border border-border px-2 py-2 text-sm"
         />
         {isAdmin ? (
           <select
             name="assignedToUserId"
             defaultValue=""
-            className="flex-1 rounded-md border border-neutral-300 px-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+            className="flex-1 rounded-md border border-border px-2 py-2 text-sm"
           >
             <option value="">Everyone</option>
             {members.map((member) => (
@@ -53,7 +53,7 @@ export function ReminderForm({
       </div>
 
       {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {state.error}
         </p>
       )}
@@ -61,7 +61,7 @@ export function ReminderForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
       >
         {pending ? "Adding..." : "Add reminder"}
       </button>
