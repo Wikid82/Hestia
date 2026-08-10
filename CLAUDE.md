@@ -23,7 +23,17 @@ adding a new external dependency) before just doing it.
   branch in the normal checkout. Jeremy likes to build and test the app
   himself before merging, and a worktree puts the change somewhere he
   isn't already looking.
-- Open PRs against `development`, not `main`. `main` is the
+- Only switch/create a branch for major feature work. Small edits and
+  fixes happen directly on whatever branch is currently checked out —
+  don't branch reflexively for every change. Branch (and open a PR) when
+  something is a real chore that needs build/CI testing before landing.
+- CI/workflow changes (`.github/workflows/*`) are committed directly to
+  `main` for now, since that's the branch CI actually runs on and needs
+  to reflect immediately — `propagate-main-to-development.yml` carries
+  them down to `development` automatically. Once the project is more
+  mature this will switch to normal PRs against `development` like
+  everything else; ask if it's unclear which regime is current.
+- Otherwise, open PRs against `development`, not `main`. `main` is the
   release/stable branch; `development` is the integration branch,
   periodically synced back into `main`.
 
