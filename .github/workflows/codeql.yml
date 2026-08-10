@@ -10,7 +10,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  # PRs: cancel the scan for superseded commits on the same PR (the old
+  # code no longer matters). Pushes: key on the commit SHA, not the branch
+  # name — otherwise a second push to the same branch before CodeQL
+  # finishes cancels the first commit's scan and leaves it with a
+  # permanently cancelled/red check instead of a result.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
   cancel-in-progress: true
 
 permissions:
