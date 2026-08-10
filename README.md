@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/images/hestia_banner.png" alt="Hestia" width="240">
+</p>
+
 # Hestia
 
 A self-hosted household chore chart for families. Add your chores, assign
