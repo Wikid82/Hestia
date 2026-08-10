@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import {
+  describeRecurrence,
   dueDatesInRange,
   isChoreDueOn,
+  isChoreDueToday,
   parseRecurrenceDays,
   serializeRecurrenceDays,
 } from "./recurrence.ts";
@@ -62,6 +64,39 @@ test("parseRecurrenceDays: ignores malformed input rather than throwing", () => 
   assert.deepEqual(parseRecurrenceDays(null), []);
   assert.deepEqual(parseRecurrenceDays("not json"), []);
   assert.deepEqual(parseRecurrenceDays("[1,2,9,-1,3]"), [1, 2, 3]);
+});
+
+test("isChoreDueToday: reflects isChoreDueOn against the current date", () => {
+  const today = new Date();
+  const chore = { recurrence: "daily" as const, dueDate: today, recurrenceDays: null };
+  assert.equal(isChoreDueToday(chore), true);
+});
+
+test("describeRecurrence: describes every recurrence kind", () => {
+  assert.match(
+    describeRecurrence({ recurrence: "none", dueDate: WEDNESDAY, recurrenceDays: null }),
+    /^One-time \(/,
+  );
+  assert.equal(
+    describeRecurrence({ recurrence: "daily", dueDate: WEDNESDAY, recurrenceDays: null }),
+    "Daily",
+  );
+  assert.equal(
+    describeRecurrence({ recurrence: "weekly", dueDate: WEDNESDAY, recurrenceDays: null }),
+    "Weekly (Wed)",
+  );
+  assert.equal(
+    describeRecurrence({ recurrence: "weekdays", dueDate: WEDNESDAY, recurrenceDays: null }),
+    "Weekdays",
+  );
+  assert.equal(
+    describeRecurrence({
+      recurrence: "custom",
+      dueDate: WEDNESDAY,
+      recurrenceDays: serializeRecurrenceDays([1, 3]),
+    }),
+    "Custom (Mon, Wed)",
+  );
 });
 
 test("dueDatesInRange: collects every due date across a span", () => {
