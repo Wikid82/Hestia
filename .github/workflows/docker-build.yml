@@ -32,7 +32,19 @@ permissions:
 
 jobs:
   build:
+    # Skip PR-triggered builds for our own propagate/promotion PRs
+    # (opened by github-actions[bot] — see propagate-main-to-development.yml
+    # and promote-nightly-to-main.yml). Their head is always an existing
+    # branch (main or nightly) that already got a push-triggered build for
+    # this exact commit — a second concurrent multi-arch build of identical
+    # content is pure waste, and running two QEMU-emulated arm64 builds at
+    # once is the most likely reason one of them hung for 2+ hours on
+    # 2026-08-09 instead of failing cleanly.
+    if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    # Hard ceiling regardless of cause — a hang shouldn't be able to run for
+    # hours. Sized for 2 retry attempts (below) plus the scan chain after.
+    timeout-minutes: 40
     permissions:
       contents: read
       packages: write
@@ -81,15 +93,67 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
 
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+      - name: Determine build platforms
+        id: platforms
+        run: |
+          # PR builds are for validation, not the published artifact — skip
+          # QEMU-emulated arm64 there entirely. It's slow and, per the
+          # 2026-08-09 incident, the most likely source of an outright hang
+          # during native module (better-sqlite3) cross-compilation. Real
+          # multi-arch images (what self-hosters actually pull) still come
+          # from push-to-main/development/nightly and releases.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "platforms=linux/amd64" >> "$GITHUB_OUTPUT"
+          else
+            echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: true
+          tool-cache: false
+
+      # docker/build-push-action itself has no retry support, so a build
+      # step wrapped in nick-fields/retry has to invoke buildx directly
+      # rather than as a `uses:` step. timeout_minutes bounds each attempt
+      # individually (separate from the job-level timeout-minutes above,
+      # which bounds the whole job regardless of how many attempts run).
+      - name: Build and push (with retry)
+        id: build
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 2
+          retry_wait_seconds: 15
+          warning_on_retry: true
+          command: |
+            set -euo pipefail
+
+            TAG_ARGS=()
+            while IFS= read -r tag; do
+              [[ -n "$tag" ]] && TAG_ARGS+=(--tag "$tag")
+            done <<< "${{ steps.meta.outputs.tags }}"
+
+            LABEL_ARGS=()
+            while IFS= read -r label; do
+              [[ -n "$label" ]] && LABEL_ARGS+=(--label "$label")
+            done <<< "${{ steps.meta.outputs.labels }}"
+
+            docker buildx build \
+              --platform "${{ steps.platforms.outputs.platforms }}" \
+              --push \
+              "${TAG_ARGS[@]}" \
+              "${LABEL_ARGS[@]}" \
+              --iidfile /tmp/image-digest.txt \
+              .
+
+            echo "digest=$(cat /tmp/image-digest.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Trivy vulnerability scan (table)
         if: always() && steps.build.outcome == 'success'
