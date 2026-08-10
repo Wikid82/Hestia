@@ -29,3 +29,25 @@ export async function renameHousehold(
   revalidatePath("/switch-profile");
   return null;
 }
+
+export async function updateThemePreference(
+  _prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { household, user } = await requireActiveUser();
+  requireAdmin(user);
+
+  const themePreference = String(formData.get("themePreference") ?? "");
+  if (!["system", "light", "dark"].includes(themePreference)) {
+    return { error: "Invalid theme preference." };
+  }
+
+  await db
+    .update(households)
+    .set({ themePreference: themePreference as "system" | "light" | "dark" })
+    .where(eq(households.id, household.id));
+
+  // The choice is read by the root layout, above every route.
+  revalidatePath("/", "layout");
+  return null;
+}

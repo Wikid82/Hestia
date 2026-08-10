@@ -15,12 +15,12 @@ export function AddMemberForm() {
           type="text"
           required
           placeholder="Name"
-          className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900"
+          className="flex-1 rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
         />
         <select
           name="avatarEmoji"
           defaultValue={AVATAR_OPTIONS[0]}
-          className="rounded-md border border-neutral-300 px-2 py-2 text-lg dark:border-neutral-700 dark:bg-neutral-900"
+          className="rounded-md border border-border px-2 py-2 text-lg"
         >
           {AVATAR_OPTIONS.map((emoji) => (
             <option key={emoji} value={emoji}>
@@ -34,7 +34,7 @@ export function AddMemberForm() {
         <select
           name="role"
           defaultValue="member"
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="rounded-md border border-border px-3 py-2 text-sm"
         >
           <option value="member">Kid / member</option>
           <option value="admin">Parent / admin</option>
@@ -44,16 +44,16 @@ export function AddMemberForm() {
           type="text"
           inputMode="numeric"
           placeholder="PIN (optional)"
-          className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900"
+          className="flex-1 rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
         />
       </div>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-muted-foreground">
         Admin profiles should have a PIN — it&apos;s what stops a kid from
         tapping into edit powers on a shared screen.
       </p>
 
       {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {state.error}
         </p>
       )}
@@ -61,7 +61,7 @@ export function AddMemberForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
       >
         {pending ? "Adding..." : "Add member"}
       </button>

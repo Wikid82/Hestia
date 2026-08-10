@@ -13,13 +13,13 @@ export function RewardForm() {
         type="text"
         required
         placeholder="Title"
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+        className="w-full rounded-md border border-border px-3 py-2 text-sm"
       />
       <textarea
         name="description"
         placeholder="Description (optional)"
         rows={2}
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+        className="w-full rounded-md border border-border px-3 py-2 text-sm"
       />
       <input
         name="pointCost"
@@ -27,11 +27,11 @@ export function RewardForm() {
         min={1}
         required
         placeholder="Point cost"
-        className="w-32 rounded-md border border-neutral-300 px-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+        className="w-32 rounded-md border border-border px-2 py-2 text-sm"
       />
 
       {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {state.error}
         </p>
       )}
@@ -39,7 +39,7 @@ export function RewardForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
       >
         {pending ? "Adding..." : "Add reward"}
       </button>

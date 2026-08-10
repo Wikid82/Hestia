@@ -20,12 +20,12 @@ export default async function RewardsPage() {
       <section className="space-y-3">
         <div className="flex items-baseline justify-between">
           <h1 className="text-xl font-semibold">Rewards</h1>
-          <span className="text-sm text-neutral-500">
+          <span className="text-sm text-muted-foreground">
             You have {user.points} pts
           </span>
         </div>
         {activeRewards.length === 0 ? (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted-foreground">
             No rewards in the store yet.
           </p>
         ) : (
@@ -42,7 +42,7 @@ export default async function RewardsPage() {
       </section>
 
       {user.role === "admin" && (
-        <section className="space-y-4 border-t border-neutral-200 pt-8 dark:border-neutral-800">
+        <section className="space-y-4 border-t border-border pt-8">
           <h2 className="text-lg font-semibold">Manage rewards</h2>
           <div className="space-y-2">
             {allRewards.map((reward) => (

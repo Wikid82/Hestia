@@ -6,6 +6,7 @@ import { requireActiveUser } from "@/lib/auth/current-user";
 import { AddMemberForm } from "./add-member-form";
 import { HouseholdName } from "./household-name";
 import { MemberCard } from "./member-card";
+import { ThemePicker } from "./theme-picker";
 
 export default async function HouseholdPage() {
   const { household, user } = await requireActiveUser();
@@ -22,7 +23,7 @@ export default async function HouseholdPage() {
     <div className="space-y-8">
       <div>
         <HouseholdName name={household.name} />
-        <p className="text-sm text-neutral-500">Manage who&apos;s here.</p>
+        <p className="text-sm text-muted-foreground">Manage who&apos;s here.</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -31,7 +32,16 @@ export default async function HouseholdPage() {
         ))}
       </div>
 
-      <div className="max-w-sm space-y-3 border-t border-neutral-200 pt-6 dark:border-neutral-800">
+      <div className="max-w-sm space-y-3 border-t border-border pt-6">
+        <h2 className="font-medium">Appearance</h2>
+        <p className="text-sm text-muted-foreground">
+          Applies to every screen in the household, including shared kiosk
+          displays.
+        </p>
+        <ThemePicker value={household.themePreference} />
+      </div>
+
+      <div className="max-w-sm space-y-3 border-t border-border pt-6">
         <h2 className="font-medium">Add a family member</h2>
         <AddMemberForm />
       </div>

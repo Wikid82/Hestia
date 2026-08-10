@@ -24,13 +24,13 @@ export function ChoreRow({
     return (
       <form
         action={formAction}
-        className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+        className="space-y-2 rounded-lg border border-border p-4"
       >
         <input type="hidden" name="id" value={chore.id} />
         <ChoreFields members={members} defaults={chore} />
 
         {state?.error && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {state.error}
           </p>
         )}
@@ -39,14 +39,14 @@ export function ChoreRow({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             Save
           </button>
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700"
+            className="rounded-md border border-border px-3 py-1.5 text-sm"
           >
             Cancel
           </button>
@@ -56,10 +56,10 @@ export function ChoreRow({
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="flex items-center justify-between rounded-lg border border-border p-4">
       <div>
         <p className="font-medium">{chore.title}</p>
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-muted-foreground">
           {assignee ? `${assignee.avatarEmoji} ${assignee.name}` : "Unassigned"}{" "}
           · {chore.points} pts · {describeRecurrence(chore)}
         </p>
@@ -67,13 +67,13 @@ export function ChoreRow({
       <div className="flex items-center gap-3 text-sm">
         <button
           onClick={() => setEditing(true)}
-          className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+          className="text-muted-foreground hover:text-foreground"
         >
           Edit
         </button>
         <form action={deleteChore}>
           <input type="hidden" name="id" value={chore.id} />
-          <button className="text-red-600 hover:text-red-800">Delete</button>
+          <button className="text-danger hover:text-danger-hover">Delete</button>
         </form>
       </div>
     </div>
