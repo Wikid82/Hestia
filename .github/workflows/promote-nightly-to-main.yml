@@ -61,19 +61,27 @@ jobs:
             const headSha = branch.commit.sha;
             core.info(`nightly HEAD: ${headSha}`);
 
-            // A few retries in case CI hasn't materialized yet for this exact
-            // HEAD (e.g. nightly just synced minutes ago).
+            // sync-nightly.yml never creates a new commit — nightly is always
+            // either untouched or fast-forwarded/reset to development's exact
+            // SHA. So a completed CI run on 'development' at this same SHA is
+            // equally valid proof of health, and covers two gaps in checking
+            // 'nightly' alone: (1) if nightly was synced with the GITHUB_TOKEN
+            // fallback (doesn't trigger downstream workflows), CI never ran on
+            // nightly at all; (2) if nightly already matched development when
+            // the sync ran, no push happened, so no nightly-branch run exists
+            // for this SHA even with a trigger token configured.
             let run = null;
             for (let attempt = 1; attempt <= 4; attempt += 1) {
               const { data } = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: 'ci.yml',
-                branch: 'nightly',
                 status: 'completed',
                 per_page: 20,
               });
-              run = data.workflow_runs.find((r) => r.head_sha === headSha);
+              run = data.workflow_runs.find(
+                (r) => r.head_sha === headSha && (r.head_branch === 'nightly' || r.head_branch === 'development'),
+              );
               if (run) break;
               core.info(`No completed CI run for nightly HEAD yet (attempt ${attempt}/4), waiting...`);
               await new Promise((resolve) => setTimeout(resolve, 15000));
