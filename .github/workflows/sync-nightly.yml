@@ -1,0 +1,64 @@
+name: Sync development to nightly
+
+# Direct fast-forward sync, not a PR — nightly is meant to track development
+# continuously without manual review. (nightly -> main is the reviewed step,
+# in promote-nightly-to-main.yml.)
+#
+# Uses CI_TRIGGER_TOKEN if set, falling back to GITHUB_TOKEN. The fallback
+# works, but a push made with the default GITHUB_TOKEN doesn't trigger other
+# workflows — so without CI_TRIGGER_TOKEN, CI won't run on nightly until
+# something else touches it (e.g. the promotion PR). Set a PAT with repo
+# write access as CI_TRIGGER_TOKEN to get CI running on nightly right away.
+
+on:
+  schedule:
+    - cron: '17 9 * * *' # daily ~09:17 UTC, off the top of the hour
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout nightly
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: nightly
+          fetch-depth: 0
+          token: ${{ secrets.CI_TRIGGER_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fast-forward nightly to development
+        env:
+          HAS_TRIGGER_TOKEN: ${{ secrets.CI_TRIGGER_TOKEN != '' }}
+        run: |
+          git fetch origin development nightly
+          git reset --hard origin/nightly
+
+          if git diff --quiet origin/nightly origin/development; then
+            echo "nightly already matches development — nothing to sync"
+            exit 0
+          fi
+
+          if [[ "$HAS_TRIGGER_TOKEN" != "true" ]]; then
+            echo "::warning title=Using GITHUB_TOKEN fallback::Set CI_TRIGGER_TOKEN so this push triggers CI on nightly."
+          fi
+
+          # Neither branch of this ever creates a new commit — nightly just
+          # becomes a ref pointing at development's exact SHA, so CI (now
+          # triggered on push to nightly too) runs against it normally.
+          git merge origin/development --ff-only || {
+            echo "Fast-forward not possible — resetting nightly to development"
+            git reset --hard origin/development
+          }
+          git push --force origin nightly
