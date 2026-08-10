@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/Wikid82/hestia/compare/hestia-v0.2.2...hestia-v0.2.3) (2026-08-10)
+
+
+### Bug Fixes
+
+* accept development-branch CI run as proof of nightly health ([7a3cf5e](https://github.com/Wikid82/hestia/commit/7a3cf5e7a3ca7473a258f9faed4bebd6aca03500))
+
 ## [0.2.2](https://github.com/Wikid82/hestia/compare/hestia-v0.2.1...hestia-v0.2.2) (2026-08-09)
 
 
