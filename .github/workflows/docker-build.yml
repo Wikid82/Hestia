@@ -142,6 +142,15 @@ jobs:
         with:
           context: .
           platforms: ${{ matrix.platform }}
+          # provenance: false — otherwise buildx wraps even a single-platform
+          # push in a 2-entry OCI index (image manifest + attestation
+          # manifest), so the exported digest points at an index rather than
+          # the plain image manifest. That breaks anything resolving the
+          # digest directly (confirmed: Trivy's remote fetcher errors with
+          # "no child with platform linux/amd64 in index ..." trying to scan
+          # it) and serves no purpose here since digest-merge already
+          # produces one clean multi-arch manifest in the step below.
+          provenance: false
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
