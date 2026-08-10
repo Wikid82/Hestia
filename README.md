@@ -51,6 +51,34 @@ chore due-dates are computed from the container's local clock, so without
 it everything runs on UTC regardless of where you actually are, and chores
 flip to the next day at UTC midnight instead of local midnight.
 
+## Running behind a reverse proxy
+
+Hestia works out of the box behind Caddy, Traefik, Nginx Proxy Manager, or
+similar, as long as the proxy forwards the original `Host` header (all three
+do this by default) — session cookies and Next.js's Server Action origin
+checks rely on it matching the hostname your browser actually used.
+
+**Serving from a domain or subdomain root** (e.g.
+`https://hestia.example.com`) needs no extra configuration — just proxy to
+the container's port 3000.
+
+**Serving from a subpath** (e.g. `https://home.example.com/hestia/`) needs
+`BASE_PATH` set in `.env` to match the proxy's path prefix, e.g.:
+
+```bash
+BASE_PATH=/hestia
+```
+
+Example Caddy config for a subpath:
+
+```
+home.example.com {
+	handle_path /hestia/* {
+		reverse_proxy localhost:3000
+	}
+}
+```
+
 ## Developing locally
 
 ```bash

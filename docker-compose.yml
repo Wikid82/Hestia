@@ -17,3 +17,6 @@ services:
       # is, and chores flip to the next day at UTC midnight instead of
       # local midnight.
       TZ: ${TZ:-UTC}
+      # Only needed behind a reverse proxy serving Hestia from a subpath —
+      # see BASE_PATH in .env.example.
+      BASE_PATH: ${BASE_PATH:-}
