@@ -19,10 +19,13 @@ adding a new external dependency) before just doing it.
 
 ## Workflow
 
-Do not use git worktrees for work in this repo — work directly on a branch
-in the normal checkout. Jeremy likes to build and test the app himself
-before merging, and a worktree puts the change somewhere he isn't already
-looking.
+- Do not use git worktrees for work in this repo — work directly on a
+  branch in the normal checkout. Jeremy likes to build and test the app
+  himself before merging, and a worktree puts the change somewhere he
+  isn't already looking.
+- Open PRs against `development`, not `main`. `main` is the
+  release/stable branch; `development` is the integration branch,
+  periodically synced back into `main`.
 
 ## Product shape
 
