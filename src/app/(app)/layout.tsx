@@ -20,7 +20,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="border-b border-neutral-200 dark:border-neutral-800">
+      <header className="border-b border-border">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-6">
             <span className="font-semibold">{household.name}</span>
@@ -29,7 +29,7 @@ export default async function AppLayout({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   {link.label}
                 </Link>
@@ -37,7 +37,7 @@ export default async function AppLayout({
               {user.role === "admin" && (
                 <Link
                   href="/household"
-                  className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   Household
                 </Link>
@@ -49,15 +49,15 @@ export default async function AppLayout({
             <span className="flex items-center gap-1.5">
               <span className="text-lg">{user.avatarEmoji}</span>
               <span>{user.name}</span>
-              <span className="text-neutral-500">· {user.points} pts</span>
+              <span className="text-muted-foreground">· {user.points} pts</span>
             </span>
             <form action={switchToPicker}>
-              <button className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
+              <button className="text-muted-foreground hover:text-foreground">
                 Switch
               </button>
             </form>
             <form action={logout}>
-              <button className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
+              <button className="text-muted-foreground hover:text-foreground">
                 Log out
               </button>
             </form>

@@ -38,13 +38,13 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
               autoFocus
               required
               placeholder="PIN"
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-center text-lg tracking-widest outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900"
+              className="w-full rounded-md border border-border px-3 py-2 text-center text-lg tracking-widest outline-none focus:border-primary"
             />
           </div>
         ) : null}
 
         {state?.error && (
-          <p className="text-center text-sm text-red-600" role="alert">
+          <p className="text-center text-sm text-danger" role="alert">
             {state.error}
           </p>
         )}
@@ -53,14 +53,14 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
           <button
             type="button"
             onClick={() => setSelected(null)}
-            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700"
+            className="flex-1 rounded-md border border-border px-3 py-2 text-sm"
           >
             Back
           </button>
           <button
             type="submit"
             disabled={pending}
-            className="flex-1 rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+            className="flex-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {pending ? "..." : "Continue"}
           </button>
@@ -75,7 +75,7 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
         <button
           key={profile.id}
           onClick={() => setSelected(profile)}
-          className="flex flex-col items-center gap-2 rounded-lg p-4 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          className="flex flex-col items-center gap-2 rounded-lg p-4 transition hover:bg-surface-hover"
         >
           <span className="text-5xl">{profile.avatarEmoji}</span>
           <span className="text-sm font-medium">{profile.name}</span>

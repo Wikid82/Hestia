@@ -4,6 +4,13 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 export const households = sqliteTable("households", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  // Applies to the whole household (a shared kiosk screen isn't
+  // per-browser), not just the account that changes it.
+  themePreference: text("theme_preference", {
+    enum: ["system", "light", "dark"],
+  })
+    .notNull()
+    .default("system"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),

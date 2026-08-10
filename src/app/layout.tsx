@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getThemePreference } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,10 +18,15 @@ export const metadata: Metadata = {
   description: "A self-hosted household chore chart.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const theme = await getThemePreference();
+
   return (
     <html
       lang="en"
+      // Omitted for "system" so globals.css falls through to the OS
+      // prefers-color-scheme media query instead of forcing a theme.
+      data-theme={theme === "system" ? undefined : theme}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

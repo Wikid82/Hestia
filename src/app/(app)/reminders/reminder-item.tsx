@@ -18,7 +18,7 @@ export function ReminderItem({
   canDelete: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+    <div className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
       <form action={toggleReminderDone} className="flex flex-1 gap-2">
         <input type="hidden" name="id" value={reminder.id} />
         <button
@@ -26,18 +26,18 @@ export function ReminderItem({
           aria-label={reminder.isDone ? "Mark not done" : "Mark done"}
           className={`mt-0.5 h-5 w-5 shrink-0 rounded border ${
             reminder.isDone
-              ? "border-neutral-900 bg-neutral-900 dark:border-white dark:bg-white"
-              : "border-neutral-300 dark:border-neutral-700"
+              ? "border-primary bg-primary"
+              : "border-border"
           }`}
         />
         <div>
-          <p className={reminder.isDone ? "text-neutral-400 line-through" : ""}>
+          <p className={reminder.isDone ? "text-muted-foreground line-through" : ""}>
             {reminder.title}
           </p>
           {reminder.notes && (
-            <p className="text-sm text-neutral-500">{reminder.notes}</p>
+            <p className="text-sm text-muted-foreground">{reminder.notes}</p>
           )}
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted-foreground">
             {assignee ? `${assignee.avatarEmoji} ${assignee.name}` : "Everyone"}
             {reminder.dueAt &&
               ` · due ${reminder.dueAt.toLocaleDateString()}`}
@@ -48,7 +48,7 @@ export function ReminderItem({
       {canDelete && (
         <form action={deleteReminder}>
           <input type="hidden" name="id" value={reminder.id} />
-          <button className="text-sm text-red-600 hover:text-red-800">
+          <button className="text-sm text-danger hover:text-danger-hover">
             Delete
           </button>
         </form>

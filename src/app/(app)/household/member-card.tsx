@@ -16,7 +16,7 @@ export function MemberCard({ member }: { member: Member }) {
     return (
       <form
         action={formAction}
-        className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+        className="space-y-2 rounded-lg border border-border p-4"
       >
         <input type="hidden" name="id" value={member.id} />
         <div className="flex gap-2">
@@ -25,12 +25,12 @@ export function MemberCard({ member }: { member: Member }) {
             type="text"
             defaultValue={member.name}
             required
-            className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+            className="flex-1 rounded-md border border-border px-2 py-1.5 text-sm"
           />
           <select
             name="avatarEmoji"
             defaultValue={member.avatarEmoji}
-            className="rounded-md border border-neutral-300 px-2 py-1.5 text-lg dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-md border border-border px-2 py-1.5 text-lg"
           >
             {AVATAR_OPTIONS.map((emoji) => (
               <option key={emoji} value={emoji}>
@@ -42,7 +42,7 @@ export function MemberCard({ member }: { member: Member }) {
         <select
           name="role"
           defaultValue={member.role}
-          className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="w-full rounded-md border border-border px-2 py-1.5 text-sm"
         >
           <option value="member">Kid / member</option>
           <option value="admin">Parent / admin</option>
@@ -52,11 +52,11 @@ export function MemberCard({ member }: { member: Member }) {
           type="text"
           inputMode="numeric"
           placeholder={member.pinHash ? "Change PIN" : "Set PIN (optional)"}
-          className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="w-full rounded-md border border-border px-2 py-1.5 text-sm"
         />
 
         {state?.error && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {state.error}
           </p>
         )}
@@ -65,14 +65,14 @@ export function MemberCard({ member }: { member: Member }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             Save
           </button>
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700"
+            className="rounded-md border border-border px-3 py-1.5 text-sm"
           >
             Cancel
           </button>
@@ -81,7 +81,7 @@ export function MemberCard({ member }: { member: Member }) {
               formAction={clearMemberPin}
               name="id"
               value={member.id}
-              className="ml-auto text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="ml-auto text-sm text-muted-foreground hover:text-foreground"
             >
               Clear PIN
             </button>
@@ -92,12 +92,12 @@ export function MemberCard({ member }: { member: Member }) {
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="flex items-center justify-between rounded-lg border border-border p-4">
       <div className="flex items-center gap-3">
         <span className="text-3xl">{member.avatarEmoji}</span>
         <div>
           <p className="font-medium">{member.name}</p>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted-foreground">
             {member.role === "admin" ? "Parent / admin" : "Kid / member"} ·{" "}
             {member.points} pts
             {hasLogin && " · main login"}
@@ -107,14 +107,14 @@ export function MemberCard({ member }: { member: Member }) {
       <div className="flex items-center gap-3 text-sm">
         <button
           onClick={() => setEditing(true)}
-          className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+          className="text-muted-foreground hover:text-foreground"
         >
           Edit
         </button>
         {!hasLogin && (
           <form action={deleteMember}>
             <input type="hidden" name="id" value={member.id} />
-            <button className="text-red-600 hover:text-red-800">
+            <button className="text-danger hover:text-danger-hover">
               Remove
             </button>
           </form>

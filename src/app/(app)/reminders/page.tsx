@@ -27,7 +27,7 @@ export default async function RemindersPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-xl font-semibold">Reminders</h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted-foreground">
           Quick tasks that don&apos;t need points — trash day, permission
           slips, that kind of thing.
         </p>
@@ -35,7 +35,7 @@ export default async function RemindersPage() {
 
       <section className="space-y-2">
         {pending.length === 0 ? (
-          <p className="text-sm text-neutral-500">Nothing pending.</p>
+          <p className="text-sm text-muted-foreground">Nothing pending.</p>
         ) : (
           pending.map((reminder) => (
             <ReminderItem
@@ -56,7 +56,7 @@ export default async function RemindersPage() {
 
       {done.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-medium text-neutral-500">Done</h2>
+          <h2 className="text-sm font-medium text-muted-foreground">Done</h2>
           {done.map((reminder) => (
             <ReminderItem
               key={reminder.id}
@@ -74,7 +74,7 @@ export default async function RemindersPage() {
         </section>
       )}
 
-      <div className="max-w-md space-y-3 border-t border-neutral-200 pt-6 dark:border-neutral-800">
+      <div className="max-w-md space-y-3 border-t border-border pt-6">
         <h2 className="font-medium">Add a reminder</h2>
         <ReminderForm members={members} isAdmin={user.role === "admin"} />
       </div>

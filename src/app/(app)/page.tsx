@@ -63,7 +63,7 @@ export default async function HubPage() {
         <h1 className="text-xl font-semibold">
           Hi, {user.avatarEmoji} {user.name}
         </h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted-foreground">
           {user.points} points ·{" "}
           <Link href="/rewards" className="underline">
             see what you can redeem
@@ -74,7 +74,7 @@ export default async function HubPage() {
       <section className="space-y-3">
         <h2 className="font-medium">Your chores today</h2>
         {myChoresToday.length === 0 ? (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted-foreground">
             Nothing assigned to you today.
           </p>
         ) : (
@@ -99,12 +99,12 @@ export default async function HubPage() {
       <section className="space-y-3">
         <div className="flex items-baseline justify-between">
           <h2 className="font-medium">Reminders</h2>
-          <Link href="/reminders" className="text-sm text-neutral-500 underline">
+          <Link href="/reminders" className="text-sm text-muted-foreground underline">
             View all
           </Link>
         </div>
         {myReminders.length === 0 ? (
-          <p className="text-sm text-neutral-500">Nothing pending.</p>
+          <p className="text-sm text-muted-foreground">Nothing pending.</p>
         ) : (
           <div className="space-y-2">
             {myReminders.map((reminder) => (
