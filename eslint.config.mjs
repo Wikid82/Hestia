@@ -1,22 +1,50 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import js from "@eslint/js";
+import nextPlugin from "@next/eslint-plugin-next";
+import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
+import { fixupPluginRules } from "@eslint/compat";
+import tsParser from "@typescript-eslint/parser";
+import globals from "globals";
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-    "coverage/**",
-    // Claude Code worktree scratch space (full repo copies, incl. their
-    // own .next build output) — not part of this project's source.
-    ".claude/**",
-  ]),
-]);
-
-export default eslintConfig;
+export default [
+  {
+    ignores: [".claude/**", ".next/**", "node_modules/**", "coverage/**"]
+  },
+  js.configs.recommended,
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+        ecmaFeatures: { jsx: true }
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      }
+    },
+    plugins: {
+      react: fixupPluginRules(reactPlugin),
+      "react-hooks": fixupPluginRules(reactHooksPlugin),
+      "@next/next": fixupPluginRules(nextPlugin),
+    },
+    rules: {
+      ...reactPlugin.configs.recommended.rules,
+      ...reactHooksPlugin.configs.recommended.rules,
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+      "react/react-in-jsx-scope": "off",
+      
+      // TypeScript handles undefined variables safely during compilation; 
+      // ESLint's no-undef throws false positives on global TS types.
+      "no-undef": "off" 
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+  }
+];

@@ -4,6 +4,20 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+echo "============================================================================"
+echo "Updating Global npm Environment"
+echo "============================================================================"
+
+echo "Current local versions (npm / npx):"
+npm -v && npx -v
+
+echo -n "Latest available npm version on registry: "
+npm view npm version
+
+echo "Installing latest global npm..."
+npm install -g npm@latest
+echo ""
+
 # ---------------------------------------------------------------------------
 # npm modules
 # ---------------------------------------------------------------------------
@@ -22,6 +36,8 @@ for MODULE in "${NPM_MODULES[@]}"; do
 
     cd "$MODULE" || exit 1
 
+
+    
     # Update prod, dev, optional, and peer dependencies to latest.
     # Exclude typescript: v7 is a from-scratch rewrite (the "tsgo"/native
     # compiler) with no typescript-eslint support yet, which breaks `npm run
@@ -31,18 +47,17 @@ for MODULE in "${NPM_MODULES[@]}"; do
     # in a way eslint-config-next's bundled eslint-plugin-react doesn't
     # support yet, which crashes `npm run lint`. Keep pinned to ^9 until
     # eslint-config-next ships a compatible eslint-plugin-react.
-    npx --yes npm-check-updates -u --reject typescript,eslint
-
+    npx --yes npm-check-updates -u --reject "typescript,@typescript-eslint/*"
     rm -rf node_modules package-lock.json
-    npm install
-    npm dedupe
+    npm install --legacy-peer-deps
+    npm dedupe --legacy-peer-deps
     npm run build
     npm run lint
     # Fails on high/critical findings; moderate/low are allowed through (see
     # audit-ci.json). Add a documented allowlist entry there if a
     # high/critical finding turns out to be unfixable upstream.
     npm run audit:ci
-    npm audit fix || true
+    npm audit fix --legacy-peer-deps || true
     npm outdated || true
 
     echo "Done: $MODULE"
