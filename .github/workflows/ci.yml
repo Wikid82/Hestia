@@ -19,7 +19,7 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
-      - run: npm test
+      - run: npm run test:coverage
       - run: npm run build
 
   e2e:
