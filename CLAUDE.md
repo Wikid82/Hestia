@@ -17,6 +17,16 @@ asking permission for routine decisions — but flag anything that's a real
 product or architecture fork in the road (auth approach, data model shape,
 adding a new external dependency) before just doing it.
 
+## Workflow
+
+- Do not use git worktrees for work in this repo — work directly on a
+  branch in the normal checkout. Jeremy likes to build and test the app
+  himself before merging, and a worktree puts the change somewhere he
+  isn't already looking.
+- Open PRs against `development`, not `main`. `main` is the
+  release/stable branch; `development` is the integration branch,
+  periodically synced back into `main`.
+
 ## Product shape
 
 - **Users**: parents/admins who can log into a household account remotely,
