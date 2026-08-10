@@ -55,14 +55,14 @@ export function ChoreFields({
         required
         placeholder="Title"
         defaultValue={defaults?.title}
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+        className="w-full rounded-md border border-border px-3 py-2 text-sm"
       />
       <textarea
         name="description"
         placeholder="Description (optional)"
         defaultValue={defaults?.description ?? ""}
         rows={2}
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+        className="w-full rounded-md border border-border px-3 py-2 text-sm"
       />
 
       <div className="flex gap-2">
@@ -70,7 +70,7 @@ export function ChoreFields({
           name="assignedToUserId"
           required
           defaultValue={defaults?.assignedToUserId ?? ""}
-          className="flex-1 rounded-md border border-neutral-300 px-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="flex-1 rounded-md border border-border px-2 py-2 text-sm"
         >
           <option value="" disabled>
             Assign to...
@@ -88,7 +88,7 @@ export function ChoreFields({
           required
           placeholder="Points"
           defaultValue={defaults?.points ?? 0}
-          className="w-24 rounded-md border border-neutral-300 px-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="w-24 rounded-md border border-border px-2 py-2 text-sm"
         />
       </div>
 
@@ -97,7 +97,7 @@ export function ChoreFields({
           name="recurrence"
           value={recurrence}
           onChange={(e) => setRecurrence(e.target.value as Recurrence)}
-          className="flex-1 rounded-md border border-neutral-300 px-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="flex-1 rounded-md border border-border px-2 py-2 text-sm"
         >
           <option value="none">One-time</option>
           <option value="daily">Daily</option>
@@ -110,7 +110,7 @@ export function ChoreFields({
           type="date"
           required
           defaultValue={toDateInputValue(defaults?.dueDate ?? new Date())}
-          className="flex-1 rounded-md border border-neutral-300 px-2 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="flex-1 rounded-md border border-border px-2 py-2 text-sm"
         />
       </div>
 

@@ -48,6 +48,9 @@ docker-compose.override.yml
 # local Claude Code permissions (personal, not shared)
 .claude/settings.local.json
 
+# Claude Code worktree scratch space (full repo copies, incl. node_modules)
+.claude/worktrees/
+
 # vercel
 .vercel
 

@@ -1,0 +1,1 @@
+ALTER TABLE `households` ADD `theme_preference` text DEFAULT 'system' NOT NULL;

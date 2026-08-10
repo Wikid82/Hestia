@@ -60,7 +60,7 @@ export default async function ChoresPage() {
       <section className="space-y-3">
         <h1 className="text-xl font-semibold">Today</h1>
         {dueToday.length === 0 ? (
-          <p className="text-sm text-neutral-500">No chores due today.</p>
+          <p className="text-sm text-muted-foreground">No chores due today.</p>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2">
             {dueToday.map((chore) => (
@@ -87,7 +87,7 @@ export default async function ChoresPage() {
       </section>
 
       {user.role === "admin" && (
-        <section className="space-y-4 border-t border-neutral-200 pt-8 dark:border-neutral-800">
+        <section className="space-y-4 border-t border-border pt-8">
           <h2 className="text-lg font-semibold">All chores</h2>
           <div className="space-y-2">
             {allChores.map((chore) => (

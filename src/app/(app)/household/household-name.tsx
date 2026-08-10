@@ -27,24 +27,24 @@ export function HouseholdName({ name }: { name: string }) {
           required
           autoFocus
           defaultValue={name}
-          className="rounded-md border border-neutral-300 px-2 py-1 text-xl font-semibold dark:border-neutral-700 dark:bg-neutral-900"
+          className="rounded-md border border-border px-2 py-1 text-xl font-semibold"
         />
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
           Save
         </button>
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700"
+          className="rounded-md border border-border px-3 py-1.5 text-sm"
         >
           Cancel
         </button>
         {state?.error && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {state.error}
           </p>
         )}
@@ -57,7 +57,7 @@ export function HouseholdName({ name }: { name: string }) {
       <h1 className="text-xl font-semibold">{name}</h1>
       <button
         onClick={() => setEditing(true)}
-        className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+        className="text-sm text-muted-foreground hover:text-foreground"
       >
         Edit
       </button>

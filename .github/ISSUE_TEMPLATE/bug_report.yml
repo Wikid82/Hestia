@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in Hestia isn't working as expected
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug. What did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: How can we see this ourselves?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Hestia version
+      description: Shown in the app footer, or your Docker image tag
+      placeholder: e.g. 0.2.2
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      options:
+        - Docker (docker-compose)
+        - Docker (other)
+        - Built from source
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Host platform
+      description: OS/architecture, e.g. Raspberry Pi 4 (arm64), Synology NAS, x86 server
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Container logs (`docker logs <container>`) or browser console output, if any
+      render: shell
+    validations:
+      required: false

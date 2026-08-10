@@ -108,24 +108,24 @@ export default async function CalendarPage({
         <div className="flex gap-3 text-sm">
           <Link
             href={`/calendar?month=${toParam(prevMonth)}`}
-            className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+            className="text-muted-foreground hover:text-foreground"
           >
             ← Prev
           </Link>
           <Link
             href={`/calendar?month=${toParam(nextMonth)}`}
-            className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+            className="text-muted-foreground hover:text-foreground"
           >
             Next →
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 text-xs dark:border-neutral-800 dark:bg-neutral-800">
+      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-border bg-border text-xs">
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
-            className="bg-neutral-50 p-1.5 text-center font-medium text-neutral-500 dark:bg-neutral-900"
+            className="bg-surface p-1.5 text-center font-medium text-muted-foreground"
           >
             {label}
           </div>
@@ -142,19 +142,19 @@ export default async function CalendarPage({
             return (
               <div
                 key={key}
-                className={`min-h-20 space-y-1 bg-white p-1.5 dark:bg-neutral-950 ${
+                className={`min-h-20 space-y-1 bg-background p-1.5 ${
                   date && dateKey(date) === todayKey
-                    ? "ring-1 ring-inset ring-neutral-900 dark:ring-white"
+                    ? "ring-1 ring-inset ring-primary"
                     : ""
                 }`}
               >
                 {date && (
                   <>
-                    <p className="text-neutral-500">{date.getDate()}</p>
+                    <p className="text-muted-foreground">{date.getDate()}</p>
                     {dayChores?.map((title, i) => (
                       <p
                         key={`c${i}`}
-                        className="truncate rounded bg-neutral-100 px-1 py-0.5 dark:bg-neutral-800"
+                        className="truncate rounded bg-surface px-1 py-0.5"
                         title={title}
                       >
                         {title}
@@ -163,7 +163,7 @@ export default async function CalendarPage({
                     {dayReminders?.map((title, i) => (
                       <p
                         key={`r${i}`}
-                        className="truncate rounded bg-amber-100 px-1 py-0.5 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200"
+                        className="truncate rounded bg-highlight px-1 py-0.5 text-highlight-foreground"
                         title={title}
                       >
                         {title}
