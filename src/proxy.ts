@@ -37,7 +37,9 @@ export async function proxy(request: NextRequest) {
     request.cookies.get("hestia_session")?.value,
   );
   if (!hasSession) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
 
   if (pathname === "/switch-profile") {
@@ -48,7 +50,9 @@ export async function proxy(request: NextRequest) {
     request.cookies.get("hestia_profile")?.value,
   );
   if (!hasProfile) {
-    return NextResponse.redirect(new URL("/switch-profile", request.url));
+    const url = request.nextUrl.clone();
+    url.pathname = "/switch-profile";
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
