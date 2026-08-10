@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/Wikid82/hestia/compare/hestia-v0.2.3...hestia-v0.2.4) (2026-08-10)
+
+
+### Bug Fixes
+
+* retry GHCR and Docker Hub logins on transient denial ([88fa2e3](https://github.com/Wikid82/hestia/commit/88fa2e337e7e1685bd4dd05cd21c41e522810c3b))
+
 ## [0.2.3](https://github.com/Wikid82/hestia/compare/hestia-v0.2.2...hestia-v0.2.3) (2026-08-10)
 
 
