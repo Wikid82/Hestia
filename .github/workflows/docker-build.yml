@@ -12,7 +12,7 @@ name: Docker Build & Publish
 # Multi-arch publishing builds each platform on its own NATIVE runner
 # (ubuntu-latest for amd64, ubuntu-24.04-arm for arm64) rather than
 # cross-building arm64 under QEMU emulation on an amd64 runner. On
-# 2026-08-09 a QEMU-emulated `npm ci` reliably crashed with "qemu: uncaught
+# 2026-08-09 a QEMU-emulated `npm ci --legacy-peer-deps` reliably crashed with "qemu: uncaught
 # target signal 4 (Illegal instruction) - core dumped" while running one of
 # esbuild's postinstall steps — deterministic on every retry, not a
 # transient hang. GitHub's Linux arm64 hosted runners are free for public
