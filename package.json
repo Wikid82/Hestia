@@ -19,6 +19,7 @@
     "audit:ci": "audit-ci --config audit-ci.json"
   },
   "dependencies": {
+    "@testing-library/dom": "^10.4.1",
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.8",
