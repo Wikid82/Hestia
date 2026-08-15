@@ -47,6 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // refresh's synchronous setState (loading) is intentional; it's how we
+    // kick off the initial session check on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 

@@ -8,7 +8,10 @@ import type { WSEvent } from "@/types";
 export function useRealtime(enabled: boolean) {
   const queryClient = useQueryClient();
   const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+  });
 
   useEffect(() => {
     if (!enabled) return;

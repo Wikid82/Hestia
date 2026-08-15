@@ -50,14 +50,13 @@ export default function CalendarPage() {
 
   const now = new Date();
   const monthParam = searchParams.get("month");
-  const [year, month] = monthParam
-    ? monthParam.split("-").map(Number)
-    : [now.getFullYear(), now.getMonth() + 1];
-  const monthIndex = month - 1;
+  const [paramYear, paramMonth] = monthParam ? monthParam.split("-") : [];
+  const year = paramYear ? Number(paramYear) : now.getFullYear();
+  const monthIndex = paramMonth ? Number(paramMonth) - 1 : now.getMonth();
 
   const monthStart = new Date(year, monthIndex, 1);
   const monthEnd = new Date(year, monthIndex + 1, 0);
-  const weeks = useMemo(() => buildMonthGrid(year, monthIndex), [year, monthIndex]);
+  const weeks = buildMonthGrid(year, monthIndex);
 
   const choresByDay = useMemo(() => {
     const map = new Map<string, string[]>();
