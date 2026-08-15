@@ -27,7 +27,7 @@ ENV CGO_ENABLED=0
 RUN cd backend && GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/hestia ./cmd/api
 
 # --- runner: minimal production image ---
-FROM alpine:3.22 AS runner
+FROM alpine:3.24 AS runner
 WORKDIR /app
 
 # tzdata: lets the TZ env var control time.Local (chore due-dates are
