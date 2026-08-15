@@ -31,10 +31,13 @@ architecture decisions.
 
 ## Tech stack
 
-- [Next.js](https://nextjs.org) (App Router, TypeScript)
+- [Go](https://go.dev) with [Gin](https://gin-gonic.com) and
+  [GORM](https://gorm.io) for the backend API
+- [React](https://react.dev) 19 + [Vite](https://vite.dev) + TypeScript for
+  the frontend
 - [Tailwind CSS](https://tailwindcss.com)
-- [SQLite](https://sqlite.org) via [Drizzle ORM](https://orm.drizzle.team) —
-  one file, no separate database server to run
+- [SQLite](https://sqlite.org) via GORM's `glebarez/sqlite` driver (pure Go,
+  no cgo) — one file, no separate database server to run
 - Docker, built for both amd64 and arm64 (Raspberry Pi / ARM NAS friendly)
 
 ## Running it (Docker)
@@ -46,7 +49,7 @@ cp .env.example .env   # set AUTH_SECRET, and TZ to your household's timezone
 docker compose up -d
 ```
 
-The app will be available at `http://localhost:3000`. The SQLite database
+The app will be available at `http://localhost:8080`. The SQLite database
 lives in `./data/hestia.db` on the host, via a bind-mounted volume — back up
 that one file to back up your whole household's data.
 
@@ -59,45 +62,36 @@ flip to the next day at UTC midnight instead of local midnight.
 
 Hestia works out of the box behind Caddy, Traefik, Nginx Proxy Manager, or
 similar, as long as the proxy forwards the original `Host` header (all three
-do this by default) — session cookies and Next.js's Server Action origin
-checks rely on it matching the hostname your browser actually used.
-
-**Serving from a domain or subdomain root** (e.g.
+do this by default). Serving from a domain or subdomain root (e.g.
 `https://hestia.example.com`) needs no extra configuration — just proxy to
-the container's port 3000.
+the container's port 8080.
 
-**Serving from a subpath** (e.g. `https://home.example.com/hestia/`) needs
-`BASE_PATH` set in `.env` to match the proxy's path prefix, e.g.:
-
-```bash
-BASE_PATH=/hestia
-```
-
-Example Caddy config for a subpath:
-
-```
-home.example.com {
-	handle_path /hestia/* {
-		reverse_proxy localhost:3000
-	}
-}
-```
+Serving Hestia from a reverse-proxy subpath (e.g.
+`https://home.example.com/hestia/`) isn't supported yet — proxy from a
+dedicated (sub)domain instead.
 
 ## Developing locally
 
+Run the backend and frontend as two separate processes:
+
 ```bash
+cd backend && cp ../.env.example ../.env  # or export AUTH_SECRET/DB_PATH/TZ directly
+go run ./cmd/api
+```
+
+```bash
+cd frontend
 npm install
-cp .env.example .env
 npm run dev
 ```
 
-Database migrations run automatically on startup (see
-`src/instrumentation.ts`). After changing `src/db/schema.ts`, generate a new
-migration with:
+The Vite dev server proxies `/api` requests to the Go backend (see
+`frontend/vite.config.ts`), so open the frontend's dev URL (typically
+`http://localhost:5173`) rather than the backend's port directly.
 
-```bash
-npm run db:generate
-```
+Database migrations run automatically on startup via GORM's `AutoMigrate`.
+After changing `backend/internal/models/models.go`, just restart the
+backend — no separate migration-generation step needed.
 
 ## License
 

@@ -4,6 +4,50 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# ---------------------------------------------------------------------------
+# Go modules
+# ---------------------------------------------------------------------------
+
+GOPATH_BIN="$(go env GOPATH)/bin"
+export PATH="$GOPATH_BIN:$PATH"
+command -v govulncheck >/dev/null || go install golang.org/x/vuln/cmd/govulncheck@latest
+
+# Hestia is a single Go module (backend/) wired into go.work
+GO_MODULES=(
+    "$REPO_ROOT/backend"
+)
+
+for MODULE in "${GO_MODULES[@]}"; do
+    echo "============================================================================"
+    echo "Updating: $MODULE"
+    echo "============================================================================"
+
+    cd "$MODULE" || exit 1
+
+    # Update go/toolchain directives so Renovate's golang updates have nothing to do
+    go get go@latest toolchain@latest
+    # -t includes test-only dependencies, which Renovate also tracks
+    go get -u -t ./...
+    go mod tidy
+    go mod verify
+    go vet ./...
+    go build ./...
+    go test ./...
+    govulncheck ./...
+
+    echo "Done: $MODULE"
+done
+
+cd "$REPO_ROOT" || exit 1
+go work sync
+
+echo ""
+echo "All Go module dependencies updated successfully."
+
+# ---------------------------------------------------------------------------
+# npm modules
+# ---------------------------------------------------------------------------
+
 echo "============================================================================"
 echo "Updating Global npm Environment"
 echo "============================================================================"
@@ -11,22 +55,20 @@ echo "==========================================================================
 echo "Current local versions (npm / npx):"
 npm -v && npx -v
 
-echo -n "Latest available npm version on registry: "
+echo "Latest available npm version on registry: "
 npm view npm version
 
 echo "Installing latest global npm..."
 npm install -g npm@latest
 echo ""
 
-# ---------------------------------------------------------------------------
-# npm modules
-# ---------------------------------------------------------------------------
-# Hestia is a single full-stack Next.js app (no separate frontend/backend
-# split), so there's just one npm module today. Kept as an array so a future
-# service split (e.g. a standalone API) is a one-line addition, not a rewrite.
+export PATH="/usr/share/nodejs/corepack/shims:$PATH"
 
+# Hestia has a single npm workspace: the Vite frontend. The Go backend has
+# no package.json (see the Go modules section above), and there's no root
+# package.json anymore since the Next.js app was removed.
 NPM_MODULES=(
-    "$REPO_ROOT"
+    "$REPO_ROOT/frontend"
 )
 
 for MODULE in "${NPM_MODULES[@]}"; do
@@ -36,28 +78,23 @@ for MODULE in "${NPM_MODULES[@]}"; do
 
     cd "$MODULE" || exit 1
 
+    # Update prod, dev, and peer dependencies.
+    # Exclude typescript: v7 crashes @typescript-eslint until upstream
+    # catches up; keep pinned to the ^5.x line until that's resolved.
+    npx --yes npm-check-updates -u --reject typescript
 
-    
-    # Update prod, dev, optional, and peer dependencies to latest.
-    # Exclude typescript: v7 is a from-scratch rewrite (the "tsgo"/native
-    # compiler) with no typescript-eslint support yet, which breaks `npm run
-    # lint` outright. Keep pinned to ^6.0.3 until upstream catches up:
-    # https://github.com/typescript-eslint/typescript-eslint/issues/10940
-    # Exclude eslint: v10 changed the rule-context API (e.g. getFilename())
-    # in a way eslint-config-next's bundled eslint-plugin-react doesn't
-    # support yet, which crashes `npm run lint`. Keep pinned to ^9 until
-    # eslint-config-next ships a compatible eslint-plugin-react.
-    npx --yes npm-check-updates -u --reject "typescript,@typescript-eslint/*"
     rm -rf node_modules package-lock.json
-    npm install --legacy-peer-deps
-    npm dedupe --legacy-peer-deps
+    npm install
+    npm dedupe
     npm run build
     npm run lint
-    # Fails on high/critical findings; moderate/low are allowed through (see
-    # audit-ci.json). Add a documented allowlist entry there if a
-    # high/critical finding turns out to be unfixable upstream.
-    npm run audit:ci
-    npm audit fix --legacy-peer-deps || true
+
+    # No audit-ci.json here (yet) — see Charon's scripts/charon_dep_update.sh
+    # for the allowlist pattern if Hestia ever needs to carve out a specific
+    # known-unfixable finding. For now, any high/critical finding fails the
+    # script outright.
+    npm audit --audit-level=high
+    npm audit fix || true
     npm outdated || true
 
     echo "Done: $MODULE"
