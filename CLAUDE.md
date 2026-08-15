@@ -31,9 +31,22 @@ adding a new external dependency) before just doing it.
   them down to `development` automatically. Once the project is more
   mature this will switch to normal PRs against `development` like
   everything else; ask if it's unclear which regime is current.
+  Exception: if a workflow file is actively broken in a way that's
+  failing checks on an already-open PR, fix it directly on that PR's
+  branch instead — `pull_request`-triggered checks run using the
+  workflow file from the PR's own head branch, not from `main`, so a
+  fix on `main` alone won't turn the open PR's checks green.
 - Otherwise, open PRs against `development`, not `main`. `main` is the
   release/stable branch; `development` is the integration branch,
   periodically synced back into `main`.
+- PR titles must use a Conventional Commits prefix (`feat:`, `fix:`,
+  `docs:`, `style:`, `refactor:`, `perf:`, `test:`, `build:`, `ci:`,
+  `chore:`, `revert:`) — enforced by `pr-title-lint.yml`. PRs are
+  squash-merged, so the PR title becomes the commit message on `main`,
+  and `release-please` parses that prefix to derive versions and
+  changelog entries; an unprefixed title fails the check and would
+  silently drop out of release automation even if merged. Individual
+  commit messages within a PR aren't checked — only the PR title matters.
 
 ## Product shape
 
