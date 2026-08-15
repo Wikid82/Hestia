@@ -1,27 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-/playwright-report
-/test-results
-/blob-report
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
+# dependencies (root has no package.json anymore — frontend/.gitignore and
+# backend/.gitignore cover their own node_modules/build artifacts)
 
 # misc
 .DS_Store
@@ -56,5 +36,4 @@ docker-compose.override.yml
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 .private/**

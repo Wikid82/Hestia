@@ -1,58 +1,59 @@
 # syntax=docker/dockerfile:1
 
+# --- frontend: build the React/Vite SPA ---
 # Alpine over Debian slim: dramatically smaller vulnerability surface for
 # this app (musl/apk's package set vs Debian's) — measured via a full-severity
 # Trivy scan of both before switching: node:24-slim came back with 152
 # findings, node:24-alpine with 11 and zero HIGH/CRITICAL either way.
-FROM node:24.19.0-alpine AS base
-
-# --- deps: install deps once, with build tools available for better-sqlite3's
-# native module in case no prebuilt binary exists for the target arch ---
-FROM base AS deps
-WORKDIR /app
-RUN apk add --no-cache python3 make g++
-COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
-
-# --- builder: build the Next.js app ---
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+FROM node:24.19.0-alpine AS frontend
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ .
 RUN npm run build
 
-# --- runner: minimal production image ---
-FROM base AS runner
+# --- backend: cross-compile the Go binary ---
+# The SQLite driver (glebarez/sqlite, backed by modernc.org/sqlite) is a
+# pure-Go transpile of SQLite with no cgo involved, so a plain
+# CGO_ENABLED=0 cross-compile from the Go toolchain's own GOARCH support is
+# sufficient — no C cross-compiler or the `tonistiigi/xx` toolchain needed.
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS backend
 WORKDIR /app
-ENV NODE_ENV=production
-ENV DATABASE_PATH=/data/hestia.db
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
+COPY backend/go.mod backend/go.sum ./backend/
+RUN cd backend && go mod download
+COPY backend/ ./backend/
+ARG TARGETARCH
+ENV CGO_ENABLED=0
+RUN cd backend && GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/hestia ./cmd/api
 
-# Reuse the "node" user (UID/GID 1000) that ships in the base image, which
-# matches the default first non-root user on most single-user Linux hosts.
-# If your host user has a different UID, either run `chown -R 1000:1000
-# ./data` once, or set `user: "<uid>:<gid>"` in docker-compose.yml to match
-# your host user instead.
-RUN mkdir -p /data && chown node:node /data
+# --- runner: minimal production image ---
+FROM alpine:3.22 AS runner
+WORKDIR /app
 
-# npm (and corepack) ship in the base image but are never invoked here —
-# the container only ever runs `node server.js`. Removing them eliminates
-# their bundled transitive deps (undici/tar/ip-address) as a source of
-# vulnerability findings entirely, rather than waiting on npm's own
-# upstream to bump versions we don't control.
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
-    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+# tzdata: lets the TZ env var control time.Local (chore due-dates are
+# computed from the container's local clock). ca-certificates: needed for
+# any outbound HTTPS calls now or in the future.
+RUN apk add --no-cache tzdata ca-certificates
 
-# Next.js standalone output traces and includes only the node_modules actually
-# needed at runtime, including better-sqlite3's compiled native binary.
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
-COPY --from=builder /app/drizzle ./drizzle
+ENV GIN_MODE=release
+ENV DB_PATH=/data/hestia.db
+ENV STATIC_DIR=/app/web
+ENV PORT=8080
 
-USER node
+# Create a dedicated non-root user at UID/GID 1000, matching the default
+# first non-root user on most single-user Linux hosts (mirrors the "node"
+# user convention the old Next.js image relied on). If your host user has a
+# different UID, either run `chown -R 1000:1000 ./data` once, or set
+# `user: "<uid>:<gid>"` in docker-compose.yml to match your host user
+# instead.
+RUN addgroup -g 1000 hestia && adduser -D -u 1000 -G hestia hestia \
+    && mkdir -p /data && chown hestia:hestia /data
+
+COPY --from=backend /out/hestia /app/hestia
+COPY --from=frontend --chown=hestia:hestia /app/frontend/dist /app/web
+
+USER hestia
 VOLUME ["/data"]
-EXPOSE 3000
+EXPOSE 8080
 
-CMD ["node", "server.js"]
+CMD ["/app/hestia"]

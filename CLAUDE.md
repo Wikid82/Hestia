@@ -1,5 +1,3 @@
-@AGENTS.md
-
 # Hestia
 
 A self-hosted, family-focused household chore chart. Free, MIT-licensed, no
@@ -56,36 +54,47 @@ adding a new external dependency) before just doing it.
 
 ## Stack and why
 
-- **Next.js (App Router, TypeScript)** — most reliable code generation for a
-  vibe-coded project, huge ecosystem, one process to deploy.
-- **SQLite via Drizzle ORM** (`better-sqlite3` driver) — a self-hoster should
-  be able to back up the entire app by copying one file. Do not introduce
-  Postgres/MySQL/Redis/etc. without discussing it first — that's a real
-  architecture change, not a routine call.
-- **Tailwind CSS** for styling.
-- **Docker**, built multi-arch (amd64 + arm64) — a lot of the self-hosted
-  audience runs on Raspberry Pi or ARM NAS boxes. Keep the image and runtime
-  footprint light; avoid dependencies that only ship prebuilt binaries for
-  x86.
-- Migrations run automatically on server boot via `src/instrumentation.ts`
-  (uses `drizzle-orm`'s own migrator against the `drizzle/` SQL files — not
-  the `drizzle-kit` CLI, which isn't in the production image). After editing
-  `src/db/schema.ts`, run `npm run db:generate` to produce a new migration
-  and commit it.
+- **Go (Gin, GORM)** for the backend API — a single static-ish binary,
+  cheap to cross-compile for arm64, no runtime/interpreter to ship.
+- **SQLite via GORM** using the `glebarez/sqlite` driver (pure Go, backed by
+  `modernc.org/sqlite` — no cgo) — a self-hoster should be able to back up
+  the entire app by copying one file, and a cgo-free driver keeps
+  cross-compilation for arm64 simple. Do not introduce Postgres/MySQL/
+  Redis/etc. without discussing it first — that's a real architecture
+  change, not a routine call.
+- **React 19 + Vite + TypeScript** for the frontend, with **Tailwind CSS v4**
+  for styling, **react-router v8** for routing, and **TanStack Query** for
+  server-state/data-fetching.
+- **`gorilla/websocket`** for realtime sync between household members'
+  screens (e.g. one profile completing a chore updates another profile's
+  view live).
+- **Auth**: JWT (`golang-jwt/jwt/v5`) + bcrypt implementing the two-tier
+  household/profile session model described above — one household-account
+  session, then a lighter profile-switch session layered on top.
+- **Docker**, a single multi-stage Dockerfile that cross-compiles the Go
+  binary for amd64 + arm64 — a lot of the self-hosted audience runs on
+  Raspberry Pi or ARM NAS boxes. Keep the image and runtime footprint light;
+  avoid dependencies that only ship prebuilt binaries for x86.
+- Migrations are GORM `AutoMigrate` only, run automatically at server boot —
+  no separate migration-generation step. After editing
+  `backend/internal/models/models.go`, AutoMigrate handles new
+  columns/tables automatically at next boot.
 
 ## Conventions
 
-- Server Components by default; only add `"use client"` where interactivity
-  actually requires it (forms, avatar picker, checkboxes).
-- Prefer Server Actions over hand-rolled API routes for mutations, unless
-  something genuinely needs a REST/JSON endpoint.
+- Backend: prefer small, focused handlers; keep business logic in
+  `backend/internal/services`, not in the HTTP handlers themselves.
+- Frontend: co-locate API calls under `frontend/src/api`; keep components
+  small and focused, lifting shared state into context/TanStack Query
+  rather than prop-drilling.
 - No abstraction for a single call site. No config/feature-flag scaffolding
   for hypothetical future options. Three similar lines beat a premature
   helper.
-- Before calling a feature done: run `npm run build` and `npm run lint`.
-  There's no test suite yet — don't add one speculatively; add tests when
-  there's logic worth protecting (e.g. recurrence-date calculation), not for
-  CRUD boilerplate.
+- Before calling a feature done: run `cd backend && go build ./... && go vet
+  ./...` and `cd frontend && npm run build && npm run lint`. There's no test
+  suite yet — don't add one speculatively; add tests when there's logic
+  worth protecting (e.g. recurrence-date calculation), not for CRUD
+  boilerplate.
 - Keep the Docker image and `docker-compose.yml` in sync with any new
   required environment variables (update `.env.example` too).
 

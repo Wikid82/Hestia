@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/*
+ * "Warm Hearth" palette, ported from the old Next.js app's globals.css:
+ * amber/orange hearth tones for actions and highlights, balanced with
+ * slate/teal structure tones for text and layout.
+ *
+ * Resolution order:
+ *  1. :root below sets the light palette as the default.
+ *  2. @media (prefers-color-scheme: dark) applies the dark palette when the
+ *     OS prefers dark, unless a household has forced light explicitly.
+ *  3. :root[data-theme] (set client-side from the household's stored
+ *     preference, see src/App.tsx) wins over both when the household forces
+ *     a specific theme instead of following the OS.
+ */
+:root {
+  --background: #fdf8f1;
+  --foreground: #1f2933;
+  --surface: #f4ecdf;
+  --surface-hover: #ece0cd;
+  --border: #e2d3ba;
+  --muted-foreground: #6b6153;
+  --primary: #d9770f;
+  --primary-foreground: #fffaf3;
+  --secondary: #0f5d5d;
+  --secondary-foreground: #ffffff;
+  --danger: #c1391f;
+  --danger-hover: #972813;
+  --highlight: #f6dfa8;
+  --highlight-foreground: #6b4a12;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #14181d;
+    --foreground: #f2e9da;
+    --surface: #1d232b;
+    --surface-hover: #262e38;
+    --border: #333d49;
+    --muted-foreground: #9aa5af;
+    --primary: #f0a13d;
+    --primary-foreground: #1a1206;
+    --secondary: #2dd4bf;
+    --secondary-foreground: #062825;
+    --danger: #f0654a;
+    --danger-hover: #ff8468;
+    --highlight: #4a3410;
+    --highlight-foreground: #f6d488;
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: #14181d;
+  --foreground: #f2e9da;
+  --surface: #1d232b;
+  --surface-hover: #262e38;
+  --border: #333d49;
+  --muted-foreground: #9aa5af;
+  --primary: #f0a13d;
+  --primary-foreground: #1a1206;
+  --secondary: #2dd4bf;
+  --secondary-foreground: #062825;
+  --danger: #f0654a;
+  --danger-hover: #ff8468;
+  --highlight: #4a3410;
+  --highlight-foreground: #f6d488;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Arial,
+    sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
