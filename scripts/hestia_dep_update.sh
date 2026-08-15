@@ -12,8 +12,7 @@ GOPATH_BIN="$(go env GOPATH)/bin"
 export PATH="$GOPATH_BIN:$PATH"
 command -v govulncheck >/dev/null || go install golang.org/x/vuln/cmd/govulncheck@latest
 
-# Hestia is a single Go module (backend/) wired into go.work — unlike
-# Charon there's no separate agent module.
+# Hestia is a single Go module (backend/) wired into go.work
 GO_MODULES=(
     "$REPO_ROOT/backend"
 )
