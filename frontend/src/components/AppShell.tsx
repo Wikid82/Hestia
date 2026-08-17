@@ -35,6 +35,11 @@ export default function AppShell() {
                   Household
                 </NavLink>
               )}
+              {profile?.isSystemAdmin && (
+                <NavLink to="/admin" className={navClass}>
+                  Admin
+                </NavLink>
+              )}
             </nav>
           </div>
 

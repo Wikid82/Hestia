@@ -1,3 +1,5 @@
+github.com/Wikid82/go_notify_yourself v0.2.1 h1:EQ5d2CIneJASfK2YZlwVpQtkY+jEQJHaIO8o+NKX/Cs=
+github.com/Wikid82/go_notify_yourself v0.2.1/go.mod h1:Y2CIgAEYdsOwgEQDOXHO1nYYKvEDdGt08R3QD/6fG+w=
 github.com/bytedance/gopkg v0.1.4 h1:oZnQwnX82KAIWb7033bEwtxvTqXcYMxDBaQxo5JJHWM=
 github.com/bytedance/gopkg v0.1.4/go.mod h1:v1zWfPm21Fb+OsyXN2VAHdL6TBb2L88anLQgdyje6R4=
 github.com/bytedance/sonic v1.15.2 h1:90H+rcF/FwLXwfB1cudOLq/je83n683Utf4Cbp0xHCo=
