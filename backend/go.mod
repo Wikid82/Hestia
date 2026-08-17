@@ -3,6 +3,7 @@ module hestia/backend
 go 1.26.6
 
 require (
+	github.com/Wikid82/go_notify_yourself v0.2.1
 	github.com/gin-contrib/static v1.1.6
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0

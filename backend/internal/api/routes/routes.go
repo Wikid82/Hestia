@@ -16,6 +16,7 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 	requireHousehold := middleware.RequireHousehold(auth, db)
 	requireProfile := middleware.RequireProfile(auth, db)
 	requireHoH := middleware.RequireHoH()
+	requireSystemAdmin := middleware.RequireSystemAdmin()
 
 	router.GET("/api/health", d.Health)
 	router.GET("/api/ws", d.WS)
@@ -85,6 +86,14 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 			rewards.PATCH("/:id/toggle", requireHoH, d.ToggleRewardActive)
 			rewards.DELETE("/:id", requireHoH, d.DeleteReward)
 			rewards.POST("/:id/redeem", d.RedeemReward)
+		}
+
+		admin := authed.Group("/admin")
+		admin.Use(requireSystemAdmin)
+		{
+			admin.GET("/notification-settings", d.GetNotificationSettings)
+			admin.PUT("/notification-settings", d.UpdateNotificationSettings)
+			admin.POST("/notification-settings/test", d.TestNotificationSettings)
 		}
 	}
 }

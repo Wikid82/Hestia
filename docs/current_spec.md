@@ -101,11 +101,18 @@ Each PR should build/vet/lint clean standalone. Check off as merged.
       (`BASE_URL`, `SMTP_HOST/PORT/USER/PASS/FROM/TLS`), fail-fast
       validation, `mailer.go` (net/smtp), `.env.example`/
       `docker-compose.yml` updates. Inert until PR4 uses it.
-- [ ] **PR3 — `feat: wire go_notify_yourself for admin notifications`.**
-      Vendor `github.com/Wikid82/go_notify_yourself`, DB-backed
+- [x] **PR3 — `feat: wire go_notify_yourself for admin notifications`.**
+      Added `github.com/Wikid82/go_notify_yourself`, DB-backed
       `NotificationSettings`, `notify_service.go` wrapper, system-admin
-      settings endpoint + "send test notification" action, minimal
-      frontend settings panel.
+      settings endpoints (`GET/PUT /api/admin/notification-settings`,
+      `POST .../test`), frontend `/admin` settings page. Scoped to the
+      seven HTTP-webhook-style providers (Discord, Slack, Gotify,
+      Pushover, ntfy, Telegram, generic webhook) — deliberately not the
+      module's "email" provider, since it wants an HTML-capable Mailer
+      and `services.Mailer` (PR2) is plain-text only; invite email itself
+      goes straight through `services.Mailer`, not through notify. Nobody
+      calls `NotifyService.Notify` yet — that lands with the invite
+      accept flow in PR4.
 - [ ] **PR4 — `feat: invite data model and accept flow (backend)`.**
       `Invite` model/service (token hashed at rest, expiry, revoke),
       endpoints for system-admin-issues-HoH-invite and

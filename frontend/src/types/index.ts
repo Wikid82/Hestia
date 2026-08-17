@@ -15,10 +15,28 @@ export type Profile = {
   name: string;
   avatarEmoji: string;
   role: Role;
+  isSystemAdmin: boolean;
   email?: string | null;
   points: number;
   createdAt: string;
   hasPin: boolean;
+};
+
+export type NotificationProvider =
+  | ""
+  | "discord"
+  | "slack"
+  | "gotify"
+  | "pushover"
+  | "ntfy"
+  | "telegram"
+  | "webhook";
+
+export type NotificationSettings = {
+  id: string;
+  provider: NotificationProvider;
+  config: Record<string, string> | null;
+  updatedAt: string;
 };
 
 export type Chore = {

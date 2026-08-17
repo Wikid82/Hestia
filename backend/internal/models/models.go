@@ -125,3 +125,39 @@ type RewardRedemption struct {
 	PointsSpent int       `gorm:"not null" json:"pointsSpent"`
 	RedeemedAt  time.Time `gorm:"not null" json:"redeemedAt"`
 }
+
+// NotificationSettings is a singleton row (always ID
+// NotificationSettingsID) holding the instance's admin-notification
+// channel: which go_notify_yourself provider to send through and its
+// provider-specific config (e.g. {"webhook_url": "..."}), stored as JSON.
+// System-admin-only, instance-wide — not per-household. An empty Provider
+// means notifications are unconfigured.
+//
+// Deliberately DB-backed and web-UI-editable, unlike SMTP: these are
+// lower-stakes credentials (a leaked webhook URL lets someone post fake
+// notifications, not access an external account) and benefit from
+// no-redeploy editability. See docs/current_spec.md.
+type NotificationSettings struct {
+	ID         string    `gorm:"primaryKey" json:"id"`
+	Provider   string    `json:"provider"`
+	ConfigJSON string    `json:"-"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+}
+
+// NotificationSettingsID is the fixed primary key of the singleton
+// NotificationSettings row.
+const NotificationSettingsID = "default"
+
+// MarshalJSON exposes ConfigJSON (stored as a raw string for simple
+// GORM persistence) as a parsed "config" object in the API response.
+func (n NotificationSettings) MarshalJSON() ([]byte, error) {
+	var cfg map[string]any
+	if n.ConfigJSON != "" {
+		_ = json.Unmarshal([]byte(n.ConfigJSON), &cfg)
+	}
+	type alias NotificationSettings
+	return json.Marshal(struct {
+		alias
+		Config map[string]any `json:"config"`
+	}{alias: alias(n), Config: cfg})
+}
