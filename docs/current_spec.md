@@ -133,11 +133,16 @@ Each PR should build/vet/lint clean standalone. Check off as merged.
       requires SMTP to be configured (PR2) and fires an
       `invite.accepted` notification on accept (PR3). No frontend yet —
       that's PR5.
-- [ ] **PR5 — `feat: invite UI (send + accept)`.** Admin "invite a HoH"
-      screen, household "invite a member" screen (with the existing
-      no-email managed-profile path called out as the alternative), public
-      `/invite/:token` accept page, pending-invites list with
-      revoke/resend.
+- [x] **PR5 — `feat: invite UI (send + accept)`.** Admin "Invite a Head
+      of Household" section on `/admin` (email form + pending-invites
+      list with revoke), household "Invite a member by email" section on
+      `/household` alongside the existing no-email "Add a family member"
+      form (each now has explanatory copy on when to use which), public
+      `/invite/:token` accept page (shows household context for member
+      invites, collects a household name for hoh invites, logs the
+      invitee straight in via a new `acceptInvite` AuthContext action).
+      No separate "resend" endpoint — re-inviting the same email just
+      calls create again, which the backend already supersedes.
 - [ ] **PR6 — `feat: self-serve password set/change on existing
       profiles`.** Lets a managed (no-login) profile be upgraded to
       email+password later, and lets any self-login user change their own

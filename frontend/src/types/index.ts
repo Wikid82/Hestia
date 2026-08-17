@@ -39,6 +39,20 @@ export type NotificationSettings = {
   updatedAt: string;
 };
 
+export type InviteStatus = "pending" | "accepted" | "revoked" | "expired";
+
+export type Invite = {
+  id: string;
+  householdId?: string | null;
+  role: Role;
+  email: string;
+  status: InviteStatus;
+  invitedByUserId: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+  createdAt: string;
+};
+
 export type Chore = {
   id: string;
   householdId: string;
