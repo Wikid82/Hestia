@@ -14,6 +14,7 @@ var (
 	ErrEmailTaken         = errors.New("an account with that email already exists")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrIncorrectPIN       = errors.New("incorrect PIN")
+	ErrSignupDisabled     = errors.New("signup is disabled on this instance — ask an admin for an invite")
 )
 
 // HouseholdAuthService implements signup/login/profile-switch, ported
@@ -30,8 +31,12 @@ func NewHouseholdAuthService(db *gorm.DB) *HouseholdAuthService {
 // (Role: hoh). Only the very first user ever created on this instance
 // also becomes IsSystemAdmin — that's the self-hoster who owns the
 // instance itself; anyone signing up afterward (e.g. once an instance
-// owner opts into ALLOW_PUBLIC_SIGNUP) just owns their own household.
-func (s *HouseholdAuthService) Signup(householdName, name, email, password string) (*models.Household, *models.User, error) {
+// owner opts into allowPublicSignup) just owns their own household. The
+// very first signup always succeeds regardless of allowPublicSignup —
+// otherwise a fresh instance could never be bootstrapped — every signup
+// after that is rejected with ErrSignupDisabled unless allowPublicSignup
+// is true. See docs/current_spec.md.
+func (s *HouseholdAuthService) Signup(householdName, name, email, password string, allowPublicSignup bool) (*models.Household, *models.User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 
 	var count int64
@@ -45,6 +50,9 @@ func (s *HouseholdAuthService) Signup(householdName, name, email, password strin
 	var userCount int64
 	if err := s.db.Model(&models.User{}).Count(&userCount).Error; err != nil {
 		return nil, nil, err
+	}
+	if userCount > 0 && !allowPublicSignup {
+		return nil, nil, ErrSignupDisabled
 	}
 
 	passwordHash, err := HashSecret(password)

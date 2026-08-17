@@ -148,6 +148,47 @@ type NotificationSettings struct {
 // NotificationSettings row.
 const NotificationSettingsID = "default"
 
+// Invite is a pending email invitation to join Hestia — either as a new
+// HoH (HouseholdID nil: the invitee creates their own, independent
+// household on accept) or as a member of an existing household
+// (HouseholdID set). Tokens are stored hashed (sha256); the raw token
+// only ever exists in the invite email link and the API response at the
+// moment of creation.
+type Invite struct {
+	ID              string     `gorm:"primaryKey" json:"id"`
+	HouseholdID     *string    `gorm:"index" json:"householdId,omitempty"`
+	Role            string     `gorm:"not null" json:"role"` // hoh | member
+	Email           string     `gorm:"not null;index" json:"email"`
+	TokenHash       string     `gorm:"not null;uniqueIndex" json:"-"`
+	Status          string     `gorm:"not null;default:pending" json:"status"` // pending | accepted | revoked
+	InvitedByUserID string     `gorm:"not null" json:"invitedByUserId"`
+	ExpiresAt       time.Time  `gorm:"not null" json:"expiresAt"`
+	AcceptedAt      *time.Time `json:"acceptedAt,omitempty"`
+	CreatedAt       time.Time  `json:"createdAt"`
+}
+
+// IsExpired reports whether this invite is still nominally "pending" in
+// the DB but past its expiry — computed on read rather than via a
+// background job, same as chore due-dates.
+func (i Invite) IsExpired() bool {
+	return i.Status == "pending" && time.Now().After(i.ExpiresAt)
+}
+
+// MarshalJSON reports "expired" as the JSON status once ExpiresAt has
+// passed, instead of the stored "pending" — API consumers shouldn't have
+// to duplicate the expiry check themselves.
+func (i Invite) MarshalJSON() ([]byte, error) {
+	status := i.Status
+	if i.IsExpired() {
+		status = "expired"
+	}
+	type alias Invite
+	return json.Marshal(struct {
+		alias
+		Status string `json:"status"`
+	}{alias: alias(i), Status: status})
+}
+
 // MarshalJSON exposes ConfigJSON (stored as a raw string for simple
 // GORM persistence) as a parsed "config" object in the API response.
 func (n NotificationSettings) MarshalJSON() ([]byte, error) {

@@ -31,6 +31,14 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 		authGroup.GET("/me", requireHousehold, d.Me)
 	}
 
+	// Invite preview/accept are public: the invitee has no session yet —
+	// that's the whole point of an invite link.
+	invites := api.Group("/invites")
+	{
+		invites.GET("/:token", d.GetInvitePreview)
+		invites.POST("/:token/accept", d.AcceptInvite)
+	}
+
 	// Profiles: listing/switching only needs a household session, not an
 	// already-active profile (that's the point of the avatar picker).
 	profiles := api.Group("/profiles")
@@ -57,6 +65,14 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 			members.PATCH("/:id", requireHoH, d.UpdateMember)
 			members.DELETE("/:id/pin", requireHoH, d.ClearMemberPIN)
 			members.DELETE("/:id", requireHoH, d.DeleteMember)
+
+			memberInvites := members.Group("/invites")
+			memberInvites.Use(requireHoH)
+			{
+				memberInvites.POST("", d.CreateMemberInvite)
+				memberInvites.GET("", d.ListMemberInvites)
+				memberInvites.DELETE("/:id", d.RevokeMemberInvite)
+			}
 		}
 
 		chores := authed.Group("/chores")
@@ -94,6 +110,10 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 			admin.GET("/notification-settings", d.GetNotificationSettings)
 			admin.PUT("/notification-settings", d.UpdateNotificationSettings)
 			admin.POST("/notification-settings/test", d.TestNotificationSettings)
+
+			admin.POST("/invites", d.CreateHoHInvite)
+			admin.GET("/invites", d.ListHoHInvites)
+			admin.DELETE("/invites/:id", d.RevokeHoHInvite)
 		}
 	}
 }

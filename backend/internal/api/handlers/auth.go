@@ -28,13 +28,16 @@ func (d *Deps) Signup(c *gin.Context) {
 		return
 	}
 
-	household, user, err := d.HHAuth.Signup(req.HouseholdName, req.Name, req.Email, req.Password)
+	household, user, err := d.HHAuth.Signup(req.HouseholdName, req.Name, req.Email, req.Password, d.AllowPublicSignup)
 	if err != nil {
-		if errors.Is(err, services.ErrEmailTaken) {
+		switch {
+		case errors.Is(err, services.ErrEmailTaken):
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-			return
+		case errors.Is(err, services.ErrSignupDisabled):
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "signup failed"})
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "signup failed"})
 		return
 	}
 

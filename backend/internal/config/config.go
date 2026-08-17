@@ -22,6 +22,15 @@ type Config struct {
 	// state (e.g. no invite system in use yet), not an error. It's only
 	// non-nil once every required SMTP variable is set.
 	SMTP *SMTPConfig
+	// AllowPublicSignup gates POST /auth/signup for every signup after
+	// the very first (which always succeeds regardless of this flag —
+	// otherwise a fresh instance could never be bootstrapped). Defaults
+	// to false: this app has no real users yet, so nobody should be able
+	// to spin up a household on someone else's found instance without an
+	// invite. An instance owner opts in explicitly; once they do, the
+	// security implications of open signup on their instance are theirs
+	// to own. See docs/current_spec.md.
+	AllowPublicSignup bool
 }
 
 // SMTPConfig holds outbound-email settings. Deliberately env-var-only
@@ -75,14 +84,17 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	allowPublicSignup := os.Getenv("ALLOW_PUBLIC_SIGNUP") == "true" || os.Getenv("ALLOW_PUBLIC_SIGNUP") == "1"
+
 	return &Config{
-		Port:       port,
-		DBPath:     dbPath,
-		AuthSecret: authSecret,
-		Production: production,
-		StaticDir:  staticDir,
-		BaseURL:    baseURL,
-		SMTP:       smtp,
+		Port:              port,
+		DBPath:            dbPath,
+		AuthSecret:        authSecret,
+		Production:        production,
+		StaticDir:         staticDir,
+		BaseURL:           baseURL,
+		SMTP:              smtp,
+		AllowPublicSignup: allowPublicSignup,
 	}, nil
 }
 
