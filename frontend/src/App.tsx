@@ -14,6 +14,7 @@ import HouseholdPage from "@/pages/HouseholdPage";
 import RemindersPage from "@/pages/RemindersPage";
 import RewardsPage from "@/pages/RewardsPage";
 import AdminSettingsPage from "@/pages/AdminSettingsPage";
+import InviteAcceptPage from "@/pages/InviteAcceptPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,7 @@ function AppRoutes() {
           </NeedProfileRoute>
         }
       />
+      <Route path="/invite/:token" element={<InviteAcceptPage />} />
       <Route
         element={
           <RequireAuth>

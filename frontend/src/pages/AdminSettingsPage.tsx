@@ -6,8 +6,11 @@ import {
   testNotificationSettings,
   updateNotificationSettings,
 } from "@/api/admin";
+import { createHoHInvite, listHoHInvites, revokeHoHInvite } from "@/api/invites";
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { InviteEmailForm } from "@/components/InviteEmailForm";
+import { InviteList } from "@/components/InviteList";
 import type { NotificationProvider } from "@/types";
 
 // Provider -> its config fields, matching the keys each go_notify_yourself
@@ -79,6 +82,28 @@ export default function AdminSettingsPage() {
       setTestResult(err instanceof ApiError ? err.message : "Failed to send test notification"),
   });
 
+  const hohInvitesQuery = useQuery({ queryKey: ["hoh-invites"], queryFn: listHoHInvites });
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null);
+
+  const createInviteMutation = useMutation({
+    mutationFn: createHoHInvite,
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["hoh-invites"] });
+      setInviteError(null);
+      setInviteNotice(res.emailSent ? "Invite sent." : `Invite created, but the email failed to send: ${res.emailError}`);
+    },
+    onError: (err) => setInviteError(err instanceof ApiError ? err.message : "Something went wrong"),
+  });
+
+  const [revokingInviteId, setRevokingInviteId] = useState<string | undefined>();
+  const revokeInviteMutation = useMutation({
+    mutationFn: revokeHoHInvite,
+    onMutate: (id) => setRevokingInviteId(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["hoh-invites"] }),
+    onSettled: () => setRevokingInviteId(undefined),
+  });
+
   if (!profile || !profile.isSystemAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -90,6 +115,29 @@ export default function AdminSettingsPage() {
       <div>
         <h1 className="text-lg font-semibold">Admin settings</h1>
         <p className="text-sm text-muted-foreground">Instance-wide, not scoped to one household.</p>
+      </div>
+
+      <div className="space-y-3 border-t border-border pt-6">
+        <h2 className="font-medium">Invite a Head of Household</h2>
+        <p className="text-sm text-muted-foreground">
+          They&apos;ll get their own independent household on this instance — separate from yours, with no
+          shared visibility either way.
+        </p>
+        <InviteEmailForm
+          onSubmit={(email) => {
+            setInviteNotice(null);
+            createInviteMutation.mutate(email);
+          }}
+          pending={createInviteMutation.isPending}
+          error={inviteError}
+          submitLabel="Invite"
+        />
+        {inviteNotice && <p className="text-sm text-muted-foreground">{inviteNotice}</p>}
+        <InviteList
+          invites={hohInvitesQuery.data?.invites ?? []}
+          onRevoke={(id) => revokeInviteMutation.mutate(id)}
+          revokingId={revokingInviteId}
+        />
       </div>
 
       <div className="space-y-3 border-t border-border pt-6">
