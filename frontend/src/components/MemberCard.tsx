@@ -69,7 +69,7 @@ export function MemberCard({ member }: { member: Profile }) {
           className="w-full rounded-md border border-border px-2 py-1.5 text-sm"
         >
           <option value="member">Kid / member</option>
-          <option value="admin">Parent / admin</option>
+          <option value="hoh">Parent / HoH</option>
         </select>
         <input
           name="pin"
@@ -124,7 +124,7 @@ export function MemberCard({ member }: { member: Profile }) {
         <div>
           <p className="font-medium">{member.name}</p>
           <p className="text-xs text-muted-foreground">
-            {member.role === "admin" ? "Parent / admin" : "Kid / member"} · {member.points} pts
+            {member.role === "hoh" ? "Parent / HoH" : "Kid / member"} · {member.points} pts
             {hasLogin && " · main login"}
           </p>
         </div>

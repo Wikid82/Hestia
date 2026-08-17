@@ -52,10 +52,10 @@ func (d *Deps) CreateReminder(c *gin.Context) {
 		dueAt = &parsed
 	}
 
-	// Non-admins can only create reminders for themselves or the whole
+	// Non-HoHs can only create reminders for themselves or the whole
 	// household — not assign work to someone else.
 	assignedToUserID := req.AssignedToUserID
-	if user.Role != "admin" && assignedToUserID != nil && *assignedToUserID != user.ID {
+	if user.Role != "hoh" && assignedToUserID != nil && *assignedToUserID != user.ID {
 		assignedToUserID = &user.ID
 	}
 

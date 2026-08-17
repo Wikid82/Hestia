@@ -66,7 +66,7 @@ export function AddMemberForm() {
           className="rounded-md border border-border px-3 py-2 text-sm"
         >
           <option value="member">Kid / member</option>
-          <option value="admin">Parent / admin</option>
+          <option value="hoh">Parent / HoH</option>
         </select>
         <input
           name="pin"

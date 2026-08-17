@@ -58,8 +58,8 @@ func (s *MemberService) Create(householdID string, in MemberInput) (*models.User
 		return nil, ErrInvalidPIN
 	}
 	role := "member"
-	if in.Role == "admin" {
-		role = "admin"
+	if in.Role == "hoh" {
+		role = "hoh"
 	}
 	avatar := in.AvatarEmoji
 	if avatar == "" {
@@ -99,8 +99,8 @@ func (s *MemberService) Update(householdID, id string, in MemberInput) (*models.
 	}
 
 	role := "member"
-	if in.Role == "admin" {
-		role = "admin"
+	if in.Role == "hoh" {
+		role = "hoh"
 	}
 	avatar := in.AvatarEmoji
 	if avatar == "" {

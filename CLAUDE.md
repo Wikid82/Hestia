@@ -17,6 +17,15 @@ adding a new external dependency) before just doing it.
 
 ## Workflow
 
+- Any feature work (not small edits/fixes — see below) must have a
+  written spec at `docs/current_spec.md` before implementation starts,
+  covering goal, key decisions (with rationale), and PR/commit slicing.
+  Keep it updated as decisions change or PRs land — it's a live tracking
+  doc for the in-progress feature, not a one-time writeup. Once the
+  feature is fully merged to `main`, replace its contents with the next
+  feature's spec rather than letting stale specs pile up. The point is to
+  make multi-PR initiatives trackable so steps don't get forgotten
+  between sessions.
 - Do not use git worktrees for work in this repo — work directly on a
   branch in the normal checkout. Jeremy likes to build and test the app
   himself before merging, and a worktree puts the change somewhere he

@@ -49,5 +49,22 @@ func Open(path string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("running auto-migration: %w", err)
 	}
 
+	if err := backfillSystemAdmins(db); err != nil {
+		return nil, fmt.Errorf("backfilling system admins: %w", err)
+	}
+
 	return db, nil
+}
+
+// backfillSystemAdmins rewrites any pre-role-split "admin" rows (the old
+// single Role value meaning "owns this household") to the new model:
+// Role "hoh" plus IsSystemAdmin true. This preserves exactly what those
+// rows could already do — every existing single-household install had
+// its one admin acting as the de facto instance owner too — without a
+// real migration-versioning system. Idempotent: once a row is "hoh" it's
+// never matched again.
+func backfillSystemAdmins(db *gorm.DB) error {
+	return db.Model(&models.User{}).
+		Where("role = ?", "admin").
+		Updates(map[string]any{"role": "hoh", "is_system_admin": true}).Error
 }

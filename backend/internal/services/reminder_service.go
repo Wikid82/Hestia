@@ -46,10 +46,10 @@ type ReminderInput struct {
 	AssignedToUserID *string
 }
 
-// Create inserts a reminder. Non-admins can only create reminders for
+// Create inserts a reminder. Non-HoHs can only create reminders for
 // themselves or the whole household (assignedToUserID == nil) — not
 // assign work to someone else; the caller is expected to have already
-// coerced AssignedToUserID accordingly for non-admin actors (mirroring
+// coerced AssignedToUserID accordingly for non-HoH actors (mirroring
 // the TS action's silent-downgrade behavior), but we re-validate the
 // assignee exists regardless.
 func (s *ReminderService) Create(householdID string, in ReminderInput) (*models.Reminder, error) {
@@ -89,14 +89,14 @@ func (s *ReminderService) ToggleDone(householdID, id string) (*models.Reminder, 
 	return r, nil
 }
 
-// Delete removes a reminder. Only an admin or the reminder's own assignee
+// Delete removes a reminder. Only a HoH or the reminder's own assignee
 // may delete it.
 func (s *ReminderService) Delete(householdID, id, actingUserID, actingRole string) error {
 	r, err := s.Get(householdID, id)
 	if err != nil {
 		return err
 	}
-	if actingRole != "admin" && (r.AssignedToUserID == nil || *r.AssignedToUserID != actingUserID) {
+	if actingRole != "hoh" && (r.AssignedToUserID == nil || *r.AssignedToUserID != actingUserID) {
 		return ErrForbidden
 	}
 	return s.db.Delete(r).Error

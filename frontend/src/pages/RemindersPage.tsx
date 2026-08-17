@@ -36,7 +36,7 @@ export default function RemindersPage() {
               key={reminder.id}
               reminder={reminder}
               assignee={reminder.assignedToUserId ? membersById.get(reminder.assignedToUserId) ?? null : null}
-              canDelete={profile.role === "admin" || reminder.assignedToUserId === profile.id}
+              canDelete={profile.role === "hoh" || reminder.assignedToUserId === profile.id}
             />
           ))
         )}
@@ -50,7 +50,7 @@ export default function RemindersPage() {
               key={reminder.id}
               reminder={reminder}
               assignee={reminder.assignedToUserId ? membersById.get(reminder.assignedToUserId) ?? null : null}
-              canDelete={profile.role === "admin" || reminder.assignedToUserId === profile.id}
+              canDelete={profile.role === "hoh" || reminder.assignedToUserId === profile.id}
             />
           ))}
         </section>
@@ -58,7 +58,7 @@ export default function RemindersPage() {
 
       <div className="max-w-md space-y-3 border-t border-border pt-6">
         <h2 className="font-medium">Add a reminder</h2>
-        <ReminderForm members={members} isAdmin={profile.role === "admin"} />
+        <ReminderForm members={members} isAdmin={profile.role === "hoh"} />
       </div>
     </div>
   );
