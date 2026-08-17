@@ -44,6 +44,7 @@ func main() {
 		Reminder:   services.NewReminderService(db),
 		Reward:     services.NewRewardService(db),
 		HHAuth:     services.NewHouseholdAuthService(db),
+		Mailer:     services.NewMailer(cfg.SMTP),
 		Hub:        hub,
 		Production: cfg.Production,
 	}

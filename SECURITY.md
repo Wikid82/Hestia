@@ -22,7 +22,7 @@ project, not a company with an SLA.
 
 ## Known Vulnerabilities
 
-Last reviewed: 2026-08-09
+Last reviewed: 2026-08-17
 
 Every entry below is suppressed in CI via [`.trivyignore`](./.trivyignore) and
 [`.grype.yaml`](./.grype.yaml), both scanned on every build (see
@@ -67,6 +67,28 @@ request-line splitting and attacker-controlled header injection. No fix version 
 container's only process is `node server.js` (see Dockerfile `CMD`).
 
 ---
+
+### [UNKNOWN] GO-2026-5932 · golang.org/x/crypto/openpgp is unsafe by design (backend Go module)
+
+| Field | Value |
+|---|---|
+| **Package** | golang.org/x/crypto v0.55.0 (backend/go.mod) |
+| **Severity** | Unknown (no CVSS published) |
+| **Status** | Not applicable · review by 2026-11-17 |
+
+`golang.org/x/crypto/openpgp` is unmaintained and unsafe by design; upstream's advisory
+recommends `github.com/ProtonMail/go-crypto/openpgp` for anyone who needs OpenPGP
+interoperability. There is no fixed version — the advisory's point is "stop calling this
+subpackage," not "upgrade past it," so bumping `x/crypto` can never clear this finding.
+
+**Why it's not applicable here**: Hestia has no PGP/OpenPGP feature and never imports
+`openpgp`. Both scanners flag it as a whole-module match, not a reachability finding — Grype's
+own `matchDetails` show `go-module-matcher` / `versionConstraint: none (unknown)`, meaning any
+project depending on `golang.org/x/crypto` for anything (here, `bcrypt` for password hashing and
+transitively via `golang-jwt/jwt`) gets flagged regardless of which subpackage it actually calls.
+Verified two ways: `go mod why golang.org/x/crypto/openpgp` reports "main module does not need
+package golang.org/x/crypto/openpgp", and `go list -deps ./...` shows only `bcrypt`,
+`chacha20poly1305`, `sha3`, and their internal helpers pulled in — `openpgp` doesn't appear.
 
 ## Review process
 
