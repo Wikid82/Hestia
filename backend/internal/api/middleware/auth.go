@@ -76,13 +76,27 @@ func RequireProfile(auth *services.AuthService, db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// RequireAdmin aborts with 403 unless the active profile has the admin
-// role. Must run after RequireProfile.
-func RequireAdmin() gin.HandlerFunc {
+// RequireHoH aborts with 403 unless the active profile owns its
+// household (Role: hoh). Must run after RequireProfile.
+func RequireHoH() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := CurrentUser(c)
-		if user == nil || user.Role != "admin" {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "this action requires an admin profile"})
+		if user == nil || user.Role != "hoh" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "this action requires a household-owner profile"})
+			return
+		}
+		c.Next()
+	}
+}
+
+// RequireSystemAdmin aborts with 403 unless the active profile is a
+// system-wide admin (instance-level, independent of which household it
+// belongs to). Must run after RequireProfile.
+func RequireSystemAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := CurrentUser(c)
+		if user == nil || !user.IsSystemAdmin {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "this action requires a system admin"})
 			return
 		}
 		c.Next()

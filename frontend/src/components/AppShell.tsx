@@ -30,7 +30,7 @@ export default function AppShell() {
                   {link.label}
                 </NavLink>
               ))}
-              {profile?.role === "admin" && (
+              {profile?.role === "hoh" && (
                 <NavLink to="/household" className={navClass}>
                   Household
                 </NavLink>

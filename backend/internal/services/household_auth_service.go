@@ -26,7 +26,11 @@ func NewHouseholdAuthService(db *gorm.DB) *HouseholdAuthService {
 	return &HouseholdAuthService{db: db}
 }
 
-// Signup creates a brand-new household plus its one admin/login profile.
+// Signup creates a brand-new household plus its one owner/login profile
+// (Role: hoh). Only the very first user ever created on this instance
+// also becomes IsSystemAdmin — that's the self-hoster who owns the
+// instance itself; anyone signing up afterward (e.g. once an instance
+// owner opts into ALLOW_PUBLIC_SIGNUP) just owns their own household.
 func (s *HouseholdAuthService) Signup(householdName, name, email, password string) (*models.Household, *models.User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 
@@ -38,6 +42,11 @@ func (s *HouseholdAuthService) Signup(householdName, name, email, password strin
 		return nil, nil, ErrEmailTaken
 	}
 
+	var userCount int64
+	if err := s.db.Model(&models.User{}).Count(&userCount).Error; err != nil {
+		return nil, nil, err
+	}
+
 	passwordHash, err := HashSecret(password)
 	if err != nil {
 		return nil, nil, err
@@ -45,13 +54,14 @@ func (s *HouseholdAuthService) Signup(householdName, name, email, password strin
 
 	household := models.Household{ID: uuid.NewString(), Name: householdName, ThemePreference: "system"}
 	user := models.User{
-		ID:           uuid.NewString(),
-		HouseholdID:  household.ID,
-		Name:         name,
-		Role:         "admin",
-		AvatarEmoji:  defaultAvatar,
-		Email:        &email,
-		PasswordHash: &passwordHash,
+		ID:            uuid.NewString(),
+		HouseholdID:   household.ID,
+		Name:          name,
+		Role:          "hoh",
+		IsSystemAdmin: userCount == 0,
+		AvatarEmoji:   defaultAvatar,
+		Email:         &email,
+		PasswordHash:  &passwordHash,
 	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {

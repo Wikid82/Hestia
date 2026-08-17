@@ -35,7 +35,7 @@ export default function ChoresPage() {
                   key={chore.id}
                   chore={{ id: chore.id, title: chore.title, points: chore.points, completedToday: chore.completedToday }}
                   assignee={assignee}
-                  canAct={profile.role === "admin" || chore.assignedToUserId === profile.id}
+                  canAct={profile.role === "hoh" || chore.assignedToUserId === profile.id}
                 />
               );
             })}
@@ -43,7 +43,7 @@ export default function ChoresPage() {
         )}
       </section>
 
-      {profile.role === "admin" && (
+      {profile.role === "hoh" && (
         <section className="space-y-4 border-t border-border pt-8">
           <h2 className="text-lg font-semibold">All chores</h2>
           <div className="space-y-2">

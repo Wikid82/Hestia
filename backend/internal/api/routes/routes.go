@@ -15,7 +15,7 @@ import (
 func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.AuthService) {
 	requireHousehold := middleware.RequireHousehold(auth, db)
 	requireProfile := middleware.RequireProfile(auth, db)
-	requireAdmin := middleware.RequireAdmin()
+	requireHoH := middleware.RequireHoH()
 
 	router.GET("/api/health", d.Health)
 	router.GET("/api/ws", d.WS)
@@ -46,25 +46,25 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 	authed.Use(requireHousehold, requireProfile)
 	{
 		authed.GET("/household", d.GetHousehold)
-		authed.PATCH("/household", requireAdmin, d.UpdateHousehold)
+		authed.PATCH("/household", requireHoH, d.UpdateHousehold)
 
 		members := authed.Group("/members")
 		{
 			members.GET("", d.ListMembers)
 			members.GET("/:id", d.GetMember)
-			members.POST("", requireAdmin, d.CreateMember)
-			members.PATCH("/:id", requireAdmin, d.UpdateMember)
-			members.DELETE("/:id/pin", requireAdmin, d.ClearMemberPIN)
-			members.DELETE("/:id", requireAdmin, d.DeleteMember)
+			members.POST("", requireHoH, d.CreateMember)
+			members.PATCH("/:id", requireHoH, d.UpdateMember)
+			members.DELETE("/:id/pin", requireHoH, d.ClearMemberPIN)
+			members.DELETE("/:id", requireHoH, d.DeleteMember)
 		}
 
 		chores := authed.Group("/chores")
 		{
 			chores.GET("", d.ListChores)
 			chores.GET("/:id", d.GetChore)
-			chores.POST("", requireAdmin, d.CreateChore)
-			chores.PATCH("/:id", requireAdmin, d.UpdateChore)
-			chores.DELETE("/:id", requireAdmin, d.DeleteChore)
+			chores.POST("", requireHoH, d.CreateChore)
+			chores.PATCH("/:id", requireHoH, d.UpdateChore)
+			chores.DELETE("/:id", requireHoH, d.DeleteChore)
 			chores.POST("/:id/complete", d.CompleteChore)
 			chores.POST("/:id/uncomplete", d.UncompleteChore)
 		}
@@ -80,10 +80,10 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 		rewards := authed.Group("/rewards")
 		{
 			rewards.GET("", d.ListRewards)
-			rewards.POST("", requireAdmin, d.CreateReward)
-			rewards.PATCH("/:id", requireAdmin, d.UpdateReward)
-			rewards.PATCH("/:id/toggle", requireAdmin, d.ToggleRewardActive)
-			rewards.DELETE("/:id", requireAdmin, d.DeleteReward)
+			rewards.POST("", requireHoH, d.CreateReward)
+			rewards.PATCH("/:id", requireHoH, d.UpdateReward)
+			rewards.PATCH("/:id/toggle", requireHoH, d.ToggleRewardActive)
+			rewards.DELETE("/:id", requireHoH, d.DeleteReward)
 			rewards.POST("/:id/redeem", d.RedeemReward)
 		}
 	}

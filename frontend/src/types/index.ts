@@ -1,5 +1,5 @@
 export type ThemePreference = "system" | "light" | "dark";
-export type Role = "admin" | "member";
+export type Role = "hoh" | "member";
 export type Recurrence = "none" | "daily" | "weekly" | "weekdays" | "custom";
 
 export type Household = {

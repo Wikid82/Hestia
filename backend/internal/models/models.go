@@ -21,22 +21,27 @@ type Household struct {
 	Rewards   []Reward   `gorm:"foreignKey:HouseholdID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
-// User is a household member profile. Only the household's one main
-// account (created at signup) has Email/PasswordHash set — that's the
-// single shared login. Every other profile is switched into locally via
-// the avatar picker; PinHash optionally gates switching into an "admin"
-// role profile. PasswordHash/PinHash are never serialized to JSON.
+// User is a household member profile. Any profile can have Email/
+// PasswordHash set for its own direct login (typically the household's
+// creator, or anyone invited by email); profiles without one are
+// switched into locally via the avatar picker, optionally PIN-gated.
+// Role is scoped to this profile's own household ("hoh" = owns/manages
+// this household, same as the old "admin"); IsSystemAdmin is a separate,
+// household-independent flag for instance-wide administration (inviting
+// HoHs, managing every household). PasswordHash/PinHash are never
+// serialized to JSON.
 type User struct {
-	ID           string    `gorm:"primaryKey" json:"id"`
-	HouseholdID  string    `gorm:"not null;index" json:"householdId"`
-	Name         string    `gorm:"not null" json:"name"`
-	AvatarEmoji  string    `gorm:"not null" json:"avatarEmoji"`
-	Role         string    `gorm:"not null;default:member" json:"role"` // admin | member
-	Email        *string   `gorm:"uniqueIndex" json:"email,omitempty"`
-	PasswordHash *string   `json:"-"`
-	PinHash      *string   `json:"-"`
-	Points       int       `gorm:"not null;default:0" json:"points"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID            string    `gorm:"primaryKey" json:"id"`
+	HouseholdID   string    `gorm:"not null;index" json:"householdId"`
+	Name          string    `gorm:"not null" json:"name"`
+	AvatarEmoji   string    `gorm:"not null" json:"avatarEmoji"`
+	Role          string    `gorm:"not null;default:member" json:"role"` // hoh | member
+	IsSystemAdmin bool      `gorm:"not null;default:false" json:"isSystemAdmin"`
+	Email         *string   `gorm:"uniqueIndex" json:"email,omitempty"`
+	PasswordHash  *string   `json:"-"`
+	PinHash       *string   `json:"-"`
+	Points        int       `gorm:"not null;default:0" json:"points"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 // MarshalJSON adds a "hasPin" flag derived from PinHash (which itself

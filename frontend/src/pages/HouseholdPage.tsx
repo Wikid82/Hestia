@@ -11,7 +11,7 @@ export default function HouseholdPage() {
   const { profile, household } = useAuth();
   const membersQuery = useQuery({ queryKey: ["members"], queryFn: listMembers });
 
-  if (!profile || profile.role !== "admin") {
+  if (!profile || profile.role !== "hoh") {
     return <Navigate to="/" replace />;
   }
   if (!household) return null;

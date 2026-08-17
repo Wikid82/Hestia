@@ -32,7 +32,7 @@ export default function RewardsPage() {
         )}
       </section>
 
-      {profile.role === "admin" && (
+      {profile.role === "hoh" && (
         <section className="space-y-4 border-t border-border pt-8">
           <h2 className="text-lg font-semibold">Manage rewards</h2>
           <div className="space-y-2">
