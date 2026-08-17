@@ -113,13 +113,26 @@ Each PR should build/vet/lint clean standalone. Check off as merged.
       goes straight through `services.Mailer`, not through notify. Nobody
       calls `NotifyService.Notify` yet — that lands with the invite
       accept flow in PR4.
-- [ ] **PR4 — `feat: invite data model and accept flow (backend)`.**
-      `Invite` model/service (token hashed at rest, expiry, revoke),
-      endpoints for system-admin-issues-HoH-invite and
-      hoh-issues-member-invite, public token-validate + accept endpoints,
-      `ALLOW_PUBLIC_SIGNUP` gate on the existing `/auth/signup` route
-      (default false — see Decision 5), sends email via PR2, fires
-      notification via PR3.
+- [x] **PR4 — `feat: invite data model and accept flow (backend)`.**
+      `models.Invite` (raw token sha256-hashed at rest, 7-day expiry,
+      status pending/accepted/revoked, expiry computed on read rather
+      than stored). `services.InviteService`: create (auto-revokes any
+      still-pending invite for the same email+household scope), public
+      preview by token, accept (creates the household+hoh or member
+      profile, logs the invitee straight in), list, revoke
+      (household-scoped for a HoH, unscoped for a system admin — any
+      system admin can revoke any hoh invite, resolving the spec's open
+      question). New endpoints: `POST/GET /api/admin/invites` +
+      `DELETE .../:id` (system-admin, hoh invites), `POST/GET
+      /api/members/invites` + `DELETE .../:id` (HoH, member invites for
+      their own household), public `GET /api/invites/:token` (preview)
+      and `POST /api/invites/:token/accept`. `ALLOW_PUBLIC_SIGNUP` gate
+      added to `POST /auth/signup` (default false, per Decision 5 — the
+      very first signup on a fresh instance always succeeds regardless,
+      so bootstrapping still works out of the box). Invite creation
+      requires SMTP to be configured (PR2) and fires an
+      `invite.accepted` notification on accept (PR3). No frontend yet —
+      that's PR5.
 - [ ] **PR5 — `feat: invite UI (send + accept)`.** Admin "invite a HoH"
       screen, household "invite a member" screen (with the existing
       no-email managed-profile path called out as the alternative), public
@@ -136,11 +149,7 @@ Each PR should build/vet/lint clean standalone. Check off as merged.
 
 ## Open questions / not yet decided
 
-- Exact `Invite` token format/length and hashing scheme (leaning:
-  crypto/rand 32-byte token, sha256 hash stored, raw token only ever in
-  the emailed link).
-- Invite expiry window (leaning: 7 days, matching nothing in particular —
-  open to input).
-- Whether a HoH invite that's never accepted should be listable/revocable
-  by any system admin or only the one who sent it (leaning: any system
-  admin, since they're all equally "the instance owner").
+All resolved as of PR4 — see that entry above. (Token: crypto/rand
+32-byte, sha256 hash stored, raw token only ever in the emailed link and
+the create-invite API response. Expiry: 7 days. Revoke scope: any system
+admin can revoke any hoh invite.)

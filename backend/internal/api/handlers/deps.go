@@ -23,8 +23,15 @@ type Deps struct {
 	HHAuth     *services.HouseholdAuthService
 	Mailer     *services.Mailer
 	Notify     *services.NotifyService
+	Invite     *services.InviteService
 	Hub        *realtime.Hub
 	Production bool
+	// AllowPublicSignup and BaseURL mirror config.Config — see there for
+	// what they mean. Deps carries them as plain values (like Production)
+	// rather than the whole *config.Config, since handlers only ever need
+	// these two fields out of it.
+	AllowPublicSignup bool
+	BaseURL           string
 }
 
 func (d *Deps) setSessionCookie(c *gin.Context, householdID string) error {
