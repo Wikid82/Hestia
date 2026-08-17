@@ -143,10 +143,20 @@ Each PR should build/vet/lint clean standalone. Check off as merged.
       invitee straight in via a new `acceptInvite` AuthContext action).
       No separate "resend" endpoint — re-inviting the same email just
       calls create again, which the backend already supersedes.
-- [ ] **PR6 — `feat: self-serve password set/change on existing
-      profiles`.** Lets a managed (no-login) profile be upgraded to
-      email+password later, and lets any self-login user change their own
-      password. Independently useful outside the invite flow.
+- [x] **PR6 — `feat: self-serve password set/change on existing
+      profiles`.** Two endpoints: `PATCH /api/members/me/credentials`
+      (self-service — any active profile can set/change its own
+      email+password; requires `currentPassword` only if one is already
+      set) and `PATCH /api/members/:id/credentials` (HoH-only admin
+      override — sets/resets another member's login, no current password
+      needed). New `/account` page + nav link for every profile; new
+      "Set up login" / "Reset login" action in `MemberCard`'s edit mode
+      for HoH-managed members. Also fixed a latent bug this PR would
+      otherwise have made reachable: `MemberService.Delete` used to key
+      "undeletable" off "has a password set" (fine when only the founding
+      account ever had one) — now that any member can get a login, that
+      check is instead "would this leave the household with zero HoHs,"
+      which is the invariant that actually matters.
 - [ ] **PR7 — `docs: multi-household/invite model, env vars, security
       rationale`.** README, `.env.example`, CLAUDE.md updates explaining
       the SMTP-env-var and closed-by-default-signup decisions so they
