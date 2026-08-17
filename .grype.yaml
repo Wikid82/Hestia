@@ -23,3 +23,16 @@ ignore:
       invokes wget or any busybox applet — the container's only process is
       `node server.js`.
     expiry: "2026-09-20"
+  - vulnerability: GO-2026-5932
+    reason: |
+      UNKNOWN severity — golang.org/x/crypto/openpgp is unsafe by design
+      and unmaintained upstream. This is a whole-module match (grype's own
+      matchDetails show go-module-matcher / versionConstraint "none
+      (unknown)"), not a reachability finding, and fix.versions is empty
+      upstream since the advisory's point is "don't call this subpackage,"
+      not "upgrade past it." `go mod why golang.org/x/crypto/openpgp`
+      confirms the main module does not need that package; `go list -deps
+      ./...` shows only bcrypt/chacha20poly1305/sha3 pulled in via
+      golang-jwt/jwt and our own bcrypt-based password hashing. Hestia has
+      no PGP/OpenPGP feature and never imports openpgp.
+    expiry: "2026-11-17"
