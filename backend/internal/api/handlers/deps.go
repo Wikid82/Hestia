@@ -21,6 +21,7 @@ type Deps struct {
 	Reminder   *services.ReminderService
 	Reward     *services.RewardService
 	HHAuth     *services.HouseholdAuthService
+	Mailer     *services.Mailer
 	Hub        *realtime.Hub
 	Production bool
 }

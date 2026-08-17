@@ -56,6 +56,8 @@ adding a new external dependency) before just doing it.
   changelog entries; an unprefixed title fails the check and would
   silently drop out of release automation even if merged. Individual
   commit messages within a PR aren't checked — only the PR title matters.
+- Do not include the `Claude-Session: https://claude.ai/code/session_...`
+  link in commit messages or PR descriptions for this repo.
 
 ## Product shape
 

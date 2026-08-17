@@ -97,7 +97,7 @@ Each PR should build/vet/lint clean standalone. Check off as merged.
       `RequireAdmin` → `RequireHoH` + new `RequireSystemAdmin` middleware,
       frontend role-string updates. Pure foundation, no new user-facing
       feature.
-- [ ] **PR2 — `feat: SMTP config and mailer service`.** Env vars
+- [x] **PR2 — `feat: SMTP config and mailer service`.** Env vars
       (`BASE_URL`, `SMTP_HOST/PORT/USER/PASS/FROM/TLS`), fail-fast
       validation, `mailer.go` (net/smtp), `.env.example`/
       `docker-compose.yml` updates. Inert until PR4 uses it.
