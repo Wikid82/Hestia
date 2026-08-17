@@ -1,0 +1,122 @@
+// Package models defines the GORM data model for Hestia, ported from the
+// original Drizzle/SQLite schema in src/db/schema.ts.
+package models
+
+import (
+	"encoding/json"
+	"time"
+)
+
+// Household is the top-level tenant: one shared login, one shared kiosk
+// screen, many member profiles.
+type Household struct {
+	ID              string    `gorm:"primaryKey" json:"id"`
+	Name            string    `gorm:"not null" json:"name"`
+	ThemePreference string    `gorm:"not null;default:system" json:"themePreference"` // system | light | dark
+	CreatedAt       time.Time `json:"createdAt"`
+
+	Users     []User     `gorm:"foreignKey:HouseholdID;constraint:OnDelete:CASCADE" json:"-"`
+	Chores    []Chore    `gorm:"foreignKey:HouseholdID;constraint:OnDelete:CASCADE" json:"-"`
+	Reminders []Reminder `gorm:"foreignKey:HouseholdID;constraint:OnDelete:CASCADE" json:"-"`
+	Rewards   []Reward   `gorm:"foreignKey:HouseholdID;constraint:OnDelete:CASCADE" json:"-"`
+}
+
+// User is a household member profile. Only the household's one main
+// account (created at signup) has Email/PasswordHash set — that's the
+// single shared login. Every other profile is switched into locally via
+// the avatar picker; PinHash optionally gates switching into an "admin"
+// role profile. PasswordHash/PinHash are never serialized to JSON.
+type User struct {
+	ID           string    `gorm:"primaryKey" json:"id"`
+	HouseholdID  string    `gorm:"not null;index" json:"householdId"`
+	Name         string    `gorm:"not null" json:"name"`
+	AvatarEmoji  string    `gorm:"not null" json:"avatarEmoji"`
+	Role         string    `gorm:"not null;default:member" json:"role"` // admin | member
+	Email        *string   `gorm:"uniqueIndex" json:"email,omitempty"`
+	PasswordHash *string   `json:"-"`
+	PinHash      *string   `json:"-"`
+	Points       int       `gorm:"not null;default:0" json:"points"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+// MarshalJSON adds a "hasPin" flag derived from PinHash (which itself
+// stays excluded from the JSON output) so the avatar-picker UI can show a
+// lock icon without ever seeing the hash.
+func (u User) MarshalJSON() ([]byte, error) {
+	type alias User
+	return json.Marshal(struct {
+		alias
+		HasPIN bool `json:"hasPin"`
+	}{alias: alias(u), HasPIN: u.PinHash != nil})
+}
+
+// Chore is a task that can be one-time or recurring, optionally assigned
+// to a specific member, and awards points on completion.
+type Chore struct {
+	ID          string  `gorm:"primaryKey" json:"id"`
+	HouseholdID string  `gorm:"not null;index" json:"householdId"`
+	Title       string  `gorm:"not null" json:"title"`
+	Description *string `json:"description,omitempty"`
+	Points      int     `gorm:"not null;default:0" json:"points"`
+	// For "none" (one-time chores), the date it's due. For recurring
+	// chores, the date recurrence starts from.
+	DueDate    time.Time `gorm:"not null" json:"dueDate"`
+	Recurrence string    `gorm:"not null;default:none" json:"recurrence"` // none | daily | weekly | weekdays | custom
+	// "custom" uses RecurrenceDays to hold a JSON array of weekday ints
+	// (0=Sun..6=Sat).
+	RecurrenceDays   *string   `json:"recurrenceDays,omitempty"`
+	AssignedToUserID *string   `gorm:"index" json:"assignedToUserId,omitempty"`
+	IsActive         bool      `gorm:"not null;default:true" json:"isActive"`
+	CreatedAt        time.Time `json:"createdAt"`
+
+	// Computed, not persisted: whether this chore already has a completion
+	// recorded for today, and who completed it. Populated by ChoreService
+	// so the frontend can render "done today" state without a separate
+	// completions-list call.
+	CompletedToday    bool    `gorm:"-" json:"completedToday"`
+	CompletedByUserID *string `gorm:"-" json:"completedByUserId,omitempty"`
+}
+
+// ChoreCompletion records one day's completion of a chore by a user, and
+// how many points it awarded (frozen at completion time so later chore
+// edits don't retroactively change history).
+type ChoreCompletion struct {
+	ID            string    `gorm:"primaryKey" json:"id"`
+	ChoreID       string    `gorm:"not null;index" json:"choreId"`
+	UserID        string    `gorm:"not null;index" json:"userId"`
+	CompletedAt   time.Time `gorm:"not null" json:"completedAt"`
+	PointsAwarded int       `gorm:"not null;default:0" json:"pointsAwarded"`
+}
+
+// Reminder is a simple to-do, optionally assigned to a member; unassigned
+// reminders are visible to the whole household.
+type Reminder struct {
+	ID               string     `gorm:"primaryKey" json:"id"`
+	HouseholdID      string     `gorm:"not null;index" json:"householdId"`
+	AssignedToUserID *string    `gorm:"index" json:"assignedToUserId,omitempty"`
+	Title            string     `gorm:"not null" json:"title"`
+	Notes            *string    `json:"notes,omitempty"`
+	DueAt            *time.Time `json:"dueAt,omitempty"`
+	IsDone           bool       `gorm:"not null;default:false" json:"isDone"`
+	CreatedAt        time.Time  `json:"createdAt"`
+}
+
+// Reward is something a member can redeem points for.
+type Reward struct {
+	ID          string    `gorm:"primaryKey" json:"id"`
+	HouseholdID string    `gorm:"not null;index" json:"householdId"`
+	Title       string    `gorm:"not null" json:"title"`
+	Description *string   `json:"description,omitempty"`
+	PointCost   int       `gorm:"not null" json:"pointCost"`
+	IsActive    bool      `gorm:"not null;default:true" json:"isActive"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
+// RewardRedemption records one redemption of a reward by a user.
+type RewardRedemption struct {
+	ID          string    `gorm:"primaryKey" json:"id"`
+	RewardID    string    `gorm:"not null;index" json:"rewardId"`
+	UserID      string    `gorm:"not null;index" json:"userId"`
+	PointsSpent int       `gorm:"not null" json:"pointsSpent"`
+	RedeemedAt  time.Time `gorm:"not null" json:"redeemedAt"`
+}

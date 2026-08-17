@@ -1,7 +1,16 @@
-node_modules
-.next
 .git
 data
 *.md
 .env*
 !.env.example
+.private/**
+
+# frontend: installed/built inside the image, not needed from the host
+frontend/node_modules
+frontend/dist
+
+# backend: local build output / test artifacts, not needed from the host
+backend/hestia
+backend/*.db
+backend/*.db-*
+**/*.test

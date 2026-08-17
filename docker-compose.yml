@@ -5,18 +5,15 @@ services:
     container_name: hestia
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "8080:8080"
     volumes:
       - ./data:/data
     environment:
-      DATABASE_PATH: /data/hestia.db
+      DB_PATH: /data/hestia.db
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env — see .env.example}
       # Chore due-dates and "due today" are computed from the container's
-      # local clock (see src/lib/chores/recurrence.ts) — without this,
-      # everything runs on UTC regardless of where the household actually
-      # is, and chores flip to the next day at UTC midnight instead of
-      # local midnight.
+      # local clock (Go's time.Local, backed by the tzdata package in the
+      # image) — without this, everything runs on UTC regardless of where
+      # the household actually is, and chores flip to the next day at UTC
+      # midnight instead of local midnight.
       TZ: ${TZ:-UTC}
-      # Only needed behind a reverse proxy serving Hestia from a subpath —
-      # see BASE_PATH in .env.example.
-      BASE_PATH: ${BASE_PATH:-}
