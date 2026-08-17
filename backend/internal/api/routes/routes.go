@@ -63,6 +63,8 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 			members.GET("/:id", d.GetMember)
 			members.POST("", requireHoH, d.CreateMember)
 			members.PATCH("/:id", requireHoH, d.UpdateMember)
+			members.PATCH("/me/credentials", d.SetOwnCredentials)
+			members.PATCH("/:id/credentials", requireHoH, d.SetMemberCredentials)
 			members.DELETE("/:id/pin", requireHoH, d.ClearMemberPIN)
 			members.DELETE("/:id", requireHoH, d.DeleteMember)
 

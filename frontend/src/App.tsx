@@ -14,6 +14,7 @@ import HouseholdPage from "@/pages/HouseholdPage";
 import RemindersPage from "@/pages/RemindersPage";
 import RewardsPage from "@/pages/RewardsPage";
 import AdminSettingsPage from "@/pages/AdminSettingsPage";
+import AccountPage from "@/pages/AccountPage";
 import InviteAcceptPage from "@/pages/InviteAcceptPage";
 
 const queryClient = new QueryClient({
@@ -114,6 +115,7 @@ function AppRoutes() {
         <Route path="/reminders" element={<RemindersPage />} />
         <Route path="/rewards" element={<RewardsPage />} />
         <Route path="/admin" element={<AdminSettingsPage />} />
+        <Route path="/account" element={<AccountPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

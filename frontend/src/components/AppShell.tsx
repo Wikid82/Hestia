@@ -49,6 +49,9 @@ export default function AppShell() {
               <span>{profile?.name}</span>
               <span className="text-muted-foreground">· {profile?.points} pts</span>
             </span>
+            <NavLink to="/account" className={navClass}>
+              Account
+            </NavLink>
             <button
               onClick={() => switchToPicker()}
               className="text-muted-foreground hover:text-foreground"
