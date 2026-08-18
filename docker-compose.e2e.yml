@@ -39,7 +39,7 @@ services:
         condition: service_started
 
   mailpit:
-    image: axllent/mailpit:v1.24
+    image: axllent/mailpit:v1.30
     container_name: hestia-e2e-mailpit
     restart: "no"
     ports:
