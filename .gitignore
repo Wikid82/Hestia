@@ -37,3 +37,9 @@ docker-compose.override.yml
 # typescript
 *.tsbuildinfo
 .private/**
+
+# Playwright e2e — auth storage state, run artifacts
+frontend/e2e/.auth/
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
