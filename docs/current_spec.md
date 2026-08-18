@@ -174,6 +174,18 @@ Each PR should build/vet/lint clean standalone. Check off as merged.
       `docker compose up -d` flow already uses the canonical file, and
       the override-file pattern covers the "how do I customize this"
       need without a second source of truth.
+      **Revised**: on reflection, `.env.example` inline rationale essays
+      didn't scale — added `docs/environment.md` as the single exhaustive
+      reference (every var: default, every option, Docker-Compose-
+      applicable or not) and cut `.env.example` down to a lean,
+      fully-commented-out pointer file. Every other pointer (CLAUDE.md
+      Conventions, `docker-compose.yml`/`docker-compose.override.yml*`
+      comments, backend doc comments in `config.go`/
+      `household_auth_service.go`/`models.go`) updated to match: `.env.example`
+      → `docs/environment.md` for "what does this var do," CLAUDE.md's
+      "Product shape" for "why is it designed this way." CLAUDE.md's
+      Conventions section now requires updating both `.env.example` and
+      `docs/environment.md` together whenever an env var changes.
 
 ## Open questions / not yet decided
 

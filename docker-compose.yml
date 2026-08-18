@@ -17,9 +17,9 @@ services:
       # the household actually is, and chores flip to the next day at UTC
       # midnight instead of local midnight.
       TZ: ${TZ:-UTC}
-      # Outbound email is optional — see .env.example. Left unset, these
-      # all resolve to empty strings and the server runs with email-
-      # dependent features (e.g. invites) unavailable.
+      # Outbound email is optional — see docs/environment.md. Left unset,
+      # these all resolve to empty strings and the server runs with
+      # email-dependent features (e.g. invites) unavailable.
       BASE_URL: ${BASE_URL:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-}
@@ -27,6 +27,7 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
       SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
-      # Closed by default — see .env.example. Only the very first signup
-      # on a fresh instance is ever allowed regardless of this setting.
+      # Closed by default — see docs/environment.md. Only the very first
+      # signup on a fresh instance is ever allowed regardless of this
+      # setting.
       ALLOW_PUBLIC_SIGNUP: ${ALLOW_PUBLIC_SIGNUP:-false}

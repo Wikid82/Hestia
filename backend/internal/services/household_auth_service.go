@@ -35,7 +35,7 @@ func NewHouseholdAuthService(db *gorm.DB) *HouseholdAuthService {
 // very first signup always succeeds regardless of allowPublicSignup —
 // otherwise a fresh instance could never be bootstrapped — every signup
 // after that is rejected with ErrSignupDisabled unless allowPublicSignup
-// is true. See docs/current_spec.md.
+// is true. See CLAUDE.md's "Product shape" section.
 func (s *HouseholdAuthService) Signup(householdName, name, email, password string, allowPublicSignup bool) (*models.Household, *models.User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 

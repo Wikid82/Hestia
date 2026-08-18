@@ -67,9 +67,10 @@ flip to the next day at UTC midnight instead of local midnight.
 The first account you sign up with becomes that household's HoH and this
 instance's system admin. By default (`ALLOW_PUBLIC_SIGNUP=false`), nobody
 else can self-signup after that — everyone else joins by invite, sent from
-the admin/household settings screens once logged in. See `.env.example`
-for every option, including the optional `SMTP_*`/`BASE_URL` variables
-needed to actually send invite emails; without them, invites simply aren't
+the admin/household settings screens once logged in. See
+[`docs/environment.md`](./docs/environment.md) for every environment
+variable, including the optional `SMTP_*`/`BASE_URL` ones needed to
+actually send invite emails; without them, invites simply aren't
 available yet, but everything else works.
 
 For personal, host-specific overrides (a different data path, real SMTP

@@ -159,7 +159,13 @@ adding a new external dependency) before just doing it.
   worth protecting (e.g. recurrence-date calculation), not for CRUD
   boilerplate.
 - Keep the Docker image and `docker-compose.yml` in sync with any new
-  required environment variables (update `.env.example` too).
+  environment variable, required or optional. Whenever one is added,
+  removed, or its behavior changes, update **both** `.env.example` (kept
+  lean and fully commented-out — see its own header) **and**
+  `docs/environment.md` (the full reference: default, every option, what
+  it does) in the same change. `.env.example` points to that doc rather
+  than explaining each variable inline, so don't let the two drift —
+  a variable missing from either one is a bug.
 
 ## Subagents
 

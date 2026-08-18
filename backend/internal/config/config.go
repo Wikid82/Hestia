@@ -29,16 +29,16 @@ type Config struct {
 	// to spin up a household on someone else's found instance without an
 	// invite. An instance owner opts in explicitly; once they do, the
 	// security implications of open signup on their instance are theirs
-	// to own. See docs/current_spec.md.
+	// to own. See CLAUDE.md's "Product shape" section.
 	AllowPublicSignup bool
 }
 
 // SMTPConfig holds outbound-email settings. Deliberately env-var-only
-// (see docs/current_spec.md) rather than DB/web-UI-editable: it's a
-// credential to an external system, and storing it reversibly in the
-// same sqlite file the README tells self-hosters to "just copy to back
-// up" would be a meaningfully worse security posture than the current
-// AUTH_SECRET-style env-var pattern.
+// (see CLAUDE.md's "Product shape" section) rather than DB/web-UI-
+// editable: it's a credential to an external system, and storing it
+// reversibly in the same sqlite file the README tells self-hosters to
+// "just copy to back up" would be a meaningfully worse security posture
+// than the current AUTH_SECRET-style env-var pattern.
 type SMTPConfig struct {
 	Host     string
 	Port     string
