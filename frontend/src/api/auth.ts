@@ -30,3 +30,11 @@ export type MeResponse = { household: Household; user: Profile | null };
 export function me() {
   return api.get<MeResponse>("/auth/me");
 }
+
+export function forgotPassword(email: string) {
+  return api.post<{ ok: boolean }>("/auth/forgot-password", { email });
+}
+
+export function resetPassword(token: string, password: string) {
+  return api.post<{ ok: boolean }>("/auth/reset-password", { token, password });
+}

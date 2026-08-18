@@ -16,6 +16,8 @@ import RewardsPage from "@/pages/RewardsPage";
 import AdminSettingsPage from "@/pages/AdminSettingsPage";
 import AccountPage from "@/pages/AccountPage";
 import InviteAcceptPage from "@/pages/InviteAcceptPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,6 +103,8 @@ function AppRoutes() {
         }
       />
       <Route path="/invite/:token" element={<InviteAcceptPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route
         element={
           <RequireAuth>

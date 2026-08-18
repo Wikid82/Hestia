@@ -43,4 +43,15 @@ describe("LoginPage", () => {
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Invalid credentials"));
   });
+
+  it("links to the forgot-password page", async () => {
+    mockApi({ "GET /api/auth/me": { status: 401, body: { error: "unauthorized" } } });
+    renderWithProviders(<LoginPage />);
+    await waitFor(() => screen.getByLabelText("Email"));
+
+    expect(screen.getByRole("link", { name: "Forgot password?" })).toHaveAttribute(
+      "href",
+      "/forgot-password",
+    );
+  });
 });

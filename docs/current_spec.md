@@ -79,13 +79,19 @@ they're already out of scope for the existing self-serve password-set flow from 
 
 ## PR slicing
 
-- [ ] **PR1 — `feat: password reset backend (model, service, endpoints)`.** `PasswordReset`
+- [x] **PR1 — `feat: password reset backend (model, service, endpoints)`.** `PasswordReset`
       model in `models.go` (mirrors `Invite`: `ID`, `UserID`, `TokenHash`, `ExpiresAt`,
-      `UsedAt *time.Time`, `CreatedAt`). `PasswordResetService` (`CreateReset`,
-      `GetByToken`, `Reset`) parallel to `InviteService`. `POST /api/auth/forgot-password` +
-      `POST /api/auth/reset-password` handlers in `auth.go`. Unit tests for the service
-      (expiry, single-use, superseding a prior pending reset, unknown-email no-op) and
-      handler-level integration tests (mirroring the existing invite handler test style).
+      `UsedAt *time.Time`, `CreatedAt`). `PasswordResetService` (`CreateReset`, `Reset`)
+      parallel to `InviteService`. `POST /api/auth/forgot-password` + `POST
+      /api/auth/reset-password` handlers in `auth.go`, wired into `Deps`/`main.go`/
+      `testutil/app.go`/`routes.go`. Unit tests for the service (expiry, single-use,
+      superseding a prior pending reset, unknown-email/managed-profile no-op, DB-error
+      propagation via `testutil.PoisonTable`) and handler-level integration tests (success,
+      wrong/old password after reset, missing fields, SMTP-unconfigured still returns a
+      generic 200, unexpected-DB-error 500 via `PoisonTableWrites`). Added
+      `testutil.Options.SMTPUnconfigured` and `testutil.LastPasswordResetToken` to support
+      these. Patch coverage 90.0% (gate: 85%). `go build`/`go vet`/`golangci-lint-fast`/full
+      test suite all clean.
 - [ ] **PR2 — `feat: forgot/reset password UI`.** `ForgotPasswordPage`,
       `ResetPasswordPage`, `api/auth.ts` additions, routes in `App.tsx`, "Forgot password?"
       link on `LoginPage`. Unit tests for both pages (mirrors `InviteAcceptPage.test.tsx`
