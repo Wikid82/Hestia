@@ -26,6 +26,7 @@ COVERAGE_FILE="coverage.txt"
 # wrapper added later. Keep in sync with codecov.yml's ignore: list.
 EXCLUDE_PACKAGES=(
 	"hestia/backend/cmd/api"
+	"hestia/backend/internal/testutil"
 )
 
 if command -v gotestsum >/dev/null 2>&1; then
@@ -35,7 +36,7 @@ else
 fi
 
 TEST_EXIT=0
-"${TEST_CMD[@]}" -race -coverprofile="$COVERAGE_FILE" ./... || TEST_EXIT=$?
+"${TEST_CMD[@]}" -race -coverpkg=./... -coverprofile="$COVERAGE_FILE" ./... || TEST_EXIT=$?
 
 COVERAGE_EXIT=1
 if [ -f "$COVERAGE_FILE" ]; then
