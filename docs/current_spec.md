@@ -96,11 +96,32 @@ they're already out of scope for the existing self-serve password-set flow from 
       `ResetPasswordPage`, `api/auth.ts` additions, routes in `App.tsx`, "Forgot password?"
       link on `LoginPage`. Unit tests for both pages (mirrors `InviteAcceptPage.test.tsx`
       style: submit, error states, success state).
-- [ ] **PR3 — `test: e2e coverage for forgot/reset password flow`.** New
-      `frontend/e2e/password-reset.spec.ts` using the existing Mailpit fixture
-      (`frontend/e2e/fixtures/mailpit.ts`) to pull the real reset link out of the sent email,
-      same pattern PR7's invite specs already established. Per Definition of Done, this is
-      required before the feature counts as done, not optional follow-up.
+- [x] **PR3 — `test: e2e coverage for forgot/reset password flow`.** New
+      `frontend/e2e/password-reset.spec.ts` (2 specs: full request-link → reset → login-with-
+      new-password flow, and a bogus-token error case) plus `findPasswordResetLink` added to
+      `frontend/e2e/fixtures/mailpit.ts`, mirroring `findInviteLink`'s existing pattern
+      exactly. **Not run locally** — see the incident note below; verification relies on CI
+      (`.github/workflows/e2e.yml`) running it in a clean runner. `npx eslint` on the new
+      files is clean.
+      - **Incident during this PR, not caused by the spec's own code**: running
+        `docker compose -f docker-compose.yml -f docker-compose.e2e.yml up -d` to verify the
+        spec locally recreated Jeremy's real, already-running `hestia` container — his actual
+        deployment is *also* managed from this same checkout, via a local
+        (gitignored) `docker-compose.override.yml` that layers on top of the same
+        `docker-compose.yml`, using the same `container_name: hestia`. The e2e override
+        shares that name (only its own `container_name: hestia-e2e` differs, but Compose
+        matched the base service first), so `up` reconfigured the running container onto the
+        e2e port/volume, and the subsequent `down` removed it. Real household data on disk
+        (bind-mounted from `/home/jeremy/Server/Configs/containers/theshelter/hestia`) was
+        never touched and confirmed intact; the container itself was restored with a plain
+        `docker compose up -d` (which auto-loads the override) and verified (mounts, port
+        3300, health check, user row all back to normal) — about 90 seconds of downtime, no
+        data loss. **Follow-up worth doing, not done here**: `docker-compose.e2e.yml`'s
+        container name collision with a real deployment sharing this checkout is a real
+        footgun for anyone (including future Claude sessions) running e2e locally against a
+        repo that's also serving a live instance — worth a docs note or a more defensively
+        distinct e2e container/project name, flagged for Jeremy rather than changed
+        unilaterally mid-feature.
 
 ## Open questions / not yet decided
 
