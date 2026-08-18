@@ -1,0 +1,57 @@
+# golangci-lint configuration — the full, non-fast rule set. Run in CI
+# (advisory, continue-on-error — see docs/current_spec.md Decision 2) and
+# locally via `lefthook run lint-full` / scripts/pre-commit-hooks/golangci-lint-full.sh.
+# .golangci-fast.yml at the repo root is the smaller, pre-commit-blocking subset.
+version: "2"
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - bodyclose
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - errcheck
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+        - opinionated
+        - experimental
+      disabled-checks:
+        - whyNoLint
+        - wrapperFunc
+        - hugeParam
+        - rangeValCopy
+        - ifElseChain
+        - appendCombine
+        - appendAssign
+        - commentedOutCode
+        - sprintfQuotedString
+    govet:
+      enable:
+        - shadow
+    errcheck:
+      exclude-functions:
+        # Deferred close errors are intentional — the read/write error, if
+        # any, was already handled before Close.
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write
+        - (*encoding/json.Encoder).Encode
+        - (*encoding/json.Decoder).Decode
+        # Test utilities
+        - os.Setenv
+        - os.Unsetenv
+        - os.RemoveAll
+        - os.MkdirAll
+        - os.WriteFile
+        - os.Remove
+        - (*gorm.io/gorm.DB).AutoMigrate

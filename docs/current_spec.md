@@ -129,11 +129,21 @@ raw agent output if more detail is ever needed.
 Each PR should build/vet/lint clean standalone, same discipline as the invite-system PRs.
 Check off as merged.
 
-- [ ] **PR1 — `chore: install lefthook with pre-commit and pre-push hooks`.** `lefthook.yml`
+- [x] **PR1 — `chore: install lefthook with pre-commit and pre-push hooks`.** `lefthook.yml`
       (pre-commit: `go vet`, golangci-lint-fast — new `.golangci-fast.yml` config, `tsc
-      --noEmit`, `npm run lint`; pre-push: `go build`, `go test ./...`, `npm run build`). A
-      `.golangci.yml` (full config) too, even though CI-wiring for it lands in PR2. README/
-      CLAUDE.md note on `lefthook install` as a one-time setup step for a fresh clone.
+      --noEmit`, `npm run lint`; pre-push: `go build && go test ./...`, `npm run build`).
+      `backend/.golangci.yml` (full config) too, even though CI-wiring for it lands in PR2.
+      `scripts/pre-commit-hooks/golangci-lint-{fast,full}.sh` ported from Charon, simplified
+      to Hestia's single Go module (no backend+agent loop). README "Git hooks" section +
+      CLAUDE.md note on `lefthook install` as one-time setup, and not bypassing hooks with
+      `--no-verify`. Manually verified end to end: installed both binaries fresh, ran
+      `lefthook install`, triggered pre-commit against real staged `.go`/`.tsx` changes (all
+      4 jobs ran and passed, correctly skipped on unrelated file types), ran `lefthook run
+      pre-push` (build+test+build all passed). Full golangci-lint config surfaced 20
+      pre-existing findings across the current codebase — expected and left alone (CI runs it
+      advisory/`continue-on-error`, and the fast pre-commit config only reports issues on
+      lines actually touched, confirmed via `--new-from-rev HEAD` returning 0 issues with no
+      Go changes staged).
 - [ ] **PR2 — `feat: backend unit test scaffolding + coverage script + CI wiring`.**
       `scripts/go-test-coverage.sh` (simplified from Charon: no encryption-key bootstrap, no
       perf-assertion env vars, no cross-process coverage merge — just `go test -coverprofile`

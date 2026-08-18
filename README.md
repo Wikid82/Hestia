@@ -114,6 +114,18 @@ Database migrations run automatically on startup via GORM's `AutoMigrate`.
 After changing `backend/internal/models/models.go`, just restart the
 backend — no separate migration-generation step needed.
 
+### Git hooks
+
+This repo uses [lefthook](https://github.com/evilmartians/lefthook) for local git hooks —
+fast checks (`go vet`, `golangci-lint`, `tsc --noEmit`, `eslint`) before every commit, and a
+full build+test before every push. One-time setup after cloning:
+
+```bash
+go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+go install github.com/evilmartians/lefthook@latest
+lefthook install
+```
+
 ## License
 
 [MIT](./LICENSE) — free for anyone to use, fork, or self-host.

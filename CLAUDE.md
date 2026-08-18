@@ -157,7 +157,15 @@ adding a new external dependency) before just doing it.
   ./...` and `cd frontend && npm run build && npm run lint`. There's no test
   suite yet — don't add one speculatively; add tests when there's logic
   worth protecting (e.g. recurrence-date calculation), not for CRUD
-  boilerplate.
+  boilerplate. (A Definition of Done — unit/e2e coverage gates, CI security
+  scanning — is in progress; see `docs/current_spec.md` until it lands as
+  its own section here.)
+- Local git hooks via [lefthook](https://github.com/evilmartians/lefthook)
+  enforce `go vet`/`golangci-lint`/`tsc --noEmit`/`eslint` on every commit
+  and a full build+test on every push — see the README's "Git hooks"
+  section for one-time setup. Don't bypass with `--no-verify` to work
+  around a failing hook; fix what it's flagging (or, if the hook itself is
+  wrong, fix `lefthook.yml`).
 - Keep the Docker image and `docker-compose.yml` in sync with any new
   environment variable, required or optional. Whenever one is added,
   removed, or its behavior changes, update **both** `.env.example` (kept
