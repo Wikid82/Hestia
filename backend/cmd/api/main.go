@@ -48,7 +48,7 @@ func main() {
 		Notify:            services.NewNotifyService(db),
 		Invite:            services.NewInviteService(db),
 		Hub:               hub,
-		Production:        cfg.Production,
+		CookieSecure:      cfg.CookieSecure,
 		AllowPublicSignup: cfg.AllowPublicSignup,
 		BaseURL:           cfg.BaseURL,
 	}

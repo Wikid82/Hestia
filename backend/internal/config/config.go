@@ -13,7 +13,19 @@ type Config struct {
 	DBPath     string
 	AuthSecret string
 	Production bool
-	StaticDir  string
+	// CookieSecure controls the Secure flag on both auth cookies.
+	// Deliberately independent of Production/GIN_MODE (see issue #79):
+	// Production reflects Gin's own release/debug mode, but the Dockerfile
+	// bakes GIN_MODE=release into every image regardless of whether
+	// there's TLS in front of it, and docker-compose.yml serves plain
+	// HTTP by default — a Secure cookie is silently dropped by every
+	// browser over plain HTTP, so tying it to Production would make the
+	// documented default setup impossible to log into. Defaults to
+	// false (works out of the box over HTTP); set true only once a
+	// TLS-terminating reverse proxy actually sits in front of this
+	// instance.
+	CookieSecure bool
+	StaticDir    string
 	// BaseURL is the externally-reachable URL of this instance (e.g.
 	// https://hestia.example.com), used to build links in outbound email
 	// such as invite-accept links. Required when SMTP is configured.
@@ -85,12 +97,14 @@ func Load() (*Config, error) {
 	}
 
 	allowPublicSignup := os.Getenv("ALLOW_PUBLIC_SIGNUP") == "true" || os.Getenv("ALLOW_PUBLIC_SIGNUP") == "1"
+	cookieSecure := os.Getenv("COOKIE_SECURE") == "true" || os.Getenv("COOKIE_SECURE") == "1"
 
 	return &Config{
 		Port:              port,
 		DBPath:            dbPath,
 		AuthSecret:        authSecret,
 		Production:        production,
+		CookieSecure:      cookieSecure,
 		StaticDir:         staticDir,
 		BaseURL:           baseURL,
 		SMTP:              smtp,

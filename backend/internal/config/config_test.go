@@ -12,7 +12,7 @@ func clearEnv(t *testing.T) {
 	for _, v := range []string{
 		"AUTH_SECRET", "PORT", "DB_PATH", "NODE_ENV", "GIN_MODE", "STATIC_DIR",
 		"BASE_URL", "SMTP_SERVER", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD",
-		"SMTP_FROM", "SMTP_USE_TLS", "ALLOW_PUBLIC_SIGNUP",
+		"SMTP_FROM", "SMTP_USE_TLS", "ALLOW_PUBLIC_SIGNUP", "COOKIE_SECURE",
 	} {
 		t.Setenv(v, "")
 	}
@@ -48,6 +48,9 @@ func TestLoad_Defaults(t *testing.T) {
 	if cfg.Production {
 		t.Error("expected Production to default to false")
 	}
+	if cfg.CookieSecure {
+		t.Error("expected CookieSecure to default to false")
+	}
 }
 
 func TestLoad_OverridesFromEnv(t *testing.T) {
@@ -71,6 +74,44 @@ func TestLoad_OverridesFromEnv(t *testing.T) {
 	}
 	if !cfg.AllowPublicSignup {
 		t.Error("expected ALLOW_PUBLIC_SIGNUP=true to be honored")
+	}
+	// Issue #79: CookieSecure must stay false here even though GIN_MODE=release
+	// set Production true — a Secure cookie is silently dropped over the plain
+	// HTTP the documented docker-compose.yml setup serves, so it can't be tied
+	// to Gin's release/debug mode.
+	if cfg.CookieSecure {
+		t.Error("expected GIN_MODE=release to NOT set CookieSecure — they must stay independent")
+	}
+}
+
+func TestLoad_CookieSecureIsIndependentOfProduction(t *testing.T) {
+	clearEnv(t)
+	t.Setenv("AUTH_SECRET", "test-secret")
+	t.Setenv("COOKIE_SECURE", "true")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load returned an error: %v", err)
+	}
+	if !cfg.CookieSecure {
+		t.Error("expected COOKIE_SECURE=true to be honored")
+	}
+	if cfg.Production {
+		t.Error("expected COOKIE_SECURE=true to NOT set Production — they must stay independent")
+	}
+}
+
+func TestLoad_CookieSecureAcceptsNumericOne(t *testing.T) {
+	clearEnv(t)
+	t.Setenv("AUTH_SECRET", "test-secret")
+	t.Setenv("COOKIE_SECURE", "1")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load returned an error: %v", err)
+	}
+	if !cfg.CookieSecure {
+		t.Error("expected COOKIE_SECURE=1 to be honored")
 	}
 }
 

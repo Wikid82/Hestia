@@ -31,3 +31,9 @@ services:
       # signup on a fresh instance is ever allowed regardless of this
       # setting.
       ALLOW_PUBLIC_SIGNUP: ${ALLOW_PUBLIC_SIGNUP:-false}
+      # Off by default so this setup works over plain HTTP out of the
+      # box — see docs/environment.md. Only set true if you've put a
+      # TLS-terminating reverse proxy in front of this instance;
+      # otherwise auth cookies get silently dropped by the browser and
+      # login won't persist (issue #79).
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}

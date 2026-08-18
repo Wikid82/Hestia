@@ -9,6 +9,12 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    # No step here should ever legitimately run long — a hang (e.g. a
+    # stalled browser download) should fail fast instead of tying up the
+    # runner for hours. Without this, GitHub's default 360m job timeout
+    # is the only backstop, and a runner that loses contact with the
+    # server can sit "in progress" well past that before it's reaped.
+    timeout-minutes: 20
     env:
       # docker-compose.yml's base AUTH_SECRET is a required (`:?`) variable
       # interpolated from the shell environment before docker-compose.e2e.yml's
@@ -51,10 +57,12 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
+        timeout-minutes: 5
         run: npx playwright install --with-deps chromium
 
       - name: Run e2e suite
         working-directory: frontend
+        timeout-minutes: 10
         run: npx playwright test
 
       - name: Upload Playwright report

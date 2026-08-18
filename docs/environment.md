@@ -147,6 +147,23 @@ send an email.
 - Gates `POST /auth/signup`. The very first signup always succeeds regardless of this
   setting, so bootstrapping a fresh instance is never blocked by it.
 
+## Cookie security
+
+### `COOKIE_SECURE`
+
+- **Default**: `false`
+- **Docker Compose**: `${COOKIE_SECURE:-false}` — set it in `.env` or your shell.
+- **Options**: `false` (auth cookies work over plain HTTP — the right choice for
+  `docker-compose.yml`'s documented setup, which has no TLS in front of it) | `true` (auth
+  cookies are marked `Secure`, so they're only ever sent back over HTTPS).
+- Controls the `Secure` flag on both auth cookies (`hestia_session`, `hestia_profile`).
+  Deliberately **not** tied to `GIN_MODE`/production mode: the Dockerfile always sets
+  `GIN_MODE=release` regardless of whether TLS is involved, and a browser silently drops a
+  `Secure` cookie sent over plain HTTP — tying the two together made the documented
+  `docker-compose.yml` setup impossible to log into (issue #79). Only set this `true` once
+  you've put a TLS-terminating reverse proxy (e.g. Caddy, Traefik, nginx) in front of this
+  instance; otherwise leave it at the default.
+
 ---
 
 **Adding a new environment variable?** Update this file and `.env.example` in the same

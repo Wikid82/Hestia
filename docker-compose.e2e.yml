@@ -26,15 +26,9 @@ services:
       SMTP_FROM: hestia@e2e.test
       SMTP_USE_TLS: "false"
       ALLOW_PUBLIC_SIGNUP: "true"
-      # See docs/current_spec.md PR7 retrospective: config.Load() sets
-      # Production=true whenever GIN_MODE=release (the Dockerfile's own
-      # baked-in default), and Production drives the Secure flag on both
-      # auth cookies. A Secure cookie is never sent back by a real browser
-      # over plain HTTP, which is exactly what this compose stack serves —
-      # so leaving GIN_MODE at its image default would make login
-      # impossible to verify at all. Overriding it here only affects this
-      # throwaway e2e container.
-      GIN_MODE: debug
+      # COOKIE_SECURE defaults to false (see docker-compose.yml/issue #79),
+      # which is exactly what this plain-HTTP e2e stack needs — no
+      # GIN_MODE override required here anymore.
     # Scratch data only — never the real ./data bind mount from
     # docker-compose.yml. A named volume gets removed by `docker compose
     # down -v` between runs so every e2e run starts from a clean database.
