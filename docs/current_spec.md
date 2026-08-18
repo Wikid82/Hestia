@@ -123,6 +123,32 @@ raw agent output if more detail is ever needed.
    file(s) locally (`npx playwright test <file>`); let CI run the full suite. Documented in
    `CLAUDE.md` — e2e suites get large fast (Charon: ~125 spec files), and running the whole
    thing locally on every edit doesn't scale.
+7. **e2e lives under `frontend/e2e/`, config at `frontend/playwright.config.ts`, `@playwright/test`
+   as a `frontend/package.json` devDependency** — not a separate root-level Node package like
+   Charon. `codecov.yml` and `vitest.config.ts` already carve out `frontend/e2e/**` as excluded,
+   so this just uses that existing boundary rather than inventing a new one.
+8. **No shared global `auth.setup.ts` + reused `storageState` across every spec (unlike
+   Charon).** Hestia's `ALLOW_PUBLIC_SIGNUP` model means only the *very first* signup on a
+   fresh instance is ever `IsSystemAdmin` — every signup after that is just an ordinary HoH of
+   their own new household. So: a Playwright `globalSetup` runs once, before any spec, and
+   creates that first user via direct API calls (fast, not through the UI — this isn't itself a
+   UI flow under test), saving its `storageState` to `frontend/e2e/.auth/admin.json` for the one
+   spec that needs `IsSystemAdmin` (the "invite a new HoH" admin flow). Every other spec signs
+   up its *own* fresh household through the real UI as its first step — this doubles as the
+   signup-flow's own coverage, gives every spec full household isolation for free (no shared
+   fixture data to collide on), and matches `workers: 1`/serial CI execution the research
+   already called for. The e2e docker-compose override sets `ALLOW_PUBLIC_SIGNUP=true` (a
+   deliberate divergence from the secure-by-default production value — this is a throwaway e2e
+   container, not a real deployment) so every spec after the first can still sign up at all.
+9. **Outbound email in e2e is captured with Mailpit, not skipped.** The invite-accept flow
+   can't be tested end-to-end without the real token, which the API never returns (invite
+   tokens are stored hashed — see `models.go`'s `Invite` doc comment — the raw token only ever
+   exists in the email body). Rather than reach into the container's sqlite file to dig it out
+   (fragile, couples the test to storage internals), the e2e docker-compose override adds a
+   `mailpit` service and points `SMTP_SERVER`/`SMTP_PORT` at it; the invite spec polls Mailpit's
+   REST API (`GET /api/v2/messages`) for the invite email and extracts the `/invite/:token` link
+   from its body. This is the standard e2e pattern for email-driven flows and keeps the test
+   black-box (through real SMTP delivery, not a backdoor).
 
 ## PR slicing (dependency-ordered)
 
@@ -283,13 +309,67 @@ Check off as merged.
         end isn't worth the added test-infra weight this app doesn't otherwise need — left
         alone deliberately rather than covered for a number, and did not block the 85% gate
         since 812 total statements gave enough headroom (94.42% with `App.tsx` at zero).
-- [ ] **PR7 — `feat: Playwright e2e scaffolding + core-flow coverage`.** `playwright.config.ts`
-      (against the real Docker image per Decision 4), a new e2e CI workflow (build image once,
-      one job per browser — chromium at minimum, firefox/webkit if time allows — no sharding),
-      and an initial spec set covering the app's core flows as they exist today: signup/login,
-      avatar-picker/profile-switch, chore CRUD + completion, reward redemption, member
-      management, invite send/accept, admin notification settings. This is the "cover as much
-      of the code as possible before going deeper" pass the goal section calls for.
+- [x] **PR7 — `feat: Playwright e2e scaffolding + core-flow coverage`.** `frontend/playwright.config.ts`
+      (against the real Docker image per Decision 4, `testDir: ./e2e`), `.github/workflows/e2e.yml`
+      (build image → `up -d` → health-check poll → install chromium → `playwright test` → upload
+      report on failure → `down -v` always). **Chromium only**, not chromium+firefox/webkit as
+      the plan left open — this app has no browser-specific rendering paths (plain forms +
+      fetch, no canvas/WebGL), so multi-browser coverage wasn't worth the added CI time at this
+      stage; add projects later if that assumption stops holding.
+      16 passing specs across 6 files (`auth`, `avatar-picker`, `chores`, `rewards`, `members`,
+      `invites`, `admin`), covering every flow the plan named: signup/login (incl. wrong-password
+      rejection), avatar-picker profile switching (both PIN-less and PIN-gated), chore CRUD +
+      completion, reward creation + a points-gated redemption block, household/member management
+      (rename, edit, remove), member-invite send + real accept, HoH-invite send + real accept via
+      the admin storageState, invite revoke, a bogus-token invite guard, and admin notification
+      settings (save + test-send). Zero vacuous assertions — every test drives a real UI
+      interaction and asserts on its real consequence.
+      - `frontend/e2e/global-setup.ts` implements Decision 8: signs up (or logs in, if a prior
+        run already claimed the slot) the instance's one-time first user via direct API calls,
+        saving `storageState` for the one spec (`admin.spec.ts`) that needs `IsSystemAdmin`.
+        `frontend/e2e/fixtures/household.ts` gives every other spec its own fresh, fully
+        isolated household through the real signup UI.
+      - `frontend/e2e/fixtures/mailpit.ts` implements Decision 9 — polls Mailpit's REST API
+        (**`/api/v1/messages`, not `/api/v2/` as Decision 9's text originally guessed** — Mailpit
+        v1.24's API is versioned `v1`) for an invite email and regexes the real `/invite/:token`
+        link out of its plain-text body. Both the member-invite and HoH-invite accept flows go
+        through this — genuinely end-to-end, no backdoor into the database for the token.
+      - `docker-compose.e2e.yml`: layers `ALLOW_PUBLIC_SIGNUP=true`, Mailpit SMTP settings, and a
+        scratch named volume (never the real `./data` bind mount) on top of `docker-compose.yml`.
+        Added `E2E_HOST_PORT` (default 8080) so a local run doesn't collide with a real instance
+        already bound to 8080 on the same host — discovered this was necessary immediately, since
+        exactly that collision happened during verification.
+      - **Real bug discovered, not an e2e-only issue**: `backend/internal/config/config.go`'s
+        `Load()` sets `Production = true` whenever `GIN_MODE=release`, which the Dockerfile bakes
+        in unconditionally (`ENV GIN_MODE=release`) — and `Production` drives the `Secure` flag on
+        both auth cookies (`deps.go`'s `setSessionCookie`/`setProfileCookie`). A `Secure` cookie is
+        never sent by a real browser over plain HTTP. `docker-compose.yml`'s own documented setup
+        exposes port 8080 over plain HTTP with no TLS termination — meaning **any self-hoster
+        running the documented docker-compose setup as-is cannot actually stay logged in**: the
+        cookies get set on login/signup but the browser silently drops them on the next request.
+        This surfaced immediately in e2e verification (storageState replay looked authenticated
+        per the JSON file but the app treated every request as logged-out) and would affect real
+        users identically. **Not fixed here** — this PR only scopes to e2e test infrastructure,
+        and worked around it locally via `GIN_MODE: debug` in `docker-compose.e2e.yml` (e2e-only,
+        clearly commented). Flagging for Jeremy to decide the real fix (e.g. don't derive
+        `Production`/cookie-Secure from `GIN_MODE` at all; gate it on an explicit `TLS`/`SECURE`
+        env var instead, or document that a reverse proxy terminating TLS is required) — this
+        looks like a pre-existing bug, not something introduced by this PR, but it's a significant
+        one worth prioritizing.
+      - Locator lessons (kept here since they're non-obvious and this is the first Playwright
+        work in the repo): `hasText` filters match every matching *ancestor* div, not just the
+        immediate one, so naive `.first()`/`.last()` picks are a coin flip once nested containers
+        share text — scoping to a `<section>` landmark first, or walking up from the exact text
+        node via `xpath=ancestor::div[contains(@class,'...')][1]`, was needed in several specs
+        (`chores`, `members`) once a page had more than one place the same text could appear.
+      - Verified for real, not just written: built the actual Docker image, ran the full
+        `docker-compose.e2e.yml` stack, ran the entire 16-test suite against it twice (including
+        once from a completely fresh volume) with `npx playwright test`, confirmed `npm run
+        build` and `npm run lint` both clean, then tore the stack down. Browser install needed
+        `npx playwright install chromium` without `--with-deps` — the sandboxed dev environment
+        this was built in has no passwordless sudo for the system-package step, but the browser
+        ran headless fine regardless; CI's `ubuntu-latest` runner has sudo, so `--with-deps` stays
+        in `e2e.yml` as originally planned.
 - [ ] **PR8 — `docs: Definition of Done in CLAUDE.md`.** Consolidates everything above into a
       DoD section in `CLAUDE.md`: what must pass before a PR is mergeable (lefthook clean,
       unit + patch coverage ≥85%, e2e passing for touched flows), when to run the local

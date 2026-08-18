@@ -1,0 +1,55 @@
+# Playwright e2e override — layer on top of docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml up -d
+#
+# Deliberately diverges from production defaults (docs/current_spec.md
+# Decision 8/9): ALLOW_PUBLIC_SIGNUP=true so every spec after global-setup's
+# first signup can still create its own isolated household, and outbound
+# email points at Mailpit (a disposable SMTP catcher) instead of a real
+# provider so the invite-accept flow can be driven through a real email
+# end to end. This is a throwaway container for CI/local e2e runs, not a
+# real deployment — never reuse these values outside e2e.
+# E2E_HOST_PORT (default 8080) controls the host-side port mapping — override
+# it locally (e.g. E2E_HOST_PORT=18080) if something else on your machine
+# already holds 8080, including a real Hestia instance you're running
+# separately from this checkout. CI runners are clean, so the default is
+# fine there and PLAYWRIGHT_BASE_URL doesn't need to be set in e2e.yml.
+services:
+  hestia:
+    container_name: hestia-e2e
+    ports: !override
+      - "${E2E_HOST_PORT:-8080}:8080"
+    environment:
+      AUTH_SECRET: e2e-test-secret-not-for-production-use
+      BASE_URL: http://127.0.0.1:${E2E_HOST_PORT:-8080}
+      SMTP_SERVER: mailpit
+      SMTP_PORT: "1025"
+      SMTP_FROM: hestia@e2e.test
+      SMTP_USE_TLS: "false"
+      ALLOW_PUBLIC_SIGNUP: "true"
+      # See docs/current_spec.md PR7 retrospective: config.Load() sets
+      # Production=true whenever GIN_MODE=release (the Dockerfile's own
+      # baked-in default), and Production drives the Secure flag on both
+      # auth cookies. A Secure cookie is never sent back by a real browser
+      # over plain HTTP, which is exactly what this compose stack serves —
+      # so leaving GIN_MODE at its image default would make login
+      # impossible to verify at all. Overriding it here only affects this
+      # throwaway e2e container.
+      GIN_MODE: debug
+    # Scratch data only — never the real ./data bind mount from
+    # docker-compose.yml. A named volume gets removed by `docker compose
+    # down -v` between runs so every e2e run starts from a clean database.
+    volumes: !override
+      - hestia-e2e-data:/data
+    depends_on:
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:v1.24
+    container_name: hestia-e2e-mailpit
+    restart: "no"
+    ports:
+      - "8025:8025"
+
+volumes:
+  hestia-e2e-data:
