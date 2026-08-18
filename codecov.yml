@@ -67,6 +67,8 @@ ignore:
   - "**/*.d.ts"
 
   # Backend entrypoint — bootstrap code only, no business logic worth unit
-  # testing (matches scripts/go-test-coverage.sh's EXCLUDE_PACKAGES — keep
-  # the two in sync manually, per CLAUDE.md's Conventions section)
+  # testing — and test infrastructure (only ever called from *_test.go
+  # files). Matches scripts/go-test-coverage.sh's EXCLUDE_PACKAGES — keep
+  # the two in sync manually, per CLAUDE.md's Conventions section.
   - "backend/cmd/api/**"
+  - "backend/internal/testutil/**"

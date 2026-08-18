@@ -201,11 +201,49 @@ Check off as merged.
       no-ops harmlessly (logged, not blocking) and Codecov's own PR status checks won't
       appear at all. Gate is still expected to fail once that's wired up — per Decision 1,
       until PR5/PR6 land.
-- [ ] **PR5 — `test: backend unit test coverage to 85%`.** Bulk test-writing pass across
-      `backend/internal/services` and `backend/internal/api/handlers` until project coverage
-      hits the gate. Likely the largest PR in this initiative; may get split further once the
-      actual gap is known (run the coverage script first to see where the gaps are before
-      committing to a specific sub-slice plan).
+- [x] **PR5 — `test: backend unit test coverage to 85%`.** Went from ~6% to **83.0%** total
+      statement coverage — 149 passing tests across 22 new test files, zero padding (every
+      test asserts something a real bug could break, several caught actual behavior
+      mismatches in my own test *assumptions*, corrected rather than "fixed" in the app —
+      see below).
+      - New `backend/internal/testutil` package (excluded from coverage, like
+        `backend/cmd/api`): a full in-process app harness (real temp-file SQLite, real
+        routes/services, `httptest.Server`) plus a real (protocol-real, not mocked) fake SMTP
+        listener, so handler tests exercise complete request flows — handlers, services,
+        middleware, and model `MarshalJSON` methods all at once — rather than unit-testing
+        each layer in isolation with hand-rolled mocks.
+      - **Discovered `-coverpkg=./...` was required** for `go test`'s default per-package
+        coverage scoping to credit `internal/services`/`internal/middleware`/`internal/models`
+        for the massive amount of code the integration-style handler tests exercise
+        indirectly via real HTTP calls — without it, coverage jumped from 5.9%→31.5%;
+        with it, 31.5%→68.1% on the same test files, no new tests added. Updated
+        `scripts/go-test-coverage.sh` accordingly (PR2's version predates this discovery).
+      - Handler-level integration tests for every resource (auth, members, chores, rewards,
+        reminders, household, invites, admin notifications, health/websocket), plus direct
+        service-level unit tests (`invite_service`, `member_service`, `notify_service`,
+        `mailer`, `household_service`, config `Load`) for validation branches unreachable
+        through the HTTP layer (the handler already filters them before the service call).
+      - **Real behaviors discovered while writing tests, test expectations corrected, no app
+        code changed**: delete endpoints are idempotent (200 for an already-gone ID, not
+        404); redeeming an unknown reward returns 400 "not available," not 404, deliberately
+        not distinguishing "gone" from "unavailable"; uncompleting a chore never completed is
+        a no-op success (200), mirroring Complete's own "already done" no-op; chores
+        currently always require an assignee at creation (no "open to anyone" path exists
+        in the handler yet, despite the service layer's `ErrUnassigned` implying one).
+      - **Gap closed, not accepted**: per Jeremy's call, went back and closed the remaining
+        ~2 points rather than settling for 83%. `testutil.PoisonTable`/`PoisonTableWrites`
+        register GORM callback hooks (`db.Callback().Query().Before("gorm:query")`, etc.)
+        scoped to one table name — GORM resolves `Statement.Table` before those hooks run, so
+        this fails only the table under test, not the whole connection, avoiding the earlier
+        problem where closing the DB outright tripped `RequireHousehold`'s own check first.
+        `PoisonTableWrites` (Create/Update/Delete hooks only, no Query/Row) exists because
+        `users`/`households` are also read by `RequireProfile`/`RequireHousehold` on every
+        request — a full poison would fail the middleware before the handler under test is
+        reached; scoping to writes-only reaches `CreateMember`/`UpdateMember`/rename without
+        that collision. One case (`ListMembers`) stayed genuinely unreachable this way — it
+        and `RequireProfile` both *read* the same table, so there's no way to poison one
+        without the other — documented inline rather than forced. Zero changes to production
+        code; this is entirely new test infrastructure. **Final: 86.4%**, gate passes.
 - [ ] **PR6 — `test: frontend unit test coverage to 85%`.** Same idea, frontend side —
       components, hooks, `api/*` modules.
 - [ ] **PR7 — `feat: Playwright e2e scaffolding + core-flow coverage`.** `playwright.config.ts`
