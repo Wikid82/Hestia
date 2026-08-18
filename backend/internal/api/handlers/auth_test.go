@@ -185,6 +185,132 @@ func TestProfiles_ListAndSwitch(t *testing.T) {
 	}
 }
 
+func TestForgotPassword_SendsResetEmail(t *testing.T) {
+	app := testutil.New(t)
+	testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	client := app.Client(t)
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/forgot-password", map[string]any{
+		"email": "admin@example.com",
+	}, nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("forgot-password: status = %d", resp.StatusCode)
+	}
+
+	token := testutil.LastPasswordResetToken(t, app.SMTP)
+	if token == "" {
+		t.Fatal("expected a reset token in the sent email")
+	}
+}
+
+func TestForgotPassword_UnknownEmailStillReturnsOK(t *testing.T) {
+	app := testutil.New(t)
+	client := app.Client(t)
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/forgot-password", map[string]any{
+		"email": "nobody@example.com",
+	}, nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("forgot-password for unknown email: status = %d, want 200 (no enumeration)", resp.StatusCode)
+	}
+	if len(app.SMTP.Messages()) != 0 {
+		t.Errorf("expected no email sent for an unknown address, got %d messages", len(app.SMTP.Messages()))
+	}
+}
+
+func TestResetPassword_Success(t *testing.T) {
+	app := testutil.New(t)
+	testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	client := app.Client(t)
+	testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/forgot-password", map[string]any{
+		"email": "admin@example.com",
+	}, nil)
+	token := testutil.LastPasswordResetToken(t, app.SMTP)
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/reset-password", map[string]any{
+		"token":    token,
+		"password": "brand-new-password",
+	}, nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("reset-password: status = %d", resp.StatusCode)
+	}
+
+	// Old password should no longer work; new password should.
+	loginClient := app.Client(t)
+	resp = testutil.Do(t, loginClient, "POST", app.BaseURL+"/api/auth/login", map[string]any{
+		"email":    "admin@example.com",
+		"password": "password123",
+	}, nil)
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("login with old password after reset: status = %d, want 401", resp.StatusCode)
+	}
+
+	resp = testutil.Do(t, loginClient, "POST", app.BaseURL+"/api/auth/login", map[string]any{
+		"email":    "admin@example.com",
+		"password": "brand-new-password",
+	}, nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("login with new password after reset: status = %d, want 200", resp.StatusCode)
+	}
+}
+
+func TestResetPassword_TokenIsSingleUse(t *testing.T) {
+	app := testutil.New(t)
+	testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	client := app.Client(t)
+	testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/forgot-password", map[string]any{
+		"email": "admin@example.com",
+	}, nil)
+	token := testutil.LastPasswordResetToken(t, app.SMTP)
+
+	testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/reset-password", map[string]any{
+		"token":    token,
+		"password": "brand-new-password",
+	}, nil)
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/reset-password", map[string]any{
+		"token":    token,
+		"password": "another-password",
+	}, nil)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("replaying a used reset token: status = %d, want 400", resp.StatusCode)
+	}
+}
+
+func TestResetPassword_UnknownTokenRejected(t *testing.T) {
+	app := testutil.New(t)
+	client := app.Client(t)
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/reset-password", map[string]any{
+		"token":    "not-a-real-token",
+		"password": "brand-new-password",
+	}, nil)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("unknown reset token: status = %d, want 400", resp.StatusCode)
+	}
+}
+
+func TestResetPassword_ShortPasswordRejected(t *testing.T) {
+	app := testutil.New(t)
+	testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	client := app.Client(t)
+	testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/forgot-password", map[string]any{
+		"email": "admin@example.com",
+	}, nil)
+	token := testutil.LastPasswordResetToken(t, app.SMTP)
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/reset-password", map[string]any{
+		"token":    token,
+		"password": "short",
+	}, nil)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("short new password: status = %d, want 400", resp.StatusCode)
+	}
+}
+
 func TestSwitchProfile_UnknownIDReturns404(t *testing.T) {
 	app := testutil.New(t)
 	client, _ := testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")

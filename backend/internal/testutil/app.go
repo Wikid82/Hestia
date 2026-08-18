@@ -106,6 +106,7 @@ func NewWithOptions(t *testing.T, opts Options) *App {
 		Mailer:            services.NewMailer(mailerCfg),
 		Notify:            services.NewNotifyService(db),
 		Invite:            services.NewInviteService(db),
+		PasswordReset:     services.NewPasswordResetService(db),
 		Hub:               hub,
 		CookieSecure:      false,
 		AllowPublicSignup: allowPublicSignup,

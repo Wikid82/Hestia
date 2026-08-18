@@ -14,17 +14,18 @@ import (
 // Deps bundles every dependency the handlers need: services, the auth
 // service (for signing/verifying cookies), and the realtime hub.
 type Deps struct {
-	Auth      *services.AuthService
-	Household *services.HouseholdService
-	Member    *services.MemberService
-	Chore     *services.ChoreService
-	Reminder  *services.ReminderService
-	Reward    *services.RewardService
-	HHAuth    *services.HouseholdAuthService
-	Mailer    *services.Mailer
-	Notify    *services.NotifyService
-	Invite    *services.InviteService
-	Hub       *realtime.Hub
+	Auth          *services.AuthService
+	Household     *services.HouseholdService
+	Member        *services.MemberService
+	Chore         *services.ChoreService
+	Reminder      *services.ReminderService
+	Reward        *services.RewardService
+	HHAuth        *services.HouseholdAuthService
+	Mailer        *services.Mailer
+	Notify        *services.NotifyService
+	Invite        *services.InviteService
+	PasswordReset *services.PasswordResetService
+	Hub           *realtime.Hub
 	// CookieSecure mirrors config.Config.CookieSecure — see there for why
 	// it's independent of Gin's release/debug mode.
 	CookieSecure bool

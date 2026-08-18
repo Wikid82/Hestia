@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -81,6 +83,80 @@ func (d *Deps) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+type forgotPasswordRequest struct {
+	Email string `json:"email" binding:"required"`
+}
+
+// ForgotPassword requests a password reset link. Always returns a
+// generic 200, regardless of whether the email matches an account or
+// whether outbound email is configured — an unauthenticated caller must
+// not be able to distinguish those cases (email enumeration). No auth
+// required.
+func (d *Deps) ForgotPassword(c *gin.Context) {
+	var req forgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email is required"})
+		return
+	}
+
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	if d.Mailer.IsConfigured() {
+		if reset, rawToken, err := d.PasswordReset.CreateReset(email); err == nil && reset != nil {
+			_ = d.sendPasswordResetEmail(email, rawToken)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func (d *Deps) sendPasswordResetEmail(email, rawToken string) error {
+	link := fmt.Sprintf("%s/reset-password/%s", strings.TrimRight(d.BaseURL, "/"), rawToken)
+	subject := "Reset your Hestia password"
+	body := fmt.Sprintf(
+		"A password reset was requested for this email address.\n\n"+
+			"Reset your password: %s\n\nThis link expires in 1 hour. "+
+			"If you didn't request this, you can safely ignore this email.",
+		link,
+	)
+	return d.Mailer.Send(email, subject, body)
+}
+
+type resetPasswordRequest struct {
+	Token    string `json:"token" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+// ResetPassword validates a reset token and sets a new password. Does not
+// auto-login (unlike AcceptInvite) — this happens to an existing account,
+// so the safer default is sending the caller to the normal login page
+// rather than authenticating whoever holds the reset link. No auth
+// required.
+func (d *Deps) ResetPassword(c *gin.Context) {
+	var req resetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "token and password are required"})
+		return
+	}
+	if len(req.Password) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "password must be at least 8 characters"})
+		return
+	}
+
+	if err := d.PasswordReset.Reset(req.Token, req.Password); err != nil {
+		switch {
+		case errors.Is(err, services.ErrPasswordResetNotFound),
+			errors.Is(err, services.ErrPasswordResetUsed),
+			errors.Is(err, services.ErrPasswordResetExpired):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "this password reset link is invalid or has expired"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to reset password"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 func (d *Deps) Logout(c *gin.Context) {

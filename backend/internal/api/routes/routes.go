@@ -29,6 +29,8 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 		authGroup.POST("/login", d.Login)
 		authGroup.POST("/logout", d.Logout)
 		authGroup.GET("/me", requireHousehold, d.Me)
+		authGroup.POST("/forgot-password", d.ForgotPassword)
+		authGroup.POST("/reset-password", d.ResetPassword)
 	}
 
 	// Invite preview/accept are public: the invitee has no session yet —
