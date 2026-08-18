@@ -1,3 +1,5 @@
 hestia
 *.db
 *.db-*
+coverage.txt
+coverage.txt.bak

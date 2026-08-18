@@ -160,10 +160,30 @@ Check off as merged.
       `govulncheck` step. **CI's coverage gate is expected to be red on this PR and PR3** —
       current backend coverage is ~6%; PR5 is the dedicated push to close that gap, per
       Decision 1.
-- [ ] **PR3 — `feat: frontend unit test scaffolding (Vitest) + coverage script + CI
-      wiring`.** Vitest + `@testing-library/react` (or similar) added to `frontend/`, a
-      handful of real tests, `scripts/frontend-test-coverage.sh` (simplified from Charon),
-      `audit-ci` + `frontend/audit-ci.json` added to CI.
+- [x] **PR3 — `feat: frontend unit test scaffolding (Vitest) + coverage script + CI
+      wiring`.** Vitest + `@testing-library/react`/`jest-dom`/`user-event` added.
+      `scripts/frontend-test-coverage.sh` ported from Charon (simplified: no isolated
+      per-run coverage dir, single `HESTIA_MIN_COVERAGE` var). Two real test files:
+      `utils/recurrence.test.ts` (a 1:1 port of backend's recurrence table-tests — this file
+      is a faithful JS mirror of `recurrence.go`) and `api/client.test.ts` (mocked-`fetch`
+      coverage of the request wrapper: credentials, JSON body handling, 204/empty-body
+      handling, `ApiError` construction from both JSON and non-JSON error responses).
+      `audit-ci` + `frontend/audit-ci.json` added, wired into CI.
+      **Coverage provider note**: started with `@vitest/coverage-v8` (Vite 8's default) but
+      hit a real bug — with `coverage.all: true` + `include` (needed for an honest
+      whole-project number, not just the 2 tested files), v8's rolldown-based remap step
+      fails to parse `import type { ... }` in any `.tsx` file no test actually imported.
+      Switched to `@vitest/coverage-istanbul` instead (Charon keeps both as devDependencies
+      for exactly this kind of gap) — it instruments via Vite's normal transform pipeline,
+      which already handles TS/JSX fine, so it doesn't hit the same issue. Also needed the
+      same `@` → `src` path alias in `vitest.config.ts` that `vite.config.ts` has, since
+      istanbul's "load every source file for coverage" pass doesn't inherit it otherwise (only
+      surfaced once `all: true` started actually loading files no test imports, like `App.tsx`).
+      `coverage.txt`/`coverage.txt.bak` (backend) and `frontend/coverage/` gitignored.
+      **CI's coverage gate is expected to be red on this PR too** — honest whole-project
+      frontend coverage is ~7.7% once `all: true` correctly includes every untested
+      component/page, not just the 92% you'd see scoping to only the 2 tested files. PR6 is
+      the dedicated push to close this gap, same as PR2/PR5 on the backend side.
 - [ ] **PR4 — `feat: Codecov integration with 85% patch + project gates`.** `codecov.yml`
       (target 85%/85%, threshold 1%, Hestia's `ignore:` list per the research notes above),
       new `codecov-upload.yml` workflow (backend + frontend flags), CodeQL's `codeql.yml`
