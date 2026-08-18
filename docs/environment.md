@@ -12,6 +12,40 @@ sets its own fixed values for the containerized deployment), so setting them in 
 effect unless you're running the backend directly (`go run ./cmd/api`) or you edit
 `docker-compose.yml` yourself.
 
+## Precedence: `.env` vs. shell vs. `docker-compose.override.yml`
+
+There are two different mechanisms here, and they don't have the same precedence rules —
+picking the wrong one for a given variable silently does nothing, with no error.
+
+**`.env` only fills in `${VAR}` placeholders in `docker-compose.yml` — it isn't injected into
+the container directly.** There's no `env_file:` directive on the service, so a variable in
+`.env` only takes effect if `docker-compose.yml` actually references it as `${VAR}` somewhere
+(every variable in this doc already does; a new one wouldn't until wired in — see
+[CLAUDE.md](../CLAUDE.md)'s Conventions section). For that interpolation, in order of what
+wins:
+
+1. A shell/CLI-level variable (`FOO=x docker compose up`, or `export FOO=x` beforehand) —
+   **highest**.
+2. `.env` — used only if the shell didn't set it.
+3. The compose file's own `:-default` fallback (e.g. `${TZ:-UTC}`) — used only if neither of
+   the above set it.
+
+**A hardcoded value in `docker-compose.override.yml`'s `environment:` block always wins,
+full stop — including over a shell-exported variable.** This isn't interpolation at all:
+Compose merges the override file's `environment:` map over the base file's by key, *after*
+the base file's own `${VAR}` has already been resolved, so the override's literal string just
+replaces it outright. Verified directly: with `SMTP_HOST: hardcoded-value` written in
+`docker-compose.override.yml`, `SMTP_HOST=something-else docker compose up` still gets the
+hardcoded value — the shell variable is silently ignored for that key.
+
+**Practical rule: pick exactly one place per variable.** `docker-compose.override.yml.example`
+ships commented-out literal values for `BASE_URL`/`SMTP_*`/`ALLOW_PUBLIC_SIGNUP` as a
+convenience for personal, don't-commit values — but if you uncomment one there, `.env`
+becomes dead for that specific variable with no warning. For most setups, `.env` alone is
+simpler and sufficient; reach for the override file's `environment:` block only if you
+specifically want a value that survives even when something else sets the same variable in
+your shell (e.g. a systemd unit or CI environment that happens to export it).
+
 ## Required
 
 ### `AUTH_SECRET`
