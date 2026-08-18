@@ -1,195 +1,201 @@
-# Current spec: user invite system
+# Current spec: Definition of Done (DoD) toolchain
 
 Status: planning — no code written yet.
 Owner: Jeremy (product/review), Claude (implementation).
 Last updated: 2026-08-17.
 
-This document is the live spec for the in-progress feature. Update it as
-decisions change or steps land — it's the source of truth for "what are we
-building and why," not a historical record. Once the feature is fully
-merged to `main`, this file should be cleared out / replaced by the next
-feature's spec (see the Workflow section in `CLAUDE.md`).
+This document is the live spec for the in-progress feature. Update it as decisions change
+or steps land — it's the source of truth for "what are we building and why," not a
+historical record. Once the feature is fully merged to `main`, this file should be cleared
+out / replaced by the next feature's spec (see the Workflow section in `CLAUDE.md`).
+
+Supersedes the invite-system spec (all 7 of its PRs are merged to `development`; its content
+is preserved in git history at the commit before this file was overwritten).
 
 ## Goal
 
-A self-hoster (system admin) can invite other people to use their Hestia
-instance without sharing one login:
+Give Hestia the same engineering rigor Jeremy's other project, Charon
+(`/home/jeremy/Server/Projects/Charon`), already has — a real Definition of Done enforced by
+tooling, not just convention:
 
-- Invite someone as a **HoH (Head of Household)** who gets their own,
-  fully independent household — e.g. inviting a friend who doesn't want to
-  self-host but wants to run their own family's chore chart on your
-  instance, with zero visibility into your household or vice versa.
-- A HoH (or system admin, within their own household) can invite regular
-  **members** of their household by email, who set their own password on
-  accept instead of sharing the household's one login.
-- The existing no-email **managed profile** path (kid with no email
-  address, switch-only avatar, optional PIN) stays exactly as it is today
-  — invites are additive, not a replacement.
-- The admin/HoH who sent an invite gets notified when it's accepted.
+- **lefthook** for local git hooks: fast checks block every commit, a real build+test blocks
+  every push.
+- **CI for security**: CodeQL extended to Go (currently JS/TS only), `govulncheck` for Go
+  dependency vulnerabilities, `audit-ci` for npm dependency vulnerabilities — on top of the
+  Trivy/Grype container-image scanning that already exists in `docker-build.yml`.
+- **CI for unit tests + Codecov**, gated at **85% for both patch (changed-lines) and project
+  (whole-repo) coverage** — matching Charon exactly. Since Hestia has 0% coverage today, this
+  means: land the tooling, then immediately do a dedicated push to write backend + frontend
+  unit tests until both gates are actually at 85%, before relying on the gate day-to-day.
+- **A local patch-coverage preflight script**, ported/simplified from Charon's
+  `scripts/local-patch-report.sh` + `cmd/localpatchreport`, so a dev can check "will my patch
+  pass Codecov's gate" *before* pushing — documented in `CLAUDE.md` as a DoD step, to catch
+  failures locally instead of burning a CI round-trip.
+- **Playwright e2e**, no coverage gate (per decision below), but `CLAUDE.md` states new
+  features need e2e + unit coverage going forward. A dedicated push to build out e2e coverage
+  of the existing app (signup/login, avatar picker, chores, invites, admin/household
+  settings) before going deeper into new feature work, so regressions in what already exists
+  get caught.
+- `CLAUDE.md` updated throughout so this is documented, not just implemented — including that
+  when e2e specs are added/changed, only run the changed spec file(s) locally; let CI run the
+  full suite (it gets large fast, per Charon's ~125-file precedent).
 
-## Current state (as of this spec)
+## Research: what Charon actually does (condensed)
 
-- One household ↔ many `User` profiles. `POST /auth/signup` creates a
-  household plus its one login-capable `User` (`Role: admin`) in the same
-  call. All other profiles are switch-only, no email/password.
-- Two-tier session already exists: `hestia_session` (household JWT) +
-  `hestia_profile` (profile JWT). Middleware chain: `RequireHousehold` →
-  `RequireProfile` → `RequireAdmin`.
-- `HouseholdAuthService.Login` already queries `User` by email across the
-  whole table (not household-scoped), and `PasswordHash` is already a
-  per-`User` column, just unset for managed profiles. This means "every
-  user can have their own password" is mostly wiring, not a new backend
-  auth mechanism.
-- Nothing exists yet for: multi-household administration, invites, SMTP,
-  outbound notifications, or a system-wide admin distinct from a
-  household's owner.
+Full findings from a research pass over Charon are summarized here; see git history for the
+raw agent output if more detail is ever needed.
+
+- **lefthook.yml**: one blocking `pre-commit` pipeline (go vet, golangci-lint-fast, `tsc
+  --noEmit`, frontend lint — all fast, seconds-scale) plus manual/opt-in pipelines
+  (`testing` = full coverage runs, `lint-full` = slow linters, `codeql`, `security-full`).
+  **No pre-push hook exists in Charon at all** — coverage-gated tests are opt-in, not run on
+  every commit or push. `golangci-lint` blocks in the pre-commit hook but is
+  `continue-on-error: true` (advisory) in CI's `quality-checks.yml` — belt-and-suspenders,
+  not double-blocking.
+- **No commit-msg / conventional-commit hook** anywhere in Charon's lefthook — matches
+  Hestia's existing approach (PR-title-level enforcement only, via `pr-title-lint.yml`).
+- **Coverage scripts are whole-project, not patch**: `scripts/go-test-coverage.sh` (`go test
+  -race -coverprofile=coverage.txt ./...`, then computes line coverage via a hand-rolled awk
+  parse of the coverprofile, gates on `CHARON_MIN_COVERAGE` env var, default 87) and
+  `scripts/frontend-test-coverage.sh` (`vitest run --coverage`, gates on
+  `coverage-summary.json`'s `total.lines.pct`). Both scripts are marked deprecated upstream in
+  Charon (mid-migration to a skill-runner wrapper) but still what CI actually calls — port
+  the *logic*, not the deprecation-in-progress wrapper layer.
+- **Patch coverage is computed by Codecov's own service** from the uploaded coverage
+  report + `codecov.yml`'s `coverage.status.patch` section — none of the whole-project
+  scripts do diff-aware coverage. Charon's local *preflight mimic* of that same computation is
+  `scripts/local-patch-report.sh`, which shells out to a Go tool
+  (`backend/cmd/localpatchreport`) that correlates `git diff <baseline>` changed-line ranges
+  against the coverage profiles. Not wired into lefthook or CI — a standalone, dev-invoked
+  script. Hestia doesn't need the multi-module (backend+frontend+agent) plumbing Charon's
+  version has; a single-module reimplementation is enough.
+- **`.claude/commands/fix-patch-coverage.md`**: reactive only — takes a Codecov PR comment /
+  report link / file+line references as input and writes tests to close the gap. Not
+  automated pre-PR. Worth having an equivalent for Hestia, invoked manually when Codecov's PR
+  check actually fails.
+- **`codecov.yml`**: `target: 87%` for both `project` and `patch`, `threshold: 1%`,
+  `require_ci_to_pass: yes`, an extensive `ignore:` list (test files, e2e, docs, CI/config,
+  build artifacts, thin-wrapper-only packages like `internal/logger`/`internal/metrics`).
+  Hestia's equivalent ignore list: `backend/cmd/api/**` (entrypoint), any pure-wrapper part of
+  `backend/internal/database` (only if it's genuinely logic-free — don't blanket-exclude if it
+  has real migration/query logic), `frontend/vite.config.ts` / `vitest.config.ts` /
+  `playwright.config.ts` / `frontend/e2e/**`, plus the generic test-file/doc/CI-config
+  patterns.
+- **e2e**: root-level `playwright.config.js`, `testDir: './tests'`, `workers: 1` in CI
+  (serial — shared container state), `retries: 2` in CI, `baseURL` against the built Docker
+  container, browser projects (chromium/firefox/webkit) with an `auth.setup.ts` dependency
+  for storage-state reuse. Charon's CI (`e2e-tests-split.yml`) is 15 jobs (WAF-mode security
+  shard split + 4-way sharding × 3 browsers) — entirely N/A for Hestia; the useful pattern is
+  just: build the Docker image once, `docker compose up -d` + health-check poll, run
+  Playwright, one job per browser, no sharding needed at this scale.
+- **Additional CI security beyond Trivy/Grype**: CodeQL (`languages: [go,
+  javascript-typescript]`, `security-and-quality` queries — Hestia's existing `codeql.yml`
+  only has `javascript-typescript`, needs `go` added), `govulncheck` (Go vuln-DB scan, cheap
+  and high-value), `audit-ci` wrapping `npm audit` with a suppression config
+  (`frontend/audit-ci.json`). Semgrep exists in Charon but is likely redundant with CodeQL at
+  Hestia's scale — skip for now, can add later if wanted. `gosec` isn't used anywhere in
+  Charon (confirmed via grep) — don't bother porting.
 
 ## Decisions
 
-1. **Role split, two orthogonal axes, not three tiers on one axis.**
-   - `User.Role`: `hoh | member` (rename today's `admin` value to `hoh` —
-     same permissions as today, scoped to one household).
-   - `User.IsSystemAdmin bool`: new, platform-wide, independent of
-     household. Grants cross-household admin (invite HoHs, see every
-     household, manage instance-wide settings).
-   - A fresh self-hoster's first signup gets both (`hoh` of their own
-     household + `IsSystemAdmin: true`) — preserves today's behavior for
-     a single-household instance exactly.
-   - Boot-time backfill (idempotent code alongside `AutoMigrate`, not a
-     real migration system): any existing `Role: admin` row becomes
-     `Role: hoh, IsSystemAdmin: true` so upgraders keep access.
-
-2. **SMTP config: environment variables only, never DB/web UI.**
-   Rationale: SMTP credentials are a secret for an *external* system and
-   would have to be stored reversibly if editable at runtime — a new class
-   of secret sitting in the same sqlite file the README tells people to
-   "just copy to back up," plus new API surface that could leak it.
-   `AUTH_SECRET` already sets the precedent of "fail fast at boot if
-   unset." `BASE_URL` (needed to build invite links) follows the same
-   env-only pattern for the same reason.
-
-3. **Notification-channel config (Discord/ntfy/webhook/etc.): DB-backed,
-   editable in the web UI, system-admin-only.** Lower stakes than SMTP
-   (a leaked webhook URL lets someone post fake notifications, not access
-   an external account), and benefits from no-redeploy editability.
-
-4. **Notification scope for v1: notify the inviter when their invite is
-   accepted.** No per-user notification preferences — one system-wide
-   channel config is enough. Don't build a preferences system nobody has
-   asked for yet.
-
-5. **Public self-signup: `ALLOW_PUBLIC_SIGNUP` env var, default `false`.**
-   There are zero real users of this app yet (pre-launch), so default to
-   closed: nobody should be able to spin up a household on someone else's
-   found instance without being invited. An instance owner opts in
-   explicitly by setting it to `true`; once they do, the security
-   implications of open signup on their instance are theirs to own, not
-   ours. `AUTH_SECRET`-style fail-fast doesn't apply here since it's a
-   boolean toggle, not a missing-required-secret case — unset means
-   closed.
+1. **Coverage gate: both patch and project at 85%, matching Charon exactly.** Confirmed with
+   Jeremy despite Hestia's 0% starting point — accepting that CI is red on the coverage gate
+   until a dedicated backfill push lands (PR5/PR6 below), immediately following the tooling
+   PRs, rather than a softer ramp-up. Threshold `1%` (matches Charon) so small fluctuations
+   don't flap the gate.
+2. **`golangci-lint`: blocking in lefthook pre-commit, advisory (`continue-on-error: true`)
+   in CI.** Matches Charon. Rationale: it's already enforced locally before the commit exists;
+   CI re-running it in blocking mode would be redundant strictness for the common case and
+   only matters for a bypassed-hooks push, which CI's build/vet/test still catches on the
+   substance (lint is style/best-practice, not correctness).
+3. **Add a `pre-push` lefthook stage (Charon has none) — build + `go test`/`vitest run` +
+   frontend build, no coverage.** Requested explicitly ("lefthook... prevent CI from failing
+   as much as possible"). Coverage runs stay a deliberate, manual step (via
+   `lefthook run testing` or the patch-coverage preflight script) rather than blocking every
+   push — running full coverage on every push would be slow enough to actively discourage
+   pushing often.
+4. **e2e against the real Docker image (`docker compose up`), not dev servers.** Closer to
+   what a self-hoster actually runs; Hestia's `docker-compose.yml` already exists and is
+   simple, so this isn't meaningfully more CI setup than pointing at `vite dev` + `go run`.
+5. **Semgrep skipped for now.** Redundant with CodeQL at this scale per the research; revisit
+   if CodeQL's coverage proves insufficient in practice.
+6. **e2e test-running convention**: when a spec file is added or changed, only run that
+   file(s) locally (`npx playwright test <file>`); let CI run the full suite. Documented in
+   `CLAUDE.md` — e2e suites get large fast (Charon: ~125 spec files), and running the whole
+   thing locally on every edit doesn't scale.
 
 ## PR slicing (dependency-ordered)
 
-Each PR should build/vet/lint clean standalone. Check off as merged.
+Each PR should build/vet/lint clean standalone, same discipline as the invite-system PRs.
+Check off as merged.
 
-- [x] **PR1 — `feat: split admin into system-admin and household-owner
-      (hoh) roles`.** Model rename + `IsSystemAdmin`, boot-time backfill,
-      `RequireAdmin` → `RequireHoH` + new `RequireSystemAdmin` middleware,
-      frontend role-string updates. Pure foundation, no new user-facing
-      feature.
-- [x] **PR2 — `feat: SMTP config and mailer service`.** Env vars
-      (`BASE_URL`, `SMTP_HOST/PORT/USER/PASS/FROM/TLS`), fail-fast
-      validation, `mailer.go` (net/smtp), `.env.example`/
-      `docker-compose.yml` updates. Inert until PR4 uses it.
-- [x] **PR3 — `feat: wire go_notify_yourself for admin notifications`.**
-      Added `github.com/Wikid82/go_notify_yourself`, DB-backed
-      `NotificationSettings`, `notify_service.go` wrapper, system-admin
-      settings endpoints (`GET/PUT /api/admin/notification-settings`,
-      `POST .../test`), frontend `/admin` settings page. Scoped to the
-      seven HTTP-webhook-style providers (Discord, Slack, Gotify,
-      Pushover, ntfy, Telegram, generic webhook) — deliberately not the
-      module's "email" provider, since it wants an HTML-capable Mailer
-      and `services.Mailer` (PR2) is plain-text only; invite email itself
-      goes straight through `services.Mailer`, not through notify. Nobody
-      calls `NotifyService.Notify` yet — that lands with the invite
-      accept flow in PR4.
-- [x] **PR4 — `feat: invite data model and accept flow (backend)`.**
-      `models.Invite` (raw token sha256-hashed at rest, 7-day expiry,
-      status pending/accepted/revoked, expiry computed on read rather
-      than stored). `services.InviteService`: create (auto-revokes any
-      still-pending invite for the same email+household scope), public
-      preview by token, accept (creates the household+hoh or member
-      profile, logs the invitee straight in), list, revoke
-      (household-scoped for a HoH, unscoped for a system admin — any
-      system admin can revoke any hoh invite, resolving the spec's open
-      question). New endpoints: `POST/GET /api/admin/invites` +
-      `DELETE .../:id` (system-admin, hoh invites), `POST/GET
-      /api/members/invites` + `DELETE .../:id` (HoH, member invites for
-      their own household), public `GET /api/invites/:token` (preview)
-      and `POST /api/invites/:token/accept`. `ALLOW_PUBLIC_SIGNUP` gate
-      added to `POST /auth/signup` (default false, per Decision 5 — the
-      very first signup on a fresh instance always succeeds regardless,
-      so bootstrapping still works out of the box). Invite creation
-      requires SMTP to be configured (PR2) and fires an
-      `invite.accepted` notification on accept (PR3). No frontend yet —
-      that's PR5.
-- [x] **PR5 — `feat: invite UI (send + accept)`.** Admin "Invite a Head
-      of Household" section on `/admin` (email form + pending-invites
-      list with revoke), household "Invite a member by email" section on
-      `/household` alongside the existing no-email "Add a family member"
-      form (each now has explanatory copy on when to use which), public
-      `/invite/:token` accept page (shows household context for member
-      invites, collects a household name for hoh invites, logs the
-      invitee straight in via a new `acceptInvite` AuthContext action).
-      No separate "resend" endpoint — re-inviting the same email just
-      calls create again, which the backend already supersedes.
-- [x] **PR6 — `feat: self-serve password set/change on existing
-      profiles`.** Two endpoints: `PATCH /api/members/me/credentials`
-      (self-service — any active profile can set/change its own
-      email+password; requires `currentPassword` only if one is already
-      set) and `PATCH /api/members/:id/credentials` (HoH-only admin
-      override — sets/resets another member's login, no current password
-      needed). New `/account` page + nav link for every profile; new
-      "Set up login" / "Reset login" action in `MemberCard`'s edit mode
-      for HoH-managed members. Also fixed a latent bug this PR would
-      otherwise have made reachable: `MemberService.Delete` used to key
-      "undeletable" off "has a password set" (fine when only the founding
-      account ever had one) — now that any member can get a login, that
-      check is instead "would this leave the household with zero HoHs,"
-      which is the invariant that actually matters.
-- [x] **PR7 — `docs: multi-household/invite model, env vars, security
-      rationale`.** CLAUDE.md's "Product shape" section rewritten to
-      describe the multi-household/HoH/system-admin model, per-profile
-      auth, invites, and the SMTP-env-var-only /
-      notification-settings-DB-backed / closed-by-default-signup
-      rationale — this is now the permanent home for that reasoning,
-      since this spec file gets cleared out once the feature reaches
-      `main`. `.env.example` and `docker-compose.override.yml.example`
-      updated to point at CLAUDE.md instead of this file, and to show an
-      example of overriding SMTP/BASE_URL/ALLOW_PUBLIC_SIGNUP personally.
-      README updated (multi-household in "Planned features", a new
-      paragraph on invites/email setup in the Docker section). Decided
-      against adding a duplicate docker-compose.yml block to the README —
-      it would drift from the real file; the existing `git clone` +
-      `docker compose up -d` flow already uses the canonical file, and
-      the override-file pattern covers the "how do I customize this"
-      need without a second source of truth.
-      **Revised**: on reflection, `.env.example` inline rationale essays
-      didn't scale — added `docs/environment.md` as the single exhaustive
-      reference (every var: default, every option, Docker-Compose-
-      applicable or not) and cut `.env.example` down to a lean,
-      fully-commented-out pointer file. Every other pointer (CLAUDE.md
-      Conventions, `docker-compose.yml`/`docker-compose.override.yml*`
-      comments, backend doc comments in `config.go`/
-      `household_auth_service.go`/`models.go`) updated to match: `.env.example`
-      → `docs/environment.md` for "what does this var do," CLAUDE.md's
-      "Product shape" for "why is it designed this way." CLAUDE.md's
-      Conventions section now requires updating both `.env.example` and
-      `docs/environment.md` together whenever an env var changes.
+- [x] **PR1 — `chore: install lefthook with pre-commit and pre-push hooks`.** `lefthook.yml`
+      (pre-commit: `go vet`, golangci-lint-fast — new `.golangci-fast.yml` config, `tsc
+      --noEmit`, `npm run lint`; pre-push: `go build && go test ./...`, `npm run build`).
+      `backend/.golangci.yml` (full config) too, even though CI-wiring for it lands in PR2.
+      `scripts/pre-commit-hooks/golangci-lint-{fast,full}.sh` ported from Charon, simplified
+      to Hestia's single Go module (no backend+agent loop). README "Git hooks" section +
+      CLAUDE.md note on `lefthook install` as one-time setup, and not bypassing hooks with
+      `--no-verify`. Manually verified end to end: installed both binaries fresh, ran
+      `lefthook install`, triggered pre-commit against real staged `.go`/`.tsx` changes (all
+      4 jobs ran and passed, correctly skipped on unrelated file types), ran `lefthook run
+      pre-push` (build+test+build all passed). Full golangci-lint config surfaced 20
+      pre-existing findings across the current codebase — expected and left alone (CI runs it
+      advisory/`continue-on-error`, and the fast pre-commit config only reports issues on
+      lines actually touched, confirmed via `--new-from-rev HEAD` returning 0 issues with no
+      Go changes staged).
+- [ ] **PR2 — `feat: backend unit test scaffolding + coverage script + CI wiring`.**
+      `scripts/go-test-coverage.sh` (simplified from Charon: no encryption-key bootstrap, no
+      perf-assertion env vars, no cross-process coverage merge — just `go test -coverprofile`
+      + line-coverage computation), a handful of real unit tests proving the harness works
+      (recurrence-date calculation is the obvious first target per `CLAUDE.md`'s own existing
+      "add tests when there's logic worth protecting" note), golangci-lint added to CI
+      (`continue-on-error: true` per Decision 2), `govulncheck` step.
+- [ ] **PR3 — `feat: frontend unit test scaffolding (Vitest) + coverage script + CI
+      wiring`.** Vitest + `@testing-library/react` (or similar) added to `frontend/`, a
+      handful of real tests, `scripts/frontend-test-coverage.sh` (simplified from Charon),
+      `audit-ci` + `frontend/audit-ci.json` added to CI.
+- [ ] **PR4 — `feat: Codecov integration with 85% patch + project gates`.** `codecov.yml`
+      (target 85%/85%, threshold 1%, Hestia's `ignore:` list per the research notes above),
+      new `codecov-upload.yml` workflow (backend + frontend flags), CodeQL's `codeql.yml`
+      extended to include `go` in its language matrix. Gate will initially fail — expected,
+      per Decision 1 — until PR5/PR6 land.
+- [ ] **PR5 — `test: backend unit test coverage to 85%`.** Bulk test-writing pass across
+      `backend/internal/services` and `backend/internal/api/handlers` until project coverage
+      hits the gate. Likely the largest PR in this initiative; may get split further once the
+      actual gap is known (run the coverage script first to see where the gaps are before
+      committing to a specific sub-slice plan).
+- [ ] **PR6 — `test: frontend unit test coverage to 85%`.** Same idea, frontend side —
+      components, hooks, `api/*` modules.
+- [ ] **PR7 — `feat: Playwright e2e scaffolding + core-flow coverage`.** `playwright.config.ts`
+      (against the real Docker image per Decision 4), a new e2e CI workflow (build image once,
+      one job per browser — chromium at minimum, firefox/webkit if time allows — no sharding),
+      and an initial spec set covering the app's core flows as they exist today: signup/login,
+      avatar-picker/profile-switch, chore CRUD + completion, reward redemption, member
+      management, invite send/accept, admin notification settings. This is the "cover as much
+      of the code as possible before going deeper" pass the goal section calls for.
+- [ ] **PR8 — `docs: Definition of Done in CLAUDE.md`.** Consolidates everything above into a
+      DoD section in `CLAUDE.md`: what must pass before a PR is mergeable (lefthook clean,
+      unit + patch coverage ≥85%, e2e passing for touched flows), when to run the local
+      patch-coverage preflight script and how, the "new/changed e2e spec runs locally, full
+      suite runs in CI" convention, and "new features need unit + e2e coverage" as an ongoing
+      expectation, not just a one-time backfill. (Could land incrementally alongside each PR
+      above instead of as one final PR, similar to how PR7 wrapped up the invite-system docs —
+      decide based on how much actually accumulates.)
+- [ ] **PR9 (maybe) — `feat: local patch-coverage preflight script`.** Simplified port of
+      Charon's `local-patch-report.sh` + `cmd/localpatchreport` — single-module (no
+      backend+frontend+agent multi-report plumbing needed), diffs against `origin/development`
+      by default, computes patch coverage from freshly-generated coverage profiles, exits
+      non-zero if below 85% (advisory mode available via a flag/env var). Could fold into PR4
+      instead of standing alone — decide once PR4's actual scope is clearer.
 
 ## Open questions / not yet decided
 
-All resolved as of PR4 — see that entry above. (Token: crypto/rand
-32-byte, sha256 hash stored, raw token only ever in the emailed link and
-the create-invite API response. Expiry: 7 days. Revoke scope: any system
-admin can revoke any hoh invite.)
+- Exact split of PR5/PR6 (backend/frontend coverage backfill) — depends on how big the actual
+  gap turns out to be once the coverage scripts exist and report real numbers.
+- Whether PR8 (CLAUDE.md DoD write-up) lands as one PR or incrementally — see its own note
+  above.
+- Whether PR9 (patch-coverage preflight script) is its own PR or folds into PR4.
+- Whether to eventually add branch protection requiring these new checks — a GitHub repo
+  setting, not a code change; flagged for Jeremy to decide/action separately, not something
+  Claude should change unilaterally.

@@ -1,0 +1,46 @@
+# lefthook.yml — local git hooks, mirroring the shape of Charon's (see
+# docs/current_spec.md for the research this was based on and what was
+# deliberately left out).
+#
+# INSTALL (one-time per clone): lefthook install
+#
+# pre-commit: fast, blocking, every commit — seconds-scale checks only.
+# pre-push: build + test + build, blocking, every push — catches what CI
+#   would catch, before burning a CI round-trip. Charon has no pre-push
+#   hook at all; Hestia adds one deliberately (see Decision 3).
+# Manual pipelines (not run automatically — invoke with `lefthook run
+#   <name>`): coverage-gated tests and the full/slow lint set land here
+#   once they exist (docs/current_spec.md PR2/PR3), same as Charon —
+#   full coverage runs are too slow to block every commit or push.
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: go-vet
+      glob: "backend/**/*.go"
+      run: cd backend && go vet ./...
+
+    - name: golangci-lint-fast
+      glob: "backend/**/*.go"
+      run: scripts/pre-commit-hooks/golangci-lint-fast.sh
+
+    - name: frontend-type-check
+      glob: "frontend/**/*.{ts,tsx}"
+      run: cd frontend && npx tsc -b --noEmit
+
+    - name: frontend-lint
+      glob: "frontend/**/*.{ts,tsx,js,jsx}"
+      run: cd frontend && npm run lint
+
+pre-push:
+  jobs:
+    - name: backend-build-and-test
+      run: cd backend && go build ./... && go test ./...
+
+    - name: frontend-build
+      run: cd frontend && npm run build
+
+lint-full:
+  jobs:
+    - name: golangci-lint-full
+      run: scripts/pre-commit-hooks/golangci-lint-full.sh
