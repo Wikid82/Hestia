@@ -71,3 +71,18 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+      - run: npm run audit:ci
+
+      - name: Run tests with coverage
+        working-directory: .
+        run: ./scripts/frontend-test-coverage.sh
+        env:
+          HESTIA_MIN_COVERAGE: "85"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/lcov.info
+          retention-days: 7
