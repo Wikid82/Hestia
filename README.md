@@ -20,9 +20,15 @@ architecture decisions.
 
 ## Planned features (v1)
 
-- Household accounts with a shared login, and a tap-your-avatar picker for
-  whoever's actually using the screen (kid-friendly, no passwords required
-  for kids)
+- One instance can host multiple independent households with no
+  cross-visibility — self-host for your own family, and optionally invite
+  someone else to run their own household on the same instance
+- Every household has a Head of Household (HoH) who manages it; anyone can
+  have their own email/password login, or be a kid-friendly "managed
+  profile" switched into via a tap-your-avatar picker on a shared screen,
+  no password required
+- Invite people in by email instead of sharing one login; managed profiles
+  work too for kids without an email address
 - Optional PIN per person for restricted actions
 - Recurring chores (daily / weekly / custom schedule)
 - Points and streaks per person
@@ -57,6 +63,20 @@ Set `TZ` to your household's IANA timezone (e.g. `America/New_York`) —
 chore due-dates are computed from the container's local clock, so without
 it everything runs on UTC regardless of where you actually are, and chores
 flip to the next day at UTC midnight instead of local midnight.
+
+The first account you sign up with becomes that household's HoH and this
+instance's system admin. By default (`ALLOW_PUBLIC_SIGNUP=false`), nobody
+else can self-signup after that — everyone else joins by invite, sent from
+the admin/household settings screens once logged in. See `.env.example`
+for every option, including the optional `SMTP_*`/`BASE_URL` variables
+needed to actually send invite emails; without them, invites simply aren't
+available yet, but everything else works.
+
+For personal, host-specific overrides (a different data path, real SMTP
+credentials, opening signup on your own instance) rather than editing
+`docker-compose.yml` directly, copy `docker-compose.override.yml.example`
+to `docker-compose.override.yml` — Compose merges it automatically, and
+it's gitignored so your personal values never end up in a fork's history.
 
 ## Running behind a reverse proxy
 

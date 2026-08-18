@@ -61,13 +61,52 @@ adding a new external dependency) before just doing it.
 
 ## Product shape
 
-- **Users**: parents/admins who can log into a household account remotely,
-  plus kid profiles that don't need their own credentials for daily use.
-- **Auth model**: one household account (email/password) for remote access.
-  Once logged in, an avatar picker (Netflix-profile style) lets whoever's at
-  the shared screen select themselves. Each profile can optionally have a PIN
-  gating restricted actions (editing chores, redeeming points) — this is one
-  auth system, not two.
+- **Multi-household**: one Hestia instance can host several independent
+  households with no cross-visibility between them — e.g. a self-hoster
+  running their own family's chart can also invite a friend who doesn't
+  want to self-host, and that friend gets their own fully separate
+  household on the same instance.
+- **Roles are two orthogonal things, not a tier ladder**:
+  - `User.Role` (`hoh | member`) is scoped to one household. `hoh` (Head
+    of Household) has full control of their own household only — same
+    permissions the old single "admin" role had, just renamed and scoped.
+  - `User.IsSystemAdmin` is a separate, instance-wide bool, independent of
+    household. Grants cross-household administration (inviting new HoHs,
+    managing instance-wide settings like notifications). A fresh
+    instance's first-ever signup gets both — that's the self-hoster who
+    owns the instance. Anyone invited or signed up afterward just owns
+    their own household unless explicitly made a system admin.
+- **Auth model**: any profile can have its own email + password and log in
+  directly — not just one shared household login. A profile without one
+  (a "managed profile," e.g. a kid without an email address) is switched
+  into locally via a Netflix-style avatar picker on a shared/kiosk screen,
+  optionally PIN-gated. Either path works for any profile; a managed
+  profile can get its own login later (HoH sets it up, or the profile's
+  own user sets it up themselves once they're switched into it) via
+  `PATCH /members/:id/credentials` or `/members/me/credentials`.
+- **Invites**: the only way to join a household you weren't the first
+  signup on. A system admin invites a new HoH (who gets their own
+  independent household on accept); a HoH invites a member of their own
+  household by email. `ALLOW_PUBLIC_SIGNUP` (env var, default `false`)
+  gates open self-signup for every signup after the very first — closed
+  by default since there are no real users of this app yet and nobody
+  should be able to spin up a household on someone else's found instance
+  uninvited. The very first signup on a fresh instance always succeeds
+  regardless, so bootstrapping isn't blocked by this.
+- **Outbound email (SMTP) is env-var-only, never DB/web-UI-editable.**
+  SMTP credentials are a secret for an *external* system, and storing
+  them reversibly (they can't be one-way hashed like a login password —
+  the app has to actually use them to authenticate outbound) in the same
+  sqlite file this app tells people to "just copy to back up" would be a
+  real security downgrade from the `AUTH_SECRET`-style env-var pattern
+  already used here. `BASE_URL` (needed to build invite links) follows
+  the same env-only pattern for the same reason. Lower-stakes
+  notification-channel settings (Discord/Slack/ntfy/webhook/etc., used
+  for "a system admin gets pinged when an invite is accepted") are the
+  opposite call: DB-backed and system-admin-web-UI-editable, since a
+  leaked webhook URL only lets someone post fake notifications rather
+  than access an external account, and self-hosters benefit from
+  changing it without a redeploy.
 - **Chores**: can repeat (daily/weekly/weekdays/custom), can be assigned to a
   specific person or left open for anyone in the household to claim, and
   award points on completion. Points/streaks are the only gamification layer
