@@ -370,20 +370,58 @@ Check off as merged.
         this was built in has no passwordless sudo for the system-package step, but the browser
         ran headless fine regardless; CI's `ubuntu-latest` runner has sudo, so `--with-deps` stays
         in `e2e.yml` as originally planned.
-- [ ] **PR8 — `docs: Definition of Done in CLAUDE.md`.** Consolidates everything above into a
-      DoD section in `CLAUDE.md`: what must pass before a PR is mergeable (lefthook clean,
-      unit + patch coverage ≥85%, e2e passing for touched flows), when to run the local
-      patch-coverage preflight script and how, the "new/changed e2e spec runs locally, full
-      suite runs in CI" convention, and "new features need unit + e2e coverage" as an ongoing
-      expectation, not just a one-time backfill. (Could land incrementally alongside each PR
-      above instead of as one final PR, similar to how PR7 wrapped up the invite-system docs —
-      decide based on how much actually accumulates.)
-- [ ] **PR9 (maybe) — `feat: local patch-coverage preflight script`.** Simplified port of
-      Charon's `local-patch-report.sh` + `cmd/localpatchreport` — single-module (no
-      backend+frontend+agent multi-report plumbing needed), diffs against `origin/development`
-      by default, computes patch coverage from freshly-generated coverage profiles, exits
-      non-zero if below 85% (advisory mode available via a flag/env var). Could fold into PR4
-      instead of standing alone — decide once PR4's actual scope is clearer.
+- [x] **PR8 — `docs: Definition of Done in CLAUDE.md + local patch-coverage preflight script`
+      (folds in PR9).** Decided: PR9 folded into PR8 rather than standing alone, since PR8's doc
+      text references the preflight script by name and would be inaccurate if the script didn't
+      exist yet — no benefit to two mini-PRs for tightly-coupled work.
+      - **`scripts/local-patch-report.sh`**: simplified single-module port of Charon's
+        `local-patch-report.sh` + `cmd/localpatchreport`. `git diff --unified=0 <merge-base
+        of $BASE and HEAD>...HEAD` (default base `origin/development`, `--base <ref>` override)
+        scoped to the same file set `codecov.yml`'s `ignore:` list excludes; regenerates fresh
+        coverage profiles by shelling out to `go-test-coverage.sh`/`frontend-test-coverage.sh`
+        with `HESTIA_MIN_COVERAGE=0` (so their own project-wide gate never aborts this script —
+        only a genuinely missing profile does); a Python correlator (matching the existing
+        `frontend-test-coverage.sh` precedent of inline Python for anything beyond trivial
+        parsing) cross-references changed lines against Go's `mode: set` cover-profile block
+        ranges and the frontend's `lcov.info` `DA:` lines, and reports per-file + overall patch
+        coverage — the same number Codecov's `patch` gate computes from the diff, not project
+        coverage. Default `HESTIA_MIN_COVERAGE=85`; `HESTIA_PATCH_ADVISORY=1` reports without
+        the non-zero exit.
+      - **Verified for real, not just "runs without crashing"**: added a small real function to
+        both `backend/internal/services/recurrence.go` and `frontend/src/utils/recurrence.ts`
+        with a test covering only one of its two branches, committed it temporarily, ran the
+        script, and hand-verified the reported numbers against the actual diff (backend 4/5
+        lines, frontend 2/3 lines, both matching manual line-by-line counts), confirmed
+        `--base` and `HESTIA_PATCH_ADVISORY=1` both behave correctly (advisory suppresses the
+        non-zero exit but still prints FAIL), then reverted the temporary probe functions —
+        confirmed via `git status`/`git diff` that no trace of them remains.
+      - **Two real bugs caught during that verification, fixed before merge**: (1) the git
+        pathspecs (`backend/*.go`, `frontend/src/*.ts`) only matched top-level files — glob `*`
+        doesn't cross `/` — so any file in a subdirectory (i.e. almost everything) was silently
+        excluded from the diff entirely; fixed to `backend/**/*.go` etc. (2) the correlation step
+        double-stripped the `backend/` path prefix (once when normalizing the Go profile's
+        `hestia/backend/...` paths, again when looking up the diff's `backend/...` path against
+        that already-stripped map), so backend files never matched their own coverage data even
+        though both maps were individually correct — fixed by comparing the diff path directly
+        against the already-normalized profile key. Both were the kind of bug that "looks like
+        it works" (script runs, exits 0, prints a report) without visibly failing — the only way
+        to catch either was hand-verifying real numbers against a real diff, not just checking
+        the script didn't crash.
+      - `shellcheck` isn't installed in this environment — skipped rather than attempting to
+        install it; `bash -n` syntax-checked clean and the script matches the existing
+        `scripts/*.sh` header-comment/structure convention.
+      - **`CLAUDE.md` DoD section** (before `## Subagents`): what must pass before a PR is
+        mergeable (lefthook, coverage gates with the preflight script call-out, e2e for touched
+        flows, security scanning), and "new features need unit + e2e coverage" as an ongoing
+        expectation, not a one-time backfill.
+      - Landed as one PR (not incrementally) since the DoD section only makes sense to write
+        once every piece it references — lefthook, coverage gates, e2e, and now the preflight
+        script — actually exists. `cd backend && go build ./... && go vet ./...` and
+        `cd frontend && npm run lint && npm run build` all clean.
+      - **This was the last planned PR in this initiative.** Once merged to `development`,
+        PR1–PR8 close out the DoD toolchain goal in full. Per this file's own header, the
+        replacement with the next feature's spec happens once merged to `main` (this merges to
+        `development` first) — not done here, left for whoever picks up the next initiative.
 
 ## Open questions / not yet decided
 

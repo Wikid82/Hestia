@@ -154,12 +154,10 @@ adding a new external dependency) before just doing it.
   for hypothetical future options. Three similar lines beat a premature
   helper.
 - Before calling a feature done: run `cd backend && go build ./... && go vet
-  ./...` and `cd frontend && npm run build && npm run lint`. There's no test
-  suite yet — don't add one speculatively; add tests when there's logic
-  worth protecting (e.g. recurrence-date calculation), not for CRUD
-  boilerplate. (A Definition of Done — unit/e2e coverage gates, CI security
-  scanning — is in progress; see `docs/current_spec.md` until it lands as
-  its own section here.)
+  ./...` and `cd frontend && npm run build && npm run lint`. See the
+  Definition of Done section below for the full bar (coverage, e2e) that
+  applies before a PR is mergeable, not just before you consider it done
+  in the moment.
 - Local git hooks via [lefthook](https://github.com/evilmartians/lefthook)
   enforce `go vet`/`golangci-lint`/`tsc --noEmit`/`eslint` on every commit
   and a full build+test on every push — see the README's "Git hooks"
@@ -174,6 +172,52 @@ adding a new external dependency) before just doing it.
   it does) in the same change. `.env.example` points to that doc rather
   than explaining each variable inline, so don't let the two drift —
   a variable missing from either one is a bug.
+
+## Definition of Done
+
+Every PR is expected to clear this bar before it's mergeable — not just
+"build and vet pass," the full set:
+
+- **lefthook clean.** `pre-commit` (`go vet`, golangci-lint-fast, `tsc
+  --noEmit`, `eslint`) and `pre-push` (`go build && go test ./...`, `npm run
+  build`) both pass. Don't bypass with `--no-verify`; see the Conventions
+  note above.
+- **Unit coverage ≥85%, both patch and project.** Codecov enforces this on
+  every PR (`codecov.yml`: `project` and `patch`, both `target: 85%,
+  threshold: 1%`) — backend via `scripts/go-test-coverage.sh`, frontend via
+  `scripts/frontend-test-coverage.sh`. Before pushing, run
+  `scripts/local-patch-report.sh` to check the *patch* number locally —
+  it diffs your branch against `origin/development`, generates fresh
+  coverage profiles, and reports the same changed-lines coverage number
+  Codecov's patch gate computes, so a real gap shows up before a CI
+  round-trip instead of after. Write real tests to close gaps for real —
+  no padding, no vacuous assertions just to move a number (see PR5/PR6 in
+  git history for the standard: every test should assert something a real
+  bug could break). If a gap looks architecturally irreducible, exhaust
+  legitimate options (including things like table-scoped fault injection —
+  see `backend/internal/testutil/fault.go`) before accepting it, and
+  document why if it's ever accepted.
+- **e2e passing for any flow your change touches.** `frontend/e2e/*.spec.ts`
+  (Playwright, `frontend/playwright.config.ts`) runs against the real
+  Docker image via `docker-compose.e2e.yml`, not dev servers — closer to
+  what a self-hoster actually runs. No coverage gate on e2e, but **new
+  features need both unit and e2e coverage** — a feature that only has
+  unit tests around its logic but no e2e spec exercising it through the
+  real UI isn't done. When you add or edit a spec file, only run that
+  file locally (`cd frontend && npx playwright test e2e/<file>.spec.ts`);
+  let CI run the full suite (`.github/workflows/e2e.yml`) — the suite gets
+  large fast (Charon's equivalent is ~125 spec files) and running
+  everything locally on every edit doesn't scale. `frontend/e2e/fixtures/`
+  has the shared helpers (`household.ts` for a fresh isolated household
+  via the real signup UI, `mailpit.ts` for reading invite emails out of
+  the disposable SMTP catcher) — reuse them rather than re-deriving the
+  same setup per spec.
+- **Security scanning clean or triaged.** CodeQL (`go` +
+  `javascript-typescript`), `govulncheck` (Go deps), `audit-ci` (npm deps)
+  all run in CI; Trivy/Grype scan the built container image in
+  `docker-build.yml`. golangci-lint is advisory in CI
+  (`continue-on-error: true`) since it's already blocking locally via
+  lefthook.
 
 ## Subagents
 
