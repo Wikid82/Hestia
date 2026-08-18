@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -104,7 +105,13 @@ func (d *Deps) ForgotPassword(c *gin.Context) {
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 	if d.Mailer.IsConfigured() {
 		if reset, rawToken, err := d.PasswordReset.CreateReset(email); err == nil && reset != nil {
-			_ = d.sendPasswordResetEmail(email, rawToken)
+			// The client only ever sees a generic 200 (see the doc comment
+			// above — no email enumeration), so a delivery failure has to
+			// surface here instead, or a self-hoster with a broken SMTP
+			// config would have no way to diagnose it.
+			if sendErr := d.sendPasswordResetEmail(email, rawToken); sendErr != nil {
+				log.Printf("password reset: failed to send email: %v", sendErr)
+			}
 		}
 	}
 
