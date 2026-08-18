@@ -136,7 +136,7 @@ type RewardRedemption struct {
 // Deliberately DB-backed and web-UI-editable, unlike SMTP: these are
 // lower-stakes credentials (a leaked webhook URL lets someone post fake
 // notifications, not access an external account) and benefit from
-// no-redeploy editability. See docs/current_spec.md.
+// no-redeploy editability. See CLAUDE.md's "Product shape" section.
 type NotificationSettings struct {
 	ID         string    `gorm:"primaryKey" json:"id"`
 	Provider   string    `json:"provider"`

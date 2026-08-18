@@ -17,3 +17,20 @@ services:
   hestia:
     volumes:
       - /srv/appdata/hestia:/data
+    # Real SMTP credentials and your instance's real public URL are exactly
+    # the kind of personal, don't-commit values this override file is for —
+    # putting them here instead of docker-compose.yml keeps them out of git
+    # even if you fork/commit changes to the base file. All optional; see
+    # docs/environment.md for what each one does. Uncomment and fill in to
+    # enable the invite system's outbound email.
+    # environment:
+    #   BASE_URL: https://hestia.example.com
+    #   SMTP_SERVER: smtp.example.com
+    #   SMTP_PORT: "587"
+    #   SMTP_USERNAME: hestia@example.com
+    #   SMTP_PASSWORD: changeme
+    #   SMTP_FROM: hestia@example.com
+    #   SMTP_USE_TLS: "false"
+    #   # Only if you want every signup after the first to stay open —
+    #   # closed by default, see docs/environment.md.
+    #   ALLOW_PUBLIC_SIGNUP: "false"

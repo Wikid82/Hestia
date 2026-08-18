@@ -157,10 +157,35 @@ Each PR should build/vet/lint clean standalone. Check off as merged.
       account ever had one) — now that any member can get a login, that
       check is instead "would this leave the household with zero HoHs,"
       which is the invariant that actually matters.
-- [ ] **PR7 — `docs: multi-household/invite model, env vars, security
-      rationale`.** README, `.env.example`, CLAUDE.md updates explaining
-      the SMTP-env-var and closed-by-default-signup decisions so they
-      aren't re-litigated later.
+- [x] **PR7 — `docs: multi-household/invite model, env vars, security
+      rationale`.** CLAUDE.md's "Product shape" section rewritten to
+      describe the multi-household/HoH/system-admin model, per-profile
+      auth, invites, and the SMTP-env-var-only /
+      notification-settings-DB-backed / closed-by-default-signup
+      rationale — this is now the permanent home for that reasoning,
+      since this spec file gets cleared out once the feature reaches
+      `main`. `.env.example` and `docker-compose.override.yml.example`
+      updated to point at CLAUDE.md instead of this file, and to show an
+      example of overriding SMTP/BASE_URL/ALLOW_PUBLIC_SIGNUP personally.
+      README updated (multi-household in "Planned features", a new
+      paragraph on invites/email setup in the Docker section). Decided
+      against adding a duplicate docker-compose.yml block to the README —
+      it would drift from the real file; the existing `git clone` +
+      `docker compose up -d` flow already uses the canonical file, and
+      the override-file pattern covers the "how do I customize this"
+      need without a second source of truth.
+      **Revised**: on reflection, `.env.example` inline rationale essays
+      didn't scale — added `docs/environment.md` as the single exhaustive
+      reference (every var: default, every option, Docker-Compose-
+      applicable or not) and cut `.env.example` down to a lean,
+      fully-commented-out pointer file. Every other pointer (CLAUDE.md
+      Conventions, `docker-compose.yml`/`docker-compose.override.yml*`
+      comments, backend doc comments in `config.go`/
+      `household_auth_service.go`/`models.go`) updated to match: `.env.example`
+      → `docs/environment.md` for "what does this var do," CLAUDE.md's
+      "Product shape" for "why is it designed this way." CLAUDE.md's
+      Conventions section now requires updating both `.env.example` and
+      `docs/environment.md` together whenever an env var changes.
 
 ## Open questions / not yet decided
 

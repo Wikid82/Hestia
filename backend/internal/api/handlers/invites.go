@@ -65,7 +65,7 @@ func inviteCreationErrorStatus(err error) int {
 // independent household on accept. System-admin-only.
 func (d *Deps) CreateHoHInvite(c *gin.Context) {
 	if !d.Mailer.IsConfigured() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "outbound email is not configured on this instance (set SMTP_HOST/SMTP_PORT/SMTP_FROM and BASE_URL)"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "outbound email is not configured on this instance (set SMTP_SERVER/SMTP_PORT/SMTP_FROM and BASE_URL)"})
 		return
 	}
 	var req createInviteRequest
@@ -119,7 +119,7 @@ func (d *Deps) RevokeHoHInvite(c *gin.Context) {
 // path. HoH-only, scoped to their own household.
 func (d *Deps) CreateMemberInvite(c *gin.Context) {
 	if !d.Mailer.IsConfigured() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "outbound email is not configured on this instance (set SMTP_HOST/SMTP_PORT/SMTP_FROM and BASE_URL)"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "outbound email is not configured on this instance (set SMTP_SERVER/SMTP_PORT/SMTP_FROM and BASE_URL)"})
 		return
 	}
 	var req createInviteRequest
