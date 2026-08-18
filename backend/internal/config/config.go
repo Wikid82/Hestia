@@ -40,7 +40,7 @@ type Config struct {
 // "just copy to back up" would be a meaningfully worse security posture
 // than the current AUTH_SECRET-style env-var pattern.
 type SMTPConfig struct {
-	Host     string
+	Server   string
 	Port     string
 	Username string // optional: some relays don't require auth
 	Password string // optional: see Username
@@ -104,17 +104,17 @@ func Load() (*Config, error) {
 // a half-configured mail setup would fail silently at send time
 // otherwise.
 func loadSMTPConfig(baseURL string) (*SMTPConfig, error) {
-	host := os.Getenv("SMTP_HOST")
+	server := os.Getenv("SMTP_SERVER")
 	portStr := os.Getenv("SMTP_PORT")
 	username := os.Getenv("SMTP_USERNAME")
 	password := os.Getenv("SMTP_PASSWORD")
 	from := os.Getenv("SMTP_FROM")
 
-	if host == "" && portStr == "" && from == "" && username == "" && password == "" {
+	if server == "" && portStr == "" && from == "" && username == "" && password == "" {
 		return nil, nil
 	}
-	if host == "" || portStr == "" || from == "" {
-		return nil, fmt.Errorf("SMTP_HOST, SMTP_PORT, and SMTP_FROM must all be set together to enable outbound email (SMTP_USERNAME/SMTP_PASSWORD are optional, for relays that don't require auth)")
+	if server == "" || portStr == "" || from == "" {
+		return nil, fmt.Errorf("SMTP_SERVER, SMTP_PORT, and SMTP_FROM must all be set together to enable outbound email (SMTP_USERNAME/SMTP_PASSWORD are optional, for relays that don't require auth)")
 	}
 	if baseURL == "" {
 		return nil, fmt.Errorf("BASE_URL must be set when SMTP is configured — it's used to build links (e.g. invite-accept links) in outbound email")
@@ -126,7 +126,7 @@ func loadSMTPConfig(baseURL string) (*SMTPConfig, error) {
 	}
 
 	return &SMTPConfig{
-		Host:     host,
+		Server:   server,
 		Port:     portStr,
 		Username: username,
 		Password: password,

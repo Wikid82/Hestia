@@ -25,7 +25,7 @@ services:
     # enable the invite system's outbound email.
     # environment:
     #   BASE_URL: https://hestia.example.com
-    #   SMTP_HOST: smtp.example.com
+    #   SMTP_SERVER: smtp.example.com
     #   SMTP_PORT: "587"
     #   SMTP_USERNAME: hestia@example.com
     #   SMTP_PASSWORD: changeme

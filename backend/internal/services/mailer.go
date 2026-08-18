@@ -32,15 +32,15 @@ func (m *Mailer) IsConfigured() bool {
 // of relying on this one.
 func (m *Mailer) Send(to, subject, body string) error {
 	if !m.IsConfigured() {
-		return fmt.Errorf("outbound email is not configured (SMTP_HOST/SMTP_PORT/SMTP_FROM unset)")
+		return fmt.Errorf("outbound email is not configured (SMTP_SERVER/SMTP_PORT/SMTP_FROM unset)")
 	}
 
 	msg := buildMessage(m.cfg.From, to, subject, body)
-	addr := net.JoinHostPort(m.cfg.Host, m.cfg.Port)
+	addr := net.JoinHostPort(m.cfg.Server, m.cfg.Port)
 
 	var auth smtp.Auth
 	if m.cfg.Username != "" {
-		auth = smtp.PlainAuth("", m.cfg.Username, m.cfg.Password, m.cfg.Host)
+		auth = smtp.PlainAuth("", m.cfg.Username, m.cfg.Password, m.cfg.Server)
 	}
 
 	// SMTP_USE_TLS true (the default) means connect via implicit TLS, the
@@ -51,11 +51,11 @@ func (m *Mailer) Send(to, subject, body string) error {
 		return smtp.SendMail(addr, auth, m.cfg.From, []string{to}, msg)
 	}
 
-	conn, err := tls.Dial("tcp", addr, &tls.Config{ServerName: m.cfg.Host})
+	conn, err := tls.Dial("tcp", addr, &tls.Config{ServerName: m.cfg.Server})
 	if err != nil {
 		return fmt.Errorf("connecting to SMTP server: %w", err)
 	}
-	client, err := smtp.NewClient(conn, m.cfg.Host)
+	client, err := smtp.NewClient(conn, m.cfg.Server)
 	if err != nil {
 		return fmt.Errorf("starting SMTP session: %w", err)
 	}

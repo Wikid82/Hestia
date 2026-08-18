@@ -21,7 +21,7 @@ services:
       # these all resolve to empty strings and the server runs with
       # email-dependent features (e.g. invites) unavailable.
       BASE_URL: ${BASE_URL:-}
-      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_SERVER: ${SMTP_SERVER:-}
       SMTP_PORT: ${SMTP_PORT:-}
       SMTP_USERNAME: ${SMTP_USERNAME:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}

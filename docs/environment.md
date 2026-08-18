@@ -34,8 +34,8 @@ wins:
 full stop — including over a shell-exported variable.** This isn't interpolation at all:
 Compose merges the override file's `environment:` map over the base file's by key, *after*
 the base file's own `${VAR}` has already been resolved, so the override's literal string just
-replaces it outright. Verified directly: with `SMTP_HOST: hardcoded-value` written in
-`docker-compose.override.yml`, `SMTP_HOST=something-else docker compose up` still gets the
+replaces it outright. Verified directly: with `SMTP_SERVER: hardcoded-value` written in
+`docker-compose.override.yml`, `SMTP_SERVER=something-else docker compose up` still gets the
 hardcoded value — the shell variable is silently ignored for that key.
 
 **Practical rule: pick exactly one place per variable.** `docker-compose.override.yml.example`
@@ -108,7 +108,7 @@ All of this is optional. Leave everything below unset to run without outbound em
 entirely — every other feature works fine without it, but invites can't be sent (there'd be
 no way to deliver the invite link).
 
-If you set any of `SMTP_HOST`/`SMTP_PORT`/`SMTP_FROM`, you must set all three
+If you set any of `SMTP_SERVER`/`SMTP_PORT`/`SMTP_FROM`, you must set all three
 (`SMTP_USERNAME`/`SMTP_PASSWORD` are only required if your relay needs auth) **and**
 `BASE_URL`, or the server refuses to start — better to fail fast at boot than silently never
 send an email.
@@ -119,7 +119,7 @@ send an email.
 - The externally-reachable URL of this instance, e.g. `https://hestia.example.com`. Used to
   build links (invite-accept links) in outbound email.
 
-### `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`
+### `SMTP_SERVER`, `SMTP_PORT`, `SMTP_FROM`
 
 - **Default**: none. Must all be set together to enable outbound email.
 - Your SMTP relay's hostname, port, and the "From" address Hestia sends as.
