@@ -144,13 +144,22 @@ Check off as merged.
       advisory/`continue-on-error`, and the fast pre-commit config only reports issues on
       lines actually touched, confirmed via `--new-from-rev HEAD` returning 0 issues with no
       Go changes staged).
-- [ ] **PR2 — `feat: backend unit test scaffolding + coverage script + CI wiring`.**
+- [x] **PR2 — `feat: backend unit test scaffolding + coverage script + CI wiring`.**
       `scripts/go-test-coverage.sh` (simplified from Charon: no encryption-key bootstrap, no
-      perf-assertion env vars, no cross-process coverage merge — just `go test -coverprofile`
-      + line-coverage computation), a handful of real unit tests proving the harness works
-      (recurrence-date calculation is the obvious first target per `CLAUDE.md`'s own existing
-      "add tests when there's logic worth protecting" note), golangci-lint added to CI
-      (`continue-on-error: true` per Decision 2), `govulncheck` step.
+      perf-assertion env vars, no cross-process coverage merge — `go test -race
+      -coverprofile` + `go tool cover -func`'s own aggregate percentage rather than
+      reimplementing Charon's hand-rolled line-coverage awk parse, since Codecov computes its
+      own authoritative number from the uploaded profile regardless). Real test-failure exit
+      codes take priority over the coverage verdict. Two new test files prove the harness:
+      `recurrence_test.go` (table-driven, all of `IsChoreDueOn`/`DescribeRecurrence`/
+      `DueDatesInRange`/day parsing — the pure logic `CLAUDE.md` already called out as worth
+      protecting) and `auth_service_test.go` (JWT sign/verify round-trips, expiry rejection,
+      wrong-secret rejection, bcrypt hash/verify, salting behavior). CI: coverage script
+      wired in (gated at `HESTIA_MIN_COVERAGE=85`, uploads `coverage.txt` as a build
+      artifact), golangci-lint added (`continue-on-error: true` per Decision 2),
+      `govulncheck` step. **CI's coverage gate is expected to be red on this PR and PR3** —
+      current backend coverage is ~6%; PR5 is the dedicated push to close that gap, per
+      Decision 1.
 - [ ] **PR3 — `feat: frontend unit test scaffolding (Vitest) + coverage script + CI
       wiring`.** Vitest + `@testing-library/react` (or similar) added to `frontend/`, a
       handful of real tests, `scripts/frontend-test-coverage.sh` (simplified from Charon),

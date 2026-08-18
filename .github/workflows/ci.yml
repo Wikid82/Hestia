@@ -23,7 +23,36 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       - run: test -z "$(gofmt -l .)"
-      - run: go test ./...
+
+      - name: Run tests with coverage
+        working-directory: .
+        run: ./scripts/go-test-coverage.sh
+        env:
+          HESTIA_MIN_COVERAGE: "85"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: backend-coverage
+          path: backend/coverage.txt
+          retention-days: 7
+
+      # Advisory only (continue-on-error) — already blocking via lefthook's
+      # pre-commit hook for anyone who hasn't bypassed it; see
+      # docs/current_spec.md Decision 2 for why this isn't double-blocking.
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.12.2
+          working-directory: backend
+          args: --timeout=5m
+        continue-on-error: true
+
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
   frontend:
     runs-on: ubuntu-latest
