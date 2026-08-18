@@ -9,6 +9,14 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    env:
+      # docker-compose.yml's base AUTH_SECRET is a required (`:?`) variable
+      # interpolated from the shell environment before docker-compose.e2e.yml's
+      # override ever merges in — so compose fails at parse time on a CI
+      # runner with no .env file, even though the override replaces this
+      # value with its own literal AUTH_SECRET for the actual container.
+      # Any non-empty placeholder satisfies the base file's interpolation.
+      AUTH_SECRET: unused-placeholder-overridden-by-docker-compose.e2e.yml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
