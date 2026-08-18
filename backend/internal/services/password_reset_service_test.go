@@ -113,6 +113,40 @@ func TestPasswordResetService_CreateReset_SupersedesPriorPending(t *testing.T) {
 	}
 }
 
+func TestPasswordResetService_CreateReset_UserLookupDBErrorPropagates(t *testing.T) {
+	db := testutil.NewDB(t)
+	svc := services.NewPasswordResetService(db)
+	testutil.PoisonTable(db, "users")
+
+	_, _, err := svc.CreateReset("whoever@example.com")
+	if err == nil {
+		t.Error("expected a DB error to propagate from the user lookup")
+	}
+}
+
+func TestPasswordResetService_CreateReset_SupersedeUpdateDBErrorPropagates(t *testing.T) {
+	db := testutil.NewDB(t)
+	svc := services.NewPasswordResetService(db)
+	user := mustCreateUser(t, db, "supersede-fail@example.com", "password123")
+	testutil.PoisonTable(db, "password_resets")
+
+	_, _, err := svc.CreateReset(*user.Email)
+	if err == nil {
+		t.Error("expected a DB error to propagate when superseding a prior pending reset fails")
+	}
+}
+
+func TestPasswordResetService_Reset_LookupDBErrorPropagates(t *testing.T) {
+	db := testutil.NewDB(t)
+	svc := services.NewPasswordResetService(db)
+	testutil.PoisonTable(db, "password_resets")
+
+	err := svc.Reset("whatever-token", "brand-new-password")
+	if err == nil || err == services.ErrPasswordResetNotFound {
+		t.Errorf("err = %v, want a generic DB error (not ErrPasswordResetNotFound)", err)
+	}
+}
+
 func TestPasswordResetService_Reset_UnknownTokenReturnsNotFound(t *testing.T) {
 	db := testutil.NewDB(t)
 	svc := services.NewPasswordResetService(db)

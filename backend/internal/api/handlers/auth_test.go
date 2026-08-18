@@ -203,6 +203,29 @@ func TestForgotPassword_SendsResetEmail(t *testing.T) {
 	}
 }
 
+func TestForgotPassword_MissingEmailRejected(t *testing.T) {
+	app := testutil.New(t)
+	client := app.Client(t)
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/forgot-password", map[string]any{}, nil)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("missing email: status = %d, want 400", resp.StatusCode)
+	}
+}
+
+func TestForgotPassword_SMTPNotConfiguredStillReturnsOK(t *testing.T) {
+	app := testutil.NewWithOptions(t, testutil.Options{SMTPUnconfigured: true})
+	testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	client := app.Client(t)
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/forgot-password", map[string]any{
+		"email": "admin@example.com",
+	}, nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("forgot-password with SMTP unconfigured: status = %d, want 200 (no config leak)", resp.StatusCode)
+	}
+}
+
 func TestForgotPassword_UnknownEmailStillReturnsOK(t *testing.T) {
 	app := testutil.New(t)
 	client := app.Client(t)
@@ -252,6 +275,41 @@ func TestResetPassword_Success(t *testing.T) {
 	}, nil)
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("login with new password after reset: status = %d, want 200", resp.StatusCode)
+	}
+}
+
+func TestResetPassword_MissingFieldsRejected(t *testing.T) {
+	app := testutil.New(t)
+	client := app.Client(t)
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/reset-password", map[string]any{}, nil)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("missing token/password: status = %d, want 400", resp.StatusCode)
+	}
+}
+
+func TestResetPassword_UnexpectedDBErrorReturns500(t *testing.T) {
+	app := testutil.New(t)
+	testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	client := app.Client(t)
+	testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/forgot-password", map[string]any{
+		"email": "admin@example.com",
+	}, nil)
+	token := testutil.LastPasswordResetToken(t, app.SMTP)
+
+	// Reset's final step updates the users table — poisoning its writes
+	// only (not reads, since other requests on this connection still
+	// touch "users") surfaces the generic 500 branch that isn't one of
+	// the three sentinel PasswordReset errors.
+	testutil.PoisonTableWrites(app.DB, "users")
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/auth/reset-password", map[string]any{
+		"token":    token,
+		"password": "brand-new-password",
+	}, nil)
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Errorf("reset-password with a poisoned users table: status = %d, want 500", resp.StatusCode)
 	}
 }
 

@@ -51,6 +51,12 @@ type Options struct {
 	// New) — set false explicitly (via NewWithOptions) to test the
 	// closed-by-default signup gate itself.
 	AllowPublicSignup *bool
+	// SMTPUnconfigured, when true, wires up the Mailer with a nil SMTP
+	// config instead of the fake SMTP listener — for exercising the
+	// "outbound email isn't configured on this instance" branches (e.g.
+	// forgot-password still returning a generic 200 rather than leaking
+	// server config to an unauthenticated caller).
+	SMTPUnconfigured bool
 }
 
 // New starts a fresh App (public signup open) for the duration of the
@@ -83,11 +89,14 @@ func NewWithOptions(t *testing.T, opts Options) *App {
 	authService := services.NewAuthService("test-auth-secret")
 
 	baseURL := "http://localhost:5173"
-	mailerCfg := &config.SMTPConfig{
-		Server: host,
-		Port:   port,
-		From:   "hestia@example.com",
-		UseTLS: false,
+	var mailerCfg *config.SMTPConfig
+	if !opts.SMTPUnconfigured {
+		mailerCfg = &config.SMTPConfig{
+			Server: host,
+			Port:   port,
+			From:   "hestia@example.com",
+			UseTLS: false,
+		}
 	}
 
 	allowPublicSignup := true
