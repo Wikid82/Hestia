@@ -38,6 +38,21 @@ jobs:
           path: backend/coverage.txt
           retention-days: 7
 
+      # Codecov computes its own project/patch gates from this (see
+      # codecov.yml) — always upload, even if the local threshold check
+      # above just failed, so the PR still gets a real Codecov status
+      # instead of nothing. Not run twice in a separate workflow (unlike
+      # Charon's codecov-upload.yml) — that would just re-run the same
+      # tests a second time for no benefit at Hestia's scale.
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./backend/coverage.txt
+          flags: backend
+          fail_ci_if_error: false
+
       # Advisory only (continue-on-error) — already blocking via lefthook's
       # pre-commit hook for anyone who hasn't bypassed it; see
       # docs/current_spec.md Decision 2 for why this isn't double-blocking.
@@ -86,3 +101,14 @@ jobs:
           name: frontend-coverage
           path: frontend/coverage/lcov.info
           retention-days: 7
+
+      # See the equivalent step in the backend job for why this is
+      # inline rather than a separate codecov-upload.yml workflow.
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./frontend/coverage
+          flags: frontend
+          fail_ci_if_error: false

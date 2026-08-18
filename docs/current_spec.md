@@ -184,11 +184,23 @@ Check off as merged.
       frontend coverage is ~7.7% once `all: true` correctly includes every untested
       component/page, not just the 92% you'd see scoping to only the 2 tested files. PR6 is
       the dedicated push to close this gap, same as PR2/PR5 on the backend side.
-- [ ] **PR4 — `feat: Codecov integration with 85% patch + project gates`.** `codecov.yml`
-      (target 85%/85%, threshold 1%, Hestia's `ignore:` list per the research notes above),
-      new `codecov-upload.yml` workflow (backend + frontend flags), CodeQL's `codeql.yml`
-      extended to include `go` in its language matrix. Gate will initially fail — expected,
-      per Decision 1 — until PR5/PR6 land.
+- [x] **PR4 — `feat: Codecov integration with 85% patch + project gates`.** `codecov.yml`
+      (target 85%/85%, threshold 1%, Hestia's `ignore:` list per the research notes above).
+      CodeQL's `codeql.yml` converted to a `[go, javascript-typescript]` matrix (was
+      JS/TS-only), Go leg runs `setup-go` + `autobuild` first. **Deviated from the spec's
+      original plan of a separate `codecov-upload.yml` workflow** — folded the Codecov
+      upload directly into `ci.yml`'s existing backend/frontend jobs instead, right after
+      each already-running coverage-script step, rather than mirroring Charon's separate
+      workflow that re-runs the same tests a second time purely to get a report to upload.
+      No benefit to that duplication at Hestia's scale. Both upload steps use
+      `fail_ci_if_error: false` (Charon uses `true`) — deliberately, since this repo isn't
+      connected to Codecov yet (no `CODECOV_TOKEN` secret configured); a hard failure there
+      would add a *third* reason CI is red beyond the two already-expected ones. **Manual
+      follow-up needed from Jeremy, not something Claude can do**: connect this GitHub repo
+      at codecov.io and add `CODECOV_TOKEN` as a repo secret — until then the upload step
+      no-ops harmlessly (logged, not blocking) and Codecov's own PR status checks won't
+      appear at all. Gate is still expected to fail once that's wired up — per Decision 1,
+      until PR5/PR6 land.
 - [ ] **PR5 — `test: backend unit test coverage to 85%`.** Bulk test-writing pass across
       `backend/internal/services` and `backend/internal/api/handlers` until project coverage
       hits the gate. Likely the largest PR in this initiative; may get split further once the
