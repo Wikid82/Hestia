@@ -107,7 +107,7 @@ func NewWithOptions(t *testing.T, opts Options) *App {
 		Notify:            services.NewNotifyService(db),
 		Invite:            services.NewInviteService(db),
 		Hub:               hub,
-		Production:        false,
+		CookieSecure:      false,
 		AllowPublicSignup: allowPublicSignup,
 		BaseURL:           baseURL,
 	}
