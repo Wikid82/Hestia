@@ -230,15 +230,20 @@ Check off as merged.
         a no-op success (200), mirroring Complete's own "already done" no-op; chores
         currently always require an assignee at creation (no "open to anyone" path exists
         in the handler yet, despite the service layer's `ErrUnassigned` implying one).
-      - **Accepted gap, not chased further**: the remaining ~2 points are concentrated in one
-        repeating pattern — every handler's defensive "the DB call itself returned an
-        unexpected error → 500" branch. Closing these for real (not by padding) needs either
-        service-layer interfaces + mocks (a real architecture change, out of scope for a
-        coverage PR) or a DB-fault-injection harness more sophisticated than closing the
-        connection outright (which trips `RequireHousehold`'s own DB check first, before the
-        handler is ever reached — confirmed by trying). Flagged for Jeremy: accept 83% as the
-        practical ceiling for this PR, or take on the interface/mocking work as a deliberate
-        follow-up later.
+      - **Gap closed, not accepted**: per Jeremy's call, went back and closed the remaining
+        ~2 points rather than settling for 83%. `testutil.PoisonTable`/`PoisonTableWrites`
+        register GORM callback hooks (`db.Callback().Query().Before("gorm:query")`, etc.)
+        scoped to one table name — GORM resolves `Statement.Table` before those hooks run, so
+        this fails only the table under test, not the whole connection, avoiding the earlier
+        problem where closing the DB outright tripped `RequireHousehold`'s own check first.
+        `PoisonTableWrites` (Create/Update/Delete hooks only, no Query/Row) exists because
+        `users`/`households` are also read by `RequireProfile`/`RequireHousehold` on every
+        request — a full poison would fail the middleware before the handler under test is
+        reached; scoping to writes-only reaches `CreateMember`/`UpdateMember`/rename without
+        that collision. One case (`ListMembers`) stayed genuinely unreachable this way — it
+        and `RequireProfile` both *read* the same table, so there's no way to poison one
+        without the other — documented inline rather than forced. Zero changes to production
+        code; this is entirely new test infrastructure. **Final: 86.4%**, gate passes.
 - [ ] **PR6 — `test: frontend unit test coverage to 85%`.** Same idea, frontend side —
       components, hooks, `api/*` modules.
 - [ ] **PR7 — `feat: Playwright e2e scaffolding + core-flow coverage`.** `playwright.config.ts`

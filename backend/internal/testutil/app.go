@@ -29,6 +29,7 @@ type App struct {
 	Server  *httptest.Server
 	SMTP    *FakeSMTP
 	BaseURL string
+	DB      *gorm.DB
 }
 
 // NewDB opens a fresh temp-file SQLite database with migrations applied —
@@ -118,7 +119,7 @@ func NewWithOptions(t *testing.T, opts Options) *App {
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 
-	return &App{Server: server, SMTP: smtp, BaseURL: server.URL}
+	return &App{Server: server, SMTP: smtp, BaseURL: server.URL, DB: db}
 }
 
 // Client returns an *http.Client with its own cookie jar bound to the
