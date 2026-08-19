@@ -19,6 +19,13 @@ RUN npm run build
 # sufficient — no C cross-compiler or the `tonistiigi/xx` toolchain needed.
 FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS backend
 WORKDIR /app
+# go.mod can require a newer Go version than this base image ships (e.g.
+# go.mod's own "go 1.27.0" directive vs. this image's 1.26.6) — GOTOOLCHAIN
+# defaults to "local" in the official images, which refuses to build
+# instead of fetching the version go.mod actually needs. auto lets the Go
+# toolchain itself download and use the right version transparently, the
+# same mechanism `go build`/`go test` already fall back to outside Docker.
+ENV GOTOOLCHAIN=auto
 COPY backend/go.mod backend/go.sum ./backend/
 RUN cd backend && go mod download
 COPY backend/ ./backend/
