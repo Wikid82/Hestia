@@ -1,0 +1,213 @@
+#!/bin/bash
+# ============================================================================
+# codeql-findings-gate.sh
+#
+# CodeQL SARIF blocking-logic gate, ported/simplified from Charon's script
+# of the same name (single Go+JS/TS module layout here — no third
+# backend+agent split). See docs/current_spec.md for the "why" — this
+# exists because CodeQL's go/email-injection query has no sanitizer model
+# at all and will always flag Mailer.Send's real, legitimate use of
+# invite-derived data, with no in-code fix able to satisfy it; GitHub's
+# in-source `codeql[rule-id]` suppression comments were tried first and
+# confirmed not honored for that call shape (see the reason field in
+# .github/codeql/codeql-suppressions.yml), so this file-based ignore-list
+# + gate is the documented fallback.
+#
+# Policy: EVERY CodeQL result blocks by default, regardless of severity,
+# unless it is suppressed:
+#   - natively, via a correctly-placed in-source `codeql[rule-id]` comment
+#     (SARIF result.suppressions is non-null/non-empty), or
+#   - via a matching, non-expired entry in
+#     .github/codeql/codeql-suppressions.yml.
+#
+# Usage: codeql-findings-gate.sh <sarif-file> <language-label>
+#
+# Exit status: 0 if no result is blocking, non-zero if any result is
+# blocking (or on usage/tooling errors).
+#
+# Env overrides:
+#   CODEQL_SUPPRESSIONS_FILE - path to the ignore-list YAML file.
+#                              Defaults to
+#                              <repo-root>/.github/codeql/codeql-suppressions.yml
+#
+# Unlike Charon's version of this script, there's no path-normalization
+# step here: Charon's local pre-commit scans scope `codeql database
+# create` to a single module (--source-root=backend or =frontend), so a
+# locally-produced SARIF's paths are module-relative and need a prefix
+# prepended to match CI's repo-root-relative paths. Hestia has no
+# equivalent local pre-commit CodeQL scan (yet — see docs/current_spec.md
+# on lefthook), and any manual local scan should be run with
+# --source-root=<repo-root> to match CI's own paths directly, so this
+# script assumes SARIF paths are always already repo-root-relative.
+# ============================================================================
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+SARIF_FILE="${1:-}"
+LANG_LABEL="${2:-}"
+SUPPRESSIONS_FILE="${CODEQL_SUPPRESSIONS_FILE:-$ROOT_DIR/.github/codeql/codeql-suppressions.yml}"
+
+usage() {
+	echo "Usage: $(basename "${BASH_SOURCE[0]}") <sarif-file> <language-label>" >&2
+}
+
+if [[ -z "$SARIF_FILE" || -z "$LANG_LABEL" ]]; then
+	usage
+	exit 2
+fi
+
+if [[ ! -f "$SARIF_FILE" ]]; then
+	echo "ERROR: SARIF file not found: $SARIF_FILE" >&2
+	exit 2
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+	echo "ERROR: jq is required for CodeQL findings-gate evaluation" >&2
+	exit 2
+fi
+
+if ! command -v yq >/dev/null 2>&1; then
+	echo "ERROR: yq is required for CodeQL findings-gate evaluation" >&2
+	exit 2
+fi
+
+# Convert the ignore-list YAML to JSON. Tries the mikefarah-yq syntax first
+# (`yq eval -o=json`, what GitHub-hosted runners ship), then the
+# kislyuk-yq syntax as a fallback for other environments.
+convert_yaml_to_json() {
+	local yaml_file="$1"
+	local out
+	if out="$(yq eval -o=json '.' "$yaml_file" 2>/dev/null)"; then
+		printf '%s' "$out"
+		return 0
+	fi
+	if out="$(yq -o=json '.' "$yaml_file" 2>/dev/null)"; then
+		printf '%s' "$out"
+		return 0
+	fi
+	if out="$(yq '.' "$yaml_file" 2>/dev/null)"; then
+		printf '%s' "$out"
+		return 0
+	fi
+	return 1
+}
+
+if [[ -f "$SUPPRESSIONS_FILE" ]]; then
+	suppressions_json="$(convert_yaml_to_json "$SUPPRESSIONS_FILE")" || {
+		echo "ERROR: failed to parse ignore-list as YAML: $SUPPRESSIONS_FILE" >&2
+		exit 2
+	}
+else
+	suppressions_json='{"suppressions": []}'
+fi
+
+ignore_entries="$(jq -c '.suppressions // []' <<<"$suppressions_json")"
+
+# Effective level fallback chain:
+#   result.level
+#   -> rules[ruleIndex].defaultConfiguration.level
+#   -> lookup by ruleId in the rules array
+#   -> ""
+results_json="$(jq -c '
+    [
+        .runs[]? as $run
+        | ($run.tool.driver.rules // []) as $rules
+        | ($run.results // [])[]
+        | . as $result
+        | ((
+            $result.level
+            // (if (($result.ruleIndex | type) == "number") then ($rules[$result.ruleIndex].defaultConfiguration.level // empty) else empty end)
+            // ([
+                $rules[]?
+                | select((.id // "") == ($result.ruleId // ""))
+                | (.defaultConfiguration.level // empty)
+            ][0] // empty)
+            // ""
+          ) | ascii_downcase) as $effectiveLevel
+        | {
+            ruleId: ($result.ruleId // "<unknown-rule>"),
+            path: ($result.locations[0].physicalLocation.artifactLocation.uri // "<unknown-file>"),
+            line: ($result.locations[0].physicalLocation.region.startLine // 0),
+            level: $effectiveLevel,
+            nativelySuppressed: (($result.suppressions // []) | length > 0)
+        }
+    ]
+' "$SARIF_FILE")"
+
+result_count="$(jq 'length' <<<"$results_json")"
+
+echo "Checking $LANG_LABEL CodeQL findings in $SARIF_FILE ($result_count result(s))..."
+
+if [[ "$result_count" -eq 0 ]]; then
+	echo "No findings."
+	echo "Summary: 0 suppressed, 0 blocking, 0 total"
+	exit 0
+fi
+
+today="$(date -u +%F)"
+blocking_count=0
+suppressed_count=0
+
+while IFS= read -r result; do
+	rule_id="$(jq -r '.ruleId' <<<"$result")"
+	path="$(jq -r '.path' <<<"$result")"
+	line="$(jq -r '.line' <<<"$result")"
+	level="$(jq -r '.level' <<<"$result")"
+	natively_suppressed="$(jq -r '.nativelySuppressed' <<<"$result")"
+
+	if [[ "$natively_suppressed" == "true" ]]; then
+		echo "SUPPRESSED (in-source): $rule_id $path:$line"
+		suppressed_count=$((suppressed_count + 1))
+		continue
+	fi
+
+	# All ignore-list entries sharing this exact rule_id + path, regardless
+	# of line — when multiple entries exist for the same rule+path at
+	# different lines, "partial match" (LIKELY-STALE) means none of them
+	# cover this specific line, not just checking the first entry found.
+	candidates="$(jq -c --arg rule "$rule_id" --arg path "$path" '
+        [.[] | select(.rule_id == $rule and .path == $path)]
+    ' <<<"$ignore_entries")"
+	candidate_count="$(jq 'length' <<<"$candidates")"
+
+	if [[ "$candidate_count" -eq 0 ]]; then
+		echo "NEW FINDING (no exception on file): $level $rule_id $path:$line"
+		blocking_count=$((blocking_count + 1))
+		continue
+	fi
+
+	match="$(jq -c --argjson line "$line" '
+        [.[] | select(
+            (has("line") and .line == $line)
+            or (has("line_range") and $line >= .line_range.start and $line <= .line_range.end)
+        )] | first // empty
+    ' <<<"$candidates")"
+
+	if [[ -z "$match" || "$match" == "null" ]]; then
+		echo "LIKELY-STALE ENTRY (line moved? check codeql-suppressions.yml): $rule_id $path:$line"
+		blocking_count=$((blocking_count + 1))
+		continue
+	fi
+
+	review_by="$(jq -r '.review_by' <<<"$match")"
+	reason="$(jq -r '.reason' <<<"$match" | tr '\n' ' ' | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')"
+
+	if [[ "$review_by" < "$today" ]]; then
+		echo "EXPIRED SUPPRESSION (review_by $review_by has passed — renew or fix): $rule_id $path:$line"
+		blocking_count=$((blocking_count + 1))
+	else
+		echo "SUPPRESSED (codeql-suppressions.yml, reason: \"$reason\", review by $review_by): $rule_id $path:$line"
+		suppressed_count=$((suppressed_count + 1))
+	fi
+done < <(jq -c '.[]' <<<"$results_json")
+
+echo "Summary: $suppressed_count suppressed, $blocking_count blocking, $result_count total"
+
+if [[ "$blocking_count" -gt 0 ]]; then
+	exit 1
+fi
+
+exit 0
