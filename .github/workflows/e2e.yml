@@ -12,14 +12,8 @@ jobs:
     # No step here should ever legitimately run long — a genuine hang
     # (e.g. total loss of runner connectivity) should fail fast instead
     # of tying up the runner for hours. Without this, GitHub's default
-    # 360m job timeout is the only backstop. Not too tight, though: the
-    # first version of this timeout (5m on the browser-install step) was
-    # itself observed failing a real, non-hung run — `apt-get update`
-    # legitimately took most of that 5m because the runner's regional
-    # `azure.archive.ubuntu.com` mirror was repeatedly unreachable and
-    # apt fell back to the main archive mirror one repo at a time. Given
-    # generous headroom instead of guessing again.
-    timeout-minutes: 25
+    # 360m job timeout is the only backstop.
+    timeout-minutes: 20
     env:
       # docker-compose.yml's base AUTH_SECRET is a required (`:?`) variable
       # interpolated from the shell environment before docker-compose.e2e.yml's
@@ -50,25 +44,27 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs
           exit 1
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: 24.19.0
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install frontend deps
-        working-directory: frontend
-        run: npm ci
-
-      - name: Install Playwright browsers
-        working-directory: frontend
-        timeout-minutes: 15
-        run: npx playwright install --with-deps chromium
-
-      - name: Run e2e suite
-        working-directory: frontend
+      # Runs npm ci + the suite inside Microsoft's official Playwright
+      # image (pinned to match frontend/package.json's @playwright/test
+      # version exactly) instead of `npx playwright install --with-deps`
+      # on the bare runner. The prior approach repeatedly hit severe
+      # `azure.archive.ubuntu.com` mirror flakiness fetching apt's font
+      # packages (one run saw a 107KB package take 7 minutes, then
+      # timed out entirely on the next one) — a real, recurring
+      # infrastructure flake, not something a longer timeout reliably
+      # fixes. This image ships every browser + system dependency
+      # pre-baked, so no apt install happens at all. `--network host`
+      # lets the container reach the app/Mailpit via the host ports
+      # docker-compose.e2e.yml already publishes, exactly like running
+      # Playwright natively on the runner would.
+      - name: Run e2e suite (official Playwright image — pre-baked browsers/deps)
         timeout-minutes: 10
-        run: npx playwright test
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/frontend:/work" -w /work \
+            -e PLAYWRIGHT_BASE_URL \
+            mcr.microsoft.com/playwright:v1.62.1-noble \
+            bash -c "npm ci && npx playwright test"
 
       - name: Upload Playwright report
         if: failure()
