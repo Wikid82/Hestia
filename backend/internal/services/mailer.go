@@ -68,6 +68,7 @@ func (m *Mailer) Send(to, subject, body string) error {
 	// let smtp.SendMail negotiate STARTTLS opportunistically if the
 	// server offers it (the common pattern on port 587/25).
 	if !m.cfg.UseTLS {
+		// codeql[go/email-injection] Safe: to/subject rejected above if they contain CR/LF; see mailer_test.go and Send's doc comment.
 		return smtp.SendMail(addr, auth, m.cfg.From, []string{to}, msg)
 	}
 
@@ -96,6 +97,7 @@ func (m *Mailer) Send(to, subject, body string) error {
 	if err != nil {
 		return err
 	}
+	// codeql[go/email-injection] Safe: to/subject rejected above if they contain CR/LF; see mailer_test.go and Send's doc comment.
 	if _, err := w.Write(msg); err != nil {
 		return err
 	}
