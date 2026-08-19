@@ -41,15 +41,19 @@ func (m *Mailer) Send(to, subject, body string) error {
 	// subject can embed another user-controlled field (a household name)
 	// — both flow straight into raw RFC 5322 header lines below. Without
 	// this, a crafted value containing CRLF could inject extra headers or
-	// splice in a fabricated message body (CWE-93 header/content
-	// injection). mail.ParseAddress rejects anything that isn't a single
-	// well-formed address, which inherently rules out embedded CR/LF.
-	parsedTo, err := mail.ParseAddress(to)
-	if err != nil {
+	// splice in a fabricated message body (CWE-93/CWE-640 header/content
+	// injection). Reject outright rather than silently strip: a real
+	// email address or subject line should never contain a line break,
+	// so this can only ever reject genuinely malformed/malicious input.
+	if _, err := mail.ParseAddress(to); err != nil {
 		return fmt.Errorf("invalid recipient address: %w", err)
 	}
-	to = parsedTo.Address
-	subject = sanitizeHeaderValue(subject)
+	if strings.ContainsAny(to, "\r\n") {
+		return fmt.Errorf("invalid recipient address: contains a line break")
+	}
+	if strings.ContainsAny(subject, "\r\n") {
+		return fmt.Errorf("invalid subject: contains a line break")
+	}
 
 	msg := buildMessage(m.cfg.From, to, subject, body)
 	addr := net.JoinHostPort(m.cfg.Server, m.cfg.Port)
@@ -116,10 +120,9 @@ func buildMessage(from, to, subject, body string) []byte {
 
 // sanitizeHeaderValue strips CR and LF so a value can never break out of
 // its own header line and inject additional headers or an early
-// body/header separator (CWE-93). Send already validates/normalizes `to`
-// via mail.ParseAddress and sanitizes `subject` before reaching here —
-// this is defense in depth for buildMessage's other callers, current or
-// future.
+// body/header separator (CWE-93). Send already rejects a `to`/`subject`
+// containing a line break outright before reaching here — this is
+// defense in depth for buildMessage's other callers, current or future.
 func sanitizeHeaderValue(s string) string {
 	s = strings.ReplaceAll(s, "\r", "")
 	s = strings.ReplaceAll(s, "\n", "")
