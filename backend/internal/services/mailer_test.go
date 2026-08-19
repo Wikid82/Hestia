@@ -2,7 +2,6 @@ package services_test
 
 import (
 	"net"
-	"strings"
 	"testing"
 
 	"hestia/backend/internal/config"
@@ -103,7 +102,7 @@ func TestMailer_RejectsRecipientWithEmbeddedCRLF(t *testing.T) {
 	}
 }
 
-func TestMailer_SanitizesSubjectHeaderInjection(t *testing.T) {
+func TestMailer_RejectsSubjectWithHeaderInjection(t *testing.T) {
 	smtp := testutil.StartFakeSMTP(t)
 	host, port, err := net.SplitHostPort(smtp.Addr)
 	if err != nil {
@@ -114,25 +113,15 @@ func TestMailer_SanitizesSubjectHeaderInjection(t *testing.T) {
 	})
 
 	// A crafted household name (or any other future subject input) trying
-	// to inject an extra header via embedded CRLF.
+	// to inject an extra header via embedded CRLF — must be rejected
+	// outright, not passed through with the CRLF silently dropped: a real
+	// subject line should never contain a line break in the first place.
 	maliciousSubject := "Invite\r\nBcc: attacker@evil.example\r\nX-Injected: true"
-	if err := m.Send("someone@example.com", maliciousSubject, "Body"); err != nil {
-		t.Fatalf("Send returned an error: %v", err)
+	if err := m.Send("someone@example.com", maliciousSubject, "Body"); err == nil {
+		t.Error("expected Send to reject a subject containing CRLF")
 	}
-
-	messages := smtp.Messages()
-	if len(messages) != 1 {
-		t.Fatalf("expected 1 captured message, got %d", len(messages))
-	}
-	got := messages[0]
-	if strings.ContainsAny(got.Subject, "\r\n") {
-		t.Errorf("Subject still contains CR/LF: %q", got.Subject)
-	}
-	for _, line := range strings.Split(got.Body, "\n") {
-		trimmed := strings.TrimSpace(strings.ToLower(line))
-		if strings.HasPrefix(trimmed, "bcc:") || strings.HasPrefix(trimmed, "x-injected:") {
-			t.Errorf("subject injection succeeded — found injected header line: %q", line)
-		}
+	if len(smtp.Messages()) != 0 {
+		t.Error("expected no message to reach the SMTP server for a rejected subject")
 	}
 }
 
