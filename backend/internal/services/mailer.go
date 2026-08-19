@@ -4,7 +4,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"net/mail"
 	"net/smtp"
+	"strings"
 
 	"hestia/backend/internal/config"
 )
@@ -34,6 +36,20 @@ func (m *Mailer) Send(to, subject, body string) error {
 	if !m.IsConfigured() {
 		return fmt.Errorf("outbound email is not configured (SMTP_SERVER/SMTP_PORT/SMTP_FROM unset)")
 	}
+
+	// to comes from user-controlled input (an invite's email address) and
+	// subject can embed another user-controlled field (a household name)
+	// — both flow straight into raw RFC 5322 header lines below. Without
+	// this, a crafted value containing CRLF could inject extra headers or
+	// splice in a fabricated message body (CWE-93 header/content
+	// injection). mail.ParseAddress rejects anything that isn't a single
+	// well-formed address, which inherently rules out embedded CR/LF.
+	parsedTo, err := mail.ParseAddress(to)
+	if err != nil {
+		return fmt.Errorf("invalid recipient address: %w", err)
+	}
+	to = parsedTo.Address
+	subject = sanitizeHeaderValue(subject)
 
 	msg := buildMessage(m.cfg.From, to, subject, body)
 	addr := net.JoinHostPort(m.cfg.Server, m.cfg.Port)
@@ -86,8 +102,26 @@ func (m *Mailer) Send(to, subject, body string) error {
 }
 
 func buildMessage(from, to, subject, body string) []byte {
+	// from is env-var-only (see config.SMTPConfig), so it's trusted at
+	// runtime, but sanitizing it too costs nothing and keeps this
+	// function safe to call with any input, not just today's callers.
+	from = sanitizeHeaderValue(from)
+	to = sanitizeHeaderValue(to)
+	subject = sanitizeHeaderValue(subject)
 	return []byte(fmt.Sprintf(
 		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=\"utf-8\"\r\n\r\n%s",
 		from, to, subject, body,
 	))
+}
+
+// sanitizeHeaderValue strips CR and LF so a value can never break out of
+// its own header line and inject additional headers or an early
+// body/header separator (CWE-93). Send already validates/normalizes `to`
+// via mail.ParseAddress and sanitizes `subject` before reaching here —
+// this is defense in depth for buildMessage's other callers, current or
+// future.
+func sanitizeHeaderValue(s string) string {
+	s = strings.ReplaceAll(s, "\r", "")
+	s = strings.ReplaceAll(s, "\n", "")
+	return s
 }
