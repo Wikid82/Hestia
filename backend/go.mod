@@ -1,6 +1,6 @@
 module hestia/backend
 
-go 1.26.6
+go 1.27.0
 
 require (
 	github.com/Wikid82/go_notify_yourself v0.2.1
@@ -52,5 +52,5 @@ require (
 	modernc.org/libc v1.75.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.0 // indirect
-	modernc.org/sqlite v1.56.0 // indirect
+	modernc.org/sqlite v1.57.0 // indirect
 )

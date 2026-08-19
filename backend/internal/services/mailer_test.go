@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"net"
+	"strings"
 	"testing"
 
 	"hestia/backend/internal/config"
@@ -77,6 +78,61 @@ func TestMailer_SendConnectionFailure(t *testing.T) {
 	})
 	if err := m.Send("someone@example.com", "Hi", "Body"); err == nil {
 		t.Error("expected an error when the SMTP server is unreachable")
+	}
+}
+
+func TestMailer_RejectsRecipientWithEmbeddedCRLF(t *testing.T) {
+	smtp := testutil.StartFakeSMTP(t)
+	host, port, err := net.SplitHostPort(smtp.Addr)
+	if err != nil {
+		t.Fatalf("splitting fake SMTP address: %v", err)
+	}
+	m := services.NewMailer(&config.SMTPConfig{
+		Server: host, Port: port, From: "hestia@example.com", UseTLS: false,
+	})
+
+	// A crafted "recipient" trying to smuggle extra SMTP commands / mail
+	// headers via embedded CRLF — must be rejected outright, not passed
+	// through to RCPT TO or a header line (CWE-93).
+	maliciousTo := "victim@example.com>\r\nRCPT TO:<attacker@evil.example"
+	if err := m.Send(maliciousTo, "Hi", "Body"); err == nil {
+		t.Error("expected Send to reject a recipient address containing CRLF")
+	}
+	if len(smtp.Messages()) != 0 {
+		t.Error("expected no message to reach the SMTP server for a rejected recipient")
+	}
+}
+
+func TestMailer_SanitizesSubjectHeaderInjection(t *testing.T) {
+	smtp := testutil.StartFakeSMTP(t)
+	host, port, err := net.SplitHostPort(smtp.Addr)
+	if err != nil {
+		t.Fatalf("splitting fake SMTP address: %v", err)
+	}
+	m := services.NewMailer(&config.SMTPConfig{
+		Server: host, Port: port, From: "hestia@example.com", UseTLS: false,
+	})
+
+	// A crafted household name (or any other future subject input) trying
+	// to inject an extra header via embedded CRLF.
+	maliciousSubject := "Invite\r\nBcc: attacker@evil.example\r\nX-Injected: true"
+	if err := m.Send("someone@example.com", maliciousSubject, "Body"); err != nil {
+		t.Fatalf("Send returned an error: %v", err)
+	}
+
+	messages := smtp.Messages()
+	if len(messages) != 1 {
+		t.Fatalf("expected 1 captured message, got %d", len(messages))
+	}
+	got := messages[0]
+	if strings.ContainsAny(got.Subject, "\r\n") {
+		t.Errorf("Subject still contains CR/LF: %q", got.Subject)
+	}
+	for _, line := range strings.Split(got.Body, "\n") {
+		trimmed := strings.TrimSpace(strings.ToLower(line))
+		if strings.HasPrefix(trimmed, "bcc:") || strings.HasPrefix(trimmed, "x-injected:") {
+			t.Errorf("subject injection succeeded — found injected header line: %q", line)
+		}
 	}
 }
 
