@@ -13,6 +13,26 @@
 # already holds 8080, including a real Hestia instance you're running
 # separately from this checkout. CI runners are clean, so the default is
 # fine there and PLAYWRIGHT_BASE_URL doesn't need to be set in e2e.yml.
+#
+# `name:` below pins this stack's Compose PROJECT to "hestia-e2e",
+# distinct from the default project name Compose would otherwise derive
+# from the checkout's directory name ("hestia"). This isn't cosmetic —
+# it's a real safety fix for an incident that happened twice: Compose
+# tracks "is this an existing container to reconfigure, or a new one" by
+# (project, service-name) — NOT by container_name, and NOT by which -f
+# files a given invocation happens to pass. A self-hoster (or a future
+# session) running a real, separately-deployed instance from this same
+# checkout via plain `docker compose up -d` (auto-merging a local
+# docker-compose.override.yml) uses the same default project ("hestia")
+# and the same service key ("hestia") as this e2e stack — so even though
+# this file sets its own container_name (hestia-e2e), Compose still saw
+# them as the same logical (project, service) and reconfigured the real
+# container onto the e2e port/volume in place. See docs/current_spec.md's
+# PR3 retrospective for the incident writeup. `name:` is the documented,
+# declarative way to pin a project name in the compose file itself
+# (Compose Spec's top-level `name:` key) so this can never collide again,
+# regardless of how either stack is invoked.
+name: hestia-e2e
 services:
   hestia:
     container_name: hestia-e2e
