@@ -47,6 +47,7 @@ func main() {
 		Mailer:            services.NewMailer(cfg.SMTP),
 		Notify:            services.NewNotifyService(db),
 		Invite:            services.NewInviteService(db),
+		PasswordReset:     services.NewPasswordResetService(db),
 		Hub:               hub,
 		CookieSecure:      cfg.CookieSecure,
 		AllowPublicSignup: cfg.AllowPublicSignup,

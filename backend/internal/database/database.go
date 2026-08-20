@@ -47,6 +47,7 @@ func Open(path string) (*gorm.DB, error) {
 		&models.RewardRedemption{},
 		&models.NotificationSettings{},
 		&models.Invite{},
+		&models.PasswordReset{},
 	); err != nil {
 		return nil, fmt.Errorf("running auto-migration: %w", err)
 	}

@@ -41,4 +41,29 @@ describe("auth api", () => {
     mockApi({ "GET /api/auth/me": { body: { household: null, user: null } } });
     await expect(auth.me()).resolves.toEqual({ household: null, user: null });
   });
+
+  it("forgotPassword posts to /auth/forgot-password", async () => {
+    const fetchMock = mockApi({
+      "POST /api/auth/forgot-password": { body: { ok: true } },
+    });
+    await expect(auth.forgotPassword("j@example.com")).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/auth/forgot-password",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ email: "j@example.com" }) }),
+    );
+  });
+
+  it("resetPassword posts to /auth/reset-password", async () => {
+    const fetchMock = mockApi({
+      "POST /api/auth/reset-password": { body: { ok: true } },
+    });
+    await expect(auth.resetPassword("tok1", "new-password")).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/auth/reset-password",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ token: "tok1", password: "new-password" }),
+      }),
+    );
+  });
 });

@@ -50,3 +50,22 @@ func LastInviteToken(t *testing.T, smtp *FakeSMTP) string {
 	}
 	return match[1]
 }
+
+var passwordResetTokenPattern = regexp.MustCompile(`/reset-password/([a-f0-9]{64})`)
+
+// LastPasswordResetToken extracts the raw reset token from the most
+// recently captured SMTP message's body — the same way a real user would
+// get it from the email they received.
+func LastPasswordResetToken(t *testing.T, smtp *FakeSMTP) string {
+	t.Helper()
+	messages := smtp.Messages()
+	if len(messages) == 0 {
+		t.Fatal("no SMTP messages captured")
+	}
+	last := messages[len(messages)-1]
+	match := passwordResetTokenPattern.FindStringSubmatch(last.Body)
+	if match == nil {
+		t.Fatalf("no password reset token found in captured message body: %q", last.Body)
+	}
+	return match[1]
+}

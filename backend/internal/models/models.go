@@ -189,6 +189,25 @@ func (i Invite) MarshalJSON() ([]byte, error) {
 	}{alias: alias(i), Status: status})
 }
 
+// PasswordReset is a pending "forgot password" request for a user with
+// email/password login. Tokens are stored hashed (sha256), same rationale
+// as Invite.TokenHash — the raw token only ever exists in the reset email
+// link and the moment-of-creation response.
+type PasswordReset struct {
+	ID        string     `gorm:"primaryKey" json:"id"`
+	UserID    string     `gorm:"not null;index" json:"userId"`
+	TokenHash string     `gorm:"not null;uniqueIndex" json:"-"`
+	ExpiresAt time.Time  `gorm:"not null" json:"expiresAt"`
+	UsedAt    *time.Time `json:"usedAt,omitempty"`
+	CreatedAt time.Time  `json:"createdAt"`
+}
+
+// IsExpired reports whether this reset token is still unused but past its
+// expiry — computed on read, same pattern as Invite.IsExpired.
+func (p PasswordReset) IsExpired() bool {
+	return p.UsedAt == nil && time.Now().After(p.ExpiresAt)
+}
+
 // MarshalJSON exposes ConfigJSON (stored as a raw string for simple
 // GORM persistence) as a parsed "config" object in the API response.
 func (n NotificationSettings) MarshalJSON() ([]byte, error) {
