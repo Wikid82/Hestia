@@ -14,6 +14,15 @@ test.describe("forgot/reset password", () => {
 
     await page.getByRole("link", { name: "Forgot password?" }).click();
     await expect(page).toHaveURL("/forgot-password");
+    // Client-side route transitions update the URL synchronously but can
+    // still be mid-render for a tick afterward — asserting on the URL
+    // alone isn't a reliable signal the new page is fully interactive.
+    // Waiting for its own heading closes that race deterministically
+    // (see docs/current_spec.md's password-reset retrospective for the
+    // full investigation — without this, the very next click was
+    // observed reaching the button (native click event fires) but never
+    // triggering the browser's implicit form submission).
+    await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
     await page.getByLabel("Email").fill(owner.email);
     await page.getByRole("button", { name: "Send reset link" }).click();
     await expect(page.getByText(/reset link is on its way/)).toBeVisible();
