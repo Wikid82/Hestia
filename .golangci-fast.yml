@@ -1,0 +1,45 @@
+# golangci-lint configuration — the fast, pre-commit-blocking subset. Only
+# ever run with --new-from-rev so it reports issues in changed lines, not
+# the whole repo (see scripts/pre-commit-hooks/golangci-lint-fast.sh).
+# backend/.golangci.yml is the fuller, CI-only rule set.
+version: "2"
+
+run:
+  timeout: 2m
+  tests: true
+
+linters:
+  enable:
+    - staticcheck
+    - govet
+    - errcheck
+    - ineffassign
+    - unused
+    - unparam
+    - gocritic
+    - gosec
+  settings:
+    govet:
+      enable:
+        - shadow
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write
+    gosec:
+      # Only critical issues at pre-commit speed — the full set runs in CI
+      # via backend/.golangci.yml.
+      includes:
+        - G101 # Hardcoded credentials
+        - G110 # Potential DoS via decompression bomb
+        - G305 # File traversal when extracting archive
+        - G401 # Weak crypto (MD5, SHA1)
+        - G501 # Blacklisted import crypto/md5
+        - G502 # Blacklisted import crypto/des
+        - G503 # Blacklisted import crypto/rc4
+  exclusions:
+    rules:
+      - path: "_test\\.go"
+        linters:
+          - gosec

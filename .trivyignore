@@ -18,3 +18,15 @@
 # process is `node server.js` (see Dockerfile CMD).
 # exp: 2026-09-20
 CVE-2025-60876
+
+# GO-2026-5932: golang.org/x/crypto/openpgp is unsafe by design / unmaintained.
+# Package: golang.org/x/crypto v0.55.0 (backend/go.mod)
+# No fixed version exists or ever will — the advisory's point is "don't call
+# this subpackage," not "upgrade past it" (fix.versions is empty upstream).
+# This is a whole-module flag, not a reachability finding: `go mod why
+# golang.org/x/crypto/openpgp` confirms "main module does not need package
+# golang.org/x/crypto/openpgp", and `go list -deps ./...` shows only bcrypt/
+# chacha20poly1305/sha3 pulled in (via golang-jwt/jwt and our own password
+# hashing) — openpgp is never imported. Hestia has no PGP/OpenPGP feature.
+# exp: 2026-11-17
+GO-2026-5932

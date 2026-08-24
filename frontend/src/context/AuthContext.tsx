@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from "react";
 import * as authApi from "@/api/auth";
 import * as profilesApi from "@/api/profiles";
+import * as invitesApi from "@/api/invites";
 import type { Household, Profile } from "@/types";
 
 type Status = "loading" | "unauthenticated" | "need-profile" | "authed";
@@ -16,6 +17,7 @@ type AuthContextValue = AuthState & {
   refresh: () => Promise<void>;
   login: (input: authApi.LoginInput) => Promise<void>;
   signup: (input: authApi.SignupInput) => Promise<void>;
+  acceptInvite: (token: string, input: invitesApi.AcceptInviteInput) => Promise<void>;
   logout: () => Promise<void>;
   switchProfile: (userId: string, pin?: string) => Promise<void>;
   switchToPicker: () => Promise<void>;
@@ -66,6 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ status: "authed", household, profile: user });
   }, []);
 
+  const acceptInvite = useCallback(async (token: string, input: invitesApi.AcceptInviteInput) => {
+    const { household, user } = await invitesApi.acceptInvite(token, input);
+    setState({ status: "authed", household, profile: user });
+  }, []);
+
   const logout = useCallback(async () => {
     await authApi.logout();
     setState({ status: "unauthenticated", household: null, profile: null });
@@ -95,13 +102,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refresh,
       login,
       signup,
+      acceptInvite,
       logout,
       switchProfile,
       switchToPicker,
       setHousehold,
       setProfile,
     }),
-    [state, refresh, login, signup, logout, switchProfile, switchToPicker, setHousehold, setProfile],
+    [
+      state,
+      refresh,
+      login,
+      signup,
+      acceptInvite,
+      logout,
+      switchProfile,
+      switchToPicker,
+      setHousehold,
+      setProfile,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

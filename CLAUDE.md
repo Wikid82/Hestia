@@ -17,6 +17,15 @@ adding a new external dependency) before just doing it.
 
 ## Workflow
 
+- Any feature work (not small edits/fixes — see below) must have a
+  written spec at `docs/current_spec.md` before implementation starts,
+  covering goal, key decisions (with rationale), and PR/commit slicing.
+  Keep it updated as decisions change or PRs land — it's a live tracking
+  doc for the in-progress feature, not a one-time writeup. Once the
+  feature is fully merged to `main`, replace its contents with the next
+  feature's spec rather than letting stale specs pile up. The point is to
+  make multi-PR initiatives trackable so steps don't get forgotten
+  between sessions.
 - Do not use git worktrees for work in this repo — work directly on a
   branch in the normal checkout. Jeremy likes to build and test the app
   himself before merging, and a worktree puts the change somewhere he
@@ -47,16 +56,57 @@ adding a new external dependency) before just doing it.
   changelog entries; an unprefixed title fails the check and would
   silently drop out of release automation even if merged. Individual
   commit messages within a PR aren't checked — only the PR title matters.
+- Do not include the `Claude-Session: https://claude.ai/code/session_...`
+  link in commit messages or PR descriptions for this repo.
 
 ## Product shape
 
-- **Users**: parents/admins who can log into a household account remotely,
-  plus kid profiles that don't need their own credentials for daily use.
-- **Auth model**: one household account (email/password) for remote access.
-  Once logged in, an avatar picker (Netflix-profile style) lets whoever's at
-  the shared screen select themselves. Each profile can optionally have a PIN
-  gating restricted actions (editing chores, redeeming points) — this is one
-  auth system, not two.
+- **Multi-household**: one Hestia instance can host several independent
+  households with no cross-visibility between them — e.g. a self-hoster
+  running their own family's chart can also invite a friend who doesn't
+  want to self-host, and that friend gets their own fully separate
+  household on the same instance.
+- **Roles are two orthogonal things, not a tier ladder**:
+  - `User.Role` (`hoh | member`) is scoped to one household. `hoh` (Head
+    of Household) has full control of their own household only — same
+    permissions the old single "admin" role had, just renamed and scoped.
+  - `User.IsSystemAdmin` is a separate, instance-wide bool, independent of
+    household. Grants cross-household administration (inviting new HoHs,
+    managing instance-wide settings like notifications). A fresh
+    instance's first-ever signup gets both — that's the self-hoster who
+    owns the instance. Anyone invited or signed up afterward just owns
+    their own household unless explicitly made a system admin.
+- **Auth model**: any profile can have its own email + password and log in
+  directly — not just one shared household login. A profile without one
+  (a "managed profile," e.g. a kid without an email address) is switched
+  into locally via a Netflix-style avatar picker on a shared/kiosk screen,
+  optionally PIN-gated. Either path works for any profile; a managed
+  profile can get its own login later (HoH sets it up, or the profile's
+  own user sets it up themselves once they're switched into it) via
+  `PATCH /members/:id/credentials` or `/members/me/credentials`.
+- **Invites**: the only way to join a household you weren't the first
+  signup on. A system admin invites a new HoH (who gets their own
+  independent household on accept); a HoH invites a member of their own
+  household by email. `ALLOW_PUBLIC_SIGNUP` (env var, default `false`)
+  gates open self-signup for every signup after the very first — closed
+  by default since there are no real users of this app yet and nobody
+  should be able to spin up a household on someone else's found instance
+  uninvited. The very first signup on a fresh instance always succeeds
+  regardless, so bootstrapping isn't blocked by this.
+- **Outbound email (SMTP) is env-var-only, never DB/web-UI-editable.**
+  SMTP credentials are a secret for an *external* system, and storing
+  them reversibly (they can't be one-way hashed like a login password —
+  the app has to actually use them to authenticate outbound) in the same
+  sqlite file this app tells people to "just copy to back up" would be a
+  real security downgrade from the `AUTH_SECRET`-style env-var pattern
+  already used here. `BASE_URL` (needed to build invite links) follows
+  the same env-only pattern for the same reason. Lower-stakes
+  notification-channel settings (Discord/Slack/ntfy/webhook/etc., used
+  for "a system admin gets pinged when an invite is accepted") are the
+  opposite call: DB-backed and system-admin-web-UI-editable, since a
+  leaked webhook URL only lets someone post fake notifications rather
+  than access an external account, and self-hosters benefit from
+  changing it without a redeploy.
 - **Chores**: can repeat (daily/weekly/weekdays/custom), can be assigned to a
   specific person or left open for anyone in the household to claim, and
   award points on completion. Points/streaks are the only gamification layer
@@ -104,12 +154,70 @@ adding a new external dependency) before just doing it.
   for hypothetical future options. Three similar lines beat a premature
   helper.
 - Before calling a feature done: run `cd backend && go build ./... && go vet
-  ./...` and `cd frontend && npm run build && npm run lint`. There's no test
-  suite yet — don't add one speculatively; add tests when there's logic
-  worth protecting (e.g. recurrence-date calculation), not for CRUD
-  boilerplate.
+  ./...` and `cd frontend && npm run build && npm run lint`. See the
+  Definition of Done section below for the full bar (coverage, e2e) that
+  applies before a PR is mergeable, not just before you consider it done
+  in the moment.
+- Local git hooks via [lefthook](https://github.com/evilmartians/lefthook)
+  enforce `go vet`/`golangci-lint`/`tsc --noEmit`/`eslint` on every commit
+  and a full build+test on every push — see the README's "Git hooks"
+  section for one-time setup. Don't bypass with `--no-verify` to work
+  around a failing hook; fix what it's flagging (or, if the hook itself is
+  wrong, fix `lefthook.yml`).
 - Keep the Docker image and `docker-compose.yml` in sync with any new
-  required environment variables (update `.env.example` too).
+  environment variable, required or optional. Whenever one is added,
+  removed, or its behavior changes, update **both** `.env.example` (kept
+  lean and fully commented-out — see its own header) **and**
+  `docs/environment.md` (the full reference: default, every option, what
+  it does) in the same change. `.env.example` points to that doc rather
+  than explaining each variable inline, so don't let the two drift —
+  a variable missing from either one is a bug.
+
+## Definition of Done
+
+Every PR is expected to clear this bar before it's mergeable — not just
+"build and vet pass," the full set:
+
+- **lefthook clean.** `pre-commit` (`go vet`, golangci-lint-fast, `tsc
+  --noEmit`, `eslint`) and `pre-push` (`go build && go test ./...`, `npm run
+  build`) both pass. Don't bypass with `--no-verify`; see the Conventions
+  note above.
+- **Unit coverage ≥85%, both patch and project.** Codecov enforces this on
+  every PR (`codecov.yml`: `project` and `patch`, both `target: 85%,
+  threshold: 1%`) — backend via `scripts/go-test-coverage.sh`, frontend via
+  `scripts/frontend-test-coverage.sh`. Before pushing, run
+  `scripts/local-patch-report.sh` to check the *patch* number locally —
+  it diffs your branch against `origin/development`, generates fresh
+  coverage profiles, and reports the same changed-lines coverage number
+  Codecov's patch gate computes, so a real gap shows up before a CI
+  round-trip instead of after. Write real tests to close gaps for real —
+  no padding, no vacuous assertions just to move a number (see PR5/PR6 in
+  git history for the standard: every test should assert something a real
+  bug could break). If a gap looks architecturally irreducible, exhaust
+  legitimate options (including things like table-scoped fault injection —
+  see `backend/internal/testutil/fault.go`) before accepting it, and
+  document why if it's ever accepted.
+- **e2e passing for any flow your change touches.** `frontend/e2e/*.spec.ts`
+  (Playwright, `frontend/playwright.config.ts`) runs against the real
+  Docker image via `docker-compose.e2e.yml`, not dev servers — closer to
+  what a self-hoster actually runs. No coverage gate on e2e, but **new
+  features need both unit and e2e coverage** — a feature that only has
+  unit tests around its logic but no e2e spec exercising it through the
+  real UI isn't done. When you add or edit a spec file, only run that
+  file locally (`cd frontend && npx playwright test e2e/<file>.spec.ts`);
+  let CI run the full suite (`.github/workflows/e2e.yml`) — the suite gets
+  large fast (Charon's equivalent is ~125 spec files) and running
+  everything locally on every edit doesn't scale. `frontend/e2e/fixtures/`
+  has the shared helpers (`household.ts` for a fresh isolated household
+  via the real signup UI, `mailpit.ts` for reading invite emails out of
+  the disposable SMTP catcher) — reuse them rather than re-deriving the
+  same setup per spec.
+- **Security scanning clean or triaged.** CodeQL (`go` +
+  `javascript-typescript`), `govulncheck` (Go deps), `audit-ci` (npm deps)
+  all run in CI; Trivy/Grype scan the built container image in
+  `docker-build.yml`. golangci-lint is advisory in CI
+  (`continue-on-error: true`) since it's already blocking locally via
+  lefthook.
 
 ## Subagents
 

@@ -37,15 +37,21 @@ func main() {
 	authService := services.NewAuthService(cfg.AuthSecret)
 
 	deps := &handlers.Deps{
-		Auth:       authService,
-		Household:  services.NewHouseholdService(db),
-		Member:     services.NewMemberService(db),
-		Chore:      services.NewChoreService(db),
-		Reminder:   services.NewReminderService(db),
-		Reward:     services.NewRewardService(db),
-		HHAuth:     services.NewHouseholdAuthService(db),
-		Hub:        hub,
-		Production: cfg.Production,
+		Auth:              authService,
+		Household:         services.NewHouseholdService(db),
+		Member:            services.NewMemberService(db),
+		Chore:             services.NewChoreService(db),
+		Reminder:          services.NewReminderService(db),
+		Reward:            services.NewRewardService(db),
+		HHAuth:            services.NewHouseholdAuthService(db),
+		Mailer:            services.NewMailer(cfg.SMTP),
+		Notify:            services.NewNotifyService(db),
+		Invite:            services.NewInviteService(db),
+		PasswordReset:     services.NewPasswordResetService(db),
+		Hub:               hub,
+		CookieSecure:      cfg.CookieSecure,
+		AllowPublicSignup: cfg.AllowPublicSignup,
+		BaseURL:           cfg.BaseURL,
 	}
 
 	if cfg.Production {

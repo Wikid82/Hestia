@@ -57,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
       - name: Free disk space
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
@@ -116,7 +116,7 @@ jobs:
         if: github.event_name != 'release'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
       - name: Log in to GHCR
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
@@ -201,7 +201,7 @@ jobs:
           pattern: digests-*
           merge-multiple: true
 
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
       - name: Log in to GHCR
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
@@ -270,7 +270,7 @@ jobs:
           trivyignores: .trivyignore
 
       - name: Upload Trivy results to Security tab
-        uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4
         continue-on-error: true
         with:
           sarif_file: trivy-results.sarif
@@ -293,7 +293,7 @@ jobs:
           fail-build: false
 
       - name: Upload Grype results to Security tab
-        uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4
         continue-on-error: true
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}

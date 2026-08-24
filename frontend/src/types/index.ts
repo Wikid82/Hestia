@@ -1,5 +1,5 @@
 export type ThemePreference = "system" | "light" | "dark";
-export type Role = "admin" | "member";
+export type Role = "hoh" | "member";
 export type Recurrence = "none" | "daily" | "weekly" | "weekdays" | "custom";
 
 export type Household = {
@@ -15,10 +15,42 @@ export type Profile = {
   name: string;
   avatarEmoji: string;
   role: Role;
+  isSystemAdmin: boolean;
   email?: string | null;
   points: number;
   createdAt: string;
   hasPin: boolean;
+};
+
+export type NotificationProvider =
+  | ""
+  | "discord"
+  | "slack"
+  | "gotify"
+  | "pushover"
+  | "ntfy"
+  | "telegram"
+  | "webhook";
+
+export type NotificationSettings = {
+  id: string;
+  provider: NotificationProvider;
+  config: Record<string, string> | null;
+  updatedAt: string;
+};
+
+export type InviteStatus = "pending" | "accepted" | "revoked" | "expired";
+
+export type Invite = {
+  id: string;
+  householdId?: string | null;
+  role: Role;
+  email: string;
+  status: InviteStatus;
+  invitedByUserId: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+  createdAt: string;
 };
 
 export type Chore = {

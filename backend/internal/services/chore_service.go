@@ -176,7 +176,7 @@ func todayRange() (time.Time, time.Time) {
 }
 
 // Complete marks a chore done for today, awarding points to the assignee.
-// Anyone can mark their own chore done; admins can mark on behalf of
+// Anyone can mark their own chore done; HoHs can mark on behalf of
 // someone else too. Returns ErrAlreadyDone if already completed today
 // (a no-op, not an error condition the caller needs to surface loudly).
 func (s *ChoreService) Complete(householdID, choreID, actingUserID, actingRole string) (*models.ChoreCompletion, error) {
@@ -187,7 +187,7 @@ func (s *ChoreService) Complete(householdID, choreID, actingUserID, actingRole s
 	if chore.AssignedToUserID == nil {
 		return nil, ErrUnassigned
 	}
-	if *chore.AssignedToUserID != actingUserID && actingRole != "admin" {
+	if *chore.AssignedToUserID != actingUserID && actingRole != "hoh" {
 		return nil, ErrForbidden
 	}
 
@@ -233,7 +233,7 @@ func (s *ChoreService) Uncomplete(householdID, choreID, actingUserID, actingRole
 	if chore.AssignedToUserID == nil {
 		return ErrUnassigned
 	}
-	if *chore.AssignedToUserID != actingUserID && actingRole != "admin" {
+	if *chore.AssignedToUserID != actingUserID && actingRole != "hoh" {
 		return ErrForbidden
 	}
 

@@ -1,8 +1,9 @@
 module hestia/backend
 
-go 1.26.6
+go 1.27.0
 
 require (
+	github.com/Wikid82/go_notify_yourself v0.2.1
 	github.com/gin-contrib/static v1.1.6
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
@@ -48,8 +49,8 @@ require (
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
-	modernc.org/libc v1.75.3 // indirect
+	modernc.org/libc v1.75.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.12.0 // indirect
-	modernc.org/sqlite v1.56.0 // indirect
+	modernc.org/memory v1.12.1 // indirect
+	modernc.org/sqlite v1.57.0 // indirect
 )

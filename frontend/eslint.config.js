@@ -25,4 +25,12 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Playwright specs/fixtures run under Node, not the browser — process,
+    // module resolution, etc. need Node's globals, not DOM's.
+    files: ["e2e/**/*.ts"],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 );

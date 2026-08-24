@@ -21,22 +21,27 @@ type Household struct {
 	Rewards   []Reward   `gorm:"foreignKey:HouseholdID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
-// User is a household member profile. Only the household's one main
-// account (created at signup) has Email/PasswordHash set — that's the
-// single shared login. Every other profile is switched into locally via
-// the avatar picker; PinHash optionally gates switching into an "admin"
-// role profile. PasswordHash/PinHash are never serialized to JSON.
+// User is a household member profile. Any profile can have Email/
+// PasswordHash set for its own direct login (typically the household's
+// creator, or anyone invited by email); profiles without one are
+// switched into locally via the avatar picker, optionally PIN-gated.
+// Role is scoped to this profile's own household ("hoh" = owns/manages
+// this household, same as the old "admin"); IsSystemAdmin is a separate,
+// household-independent flag for instance-wide administration (inviting
+// HoHs, managing every household). PasswordHash/PinHash are never
+// serialized to JSON.
 type User struct {
-	ID           string    `gorm:"primaryKey" json:"id"`
-	HouseholdID  string    `gorm:"not null;index" json:"householdId"`
-	Name         string    `gorm:"not null" json:"name"`
-	AvatarEmoji  string    `gorm:"not null" json:"avatarEmoji"`
-	Role         string    `gorm:"not null;default:member" json:"role"` // admin | member
-	Email        *string   `gorm:"uniqueIndex" json:"email,omitempty"`
-	PasswordHash *string   `json:"-"`
-	PinHash      *string   `json:"-"`
-	Points       int       `gorm:"not null;default:0" json:"points"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID            string    `gorm:"primaryKey" json:"id"`
+	HouseholdID   string    `gorm:"not null;index" json:"householdId"`
+	Name          string    `gorm:"not null" json:"name"`
+	AvatarEmoji   string    `gorm:"not null" json:"avatarEmoji"`
+	Role          string    `gorm:"not null;default:member" json:"role"` // hoh | member
+	IsSystemAdmin bool      `gorm:"not null;default:false" json:"isSystemAdmin"`
+	Email         *string   `gorm:"uniqueIndex" json:"email,omitempty"`
+	PasswordHash  *string   `json:"-"`
+	PinHash       *string   `json:"-"`
+	Points        int       `gorm:"not null;default:0" json:"points"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 // MarshalJSON adds a "hasPin" flag derived from PinHash (which itself
@@ -119,4 +124,100 @@ type RewardRedemption struct {
 	UserID      string    `gorm:"not null;index" json:"userId"`
 	PointsSpent int       `gorm:"not null" json:"pointsSpent"`
 	RedeemedAt  time.Time `gorm:"not null" json:"redeemedAt"`
+}
+
+// NotificationSettings is a singleton row (always ID
+// NotificationSettingsID) holding the instance's admin-notification
+// channel: which go_notify_yourself provider to send through and its
+// provider-specific config (e.g. {"webhook_url": "..."}), stored as JSON.
+// System-admin-only, instance-wide — not per-household. An empty Provider
+// means notifications are unconfigured.
+//
+// Deliberately DB-backed and web-UI-editable, unlike SMTP: these are
+// lower-stakes credentials (a leaked webhook URL lets someone post fake
+// notifications, not access an external account) and benefit from
+// no-redeploy editability. See CLAUDE.md's "Product shape" section.
+type NotificationSettings struct {
+	ID         string    `gorm:"primaryKey" json:"id"`
+	Provider   string    `json:"provider"`
+	ConfigJSON string    `json:"-"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+}
+
+// NotificationSettingsID is the fixed primary key of the singleton
+// NotificationSettings row.
+const NotificationSettingsID = "default"
+
+// Invite is a pending email invitation to join Hestia — either as a new
+// HoH (HouseholdID nil: the invitee creates their own, independent
+// household on accept) or as a member of an existing household
+// (HouseholdID set). Tokens are stored hashed (sha256); the raw token
+// only ever exists in the invite email link and the API response at the
+// moment of creation.
+type Invite struct {
+	ID              string     `gorm:"primaryKey" json:"id"`
+	HouseholdID     *string    `gorm:"index" json:"householdId,omitempty"`
+	Role            string     `gorm:"not null" json:"role"` // hoh | member
+	Email           string     `gorm:"not null;index" json:"email"`
+	TokenHash       string     `gorm:"not null;uniqueIndex" json:"-"`
+	Status          string     `gorm:"not null;default:pending" json:"status"` // pending | accepted | revoked
+	InvitedByUserID string     `gorm:"not null" json:"invitedByUserId"`
+	ExpiresAt       time.Time  `gorm:"not null" json:"expiresAt"`
+	AcceptedAt      *time.Time `json:"acceptedAt,omitempty"`
+	CreatedAt       time.Time  `json:"createdAt"`
+}
+
+// IsExpired reports whether this invite is still nominally "pending" in
+// the DB but past its expiry — computed on read rather than via a
+// background job, same as chore due-dates.
+func (i Invite) IsExpired() bool {
+	return i.Status == "pending" && time.Now().After(i.ExpiresAt)
+}
+
+// MarshalJSON reports "expired" as the JSON status once ExpiresAt has
+// passed, instead of the stored "pending" — API consumers shouldn't have
+// to duplicate the expiry check themselves.
+func (i Invite) MarshalJSON() ([]byte, error) {
+	status := i.Status
+	if i.IsExpired() {
+		status = "expired"
+	}
+	type alias Invite
+	return json.Marshal(struct {
+		alias
+		Status string `json:"status"`
+	}{alias: alias(i), Status: status})
+}
+
+// PasswordReset is a pending "forgot password" request for a user with
+// email/password login. Tokens are stored hashed (sha256), same rationale
+// as Invite.TokenHash — the raw token only ever exists in the reset email
+// link and the moment-of-creation response.
+type PasswordReset struct {
+	ID        string     `gorm:"primaryKey" json:"id"`
+	UserID    string     `gorm:"not null;index" json:"userId"`
+	TokenHash string     `gorm:"not null;uniqueIndex" json:"-"`
+	ExpiresAt time.Time  `gorm:"not null" json:"expiresAt"`
+	UsedAt    *time.Time `json:"usedAt,omitempty"`
+	CreatedAt time.Time  `json:"createdAt"`
+}
+
+// IsExpired reports whether this reset token is still unused but past its
+// expiry — computed on read, same pattern as Invite.IsExpired.
+func (p PasswordReset) IsExpired() bool {
+	return p.UsedAt == nil && time.Now().After(p.ExpiresAt)
+}
+
+// MarshalJSON exposes ConfigJSON (stored as a raw string for simple
+// GORM persistence) as a parsed "config" object in the API response.
+func (n NotificationSettings) MarshalJSON() ([]byte, error) {
+	var cfg map[string]any
+	if n.ConfigJSON != "" {
+		_ = json.Unmarshal([]byte(n.ConfigJSON), &cfg)
+	}
+	type alias NotificationSettings
+	return json.Marshal(struct {
+		alias
+		Config map[string]any `json:"config"`
+	}{alias: alias(n), Config: cfg})
 }

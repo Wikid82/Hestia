@@ -13,6 +13,11 @@ import CalendarPage from "@/pages/CalendarPage";
 import HouseholdPage from "@/pages/HouseholdPage";
 import RemindersPage from "@/pages/RemindersPage";
 import RewardsPage from "@/pages/RewardsPage";
+import AdminSettingsPage from "@/pages/AdminSettingsPage";
+import AccountPage from "@/pages/AccountPage";
+import InviteAcceptPage from "@/pages/InviteAcceptPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +102,9 @@ function AppRoutes() {
           </NeedProfileRoute>
         }
       />
+      <Route path="/invite/:token" element={<InviteAcceptPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route
         element={
           <RequireAuth>
@@ -110,6 +118,8 @@ function AppRoutes() {
         <Route path="/household" element={<HouseholdPage />} />
         <Route path="/reminders" element={<RemindersPage />} />
         <Route path="/rewards" element={<RewardsPage />} />
+        <Route path="/admin" element={<AdminSettingsPage />} />
+        <Route path="/account" element={<AccountPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

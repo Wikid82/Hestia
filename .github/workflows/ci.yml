@@ -23,7 +23,51 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       - run: test -z "$(gofmt -l .)"
-      - run: go test ./...
+
+      - name: Run tests with coverage
+        working-directory: .
+        run: ./scripts/go-test-coverage.sh
+        env:
+          HESTIA_MIN_COVERAGE: "85"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: backend-coverage
+          path: backend/coverage.txt
+          retention-days: 7
+
+      # Codecov computes its own project/patch gates from this (see
+      # codecov.yml) — always upload, even if the local threshold check
+      # above just failed, so the PR still gets a real Codecov status
+      # instead of nothing. Not run twice in a separate workflow (unlike
+      # Charon's codecov-upload.yml) — that would just re-run the same
+      # tests a second time for no benefit at Hestia's scale.
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./backend/coverage.txt
+          flags: backend
+          fail_ci_if_error: false
+
+      # Advisory only (continue-on-error) — already blocking via lefthook's
+      # pre-commit hook for anyone who hasn't bypassed it; see
+      # docs/current_spec.md Decision 2 for why this isn't double-blocking.
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.13.1
+          working-directory: backend
+          args: --timeout=5m
+        continue-on-error: true
+
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
   frontend:
     runs-on: ubuntu-latest
@@ -42,3 +86,29 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+      - run: npm run audit:ci
+
+      - name: Run tests with coverage
+        working-directory: .
+        run: ./scripts/frontend-test-coverage.sh
+        env:
+          HESTIA_MIN_COVERAGE: "85"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/lcov.info
+          retention-days: 7
+
+      # See the equivalent step in the backend job for why this is
+      # inline rather than a separate codecov-upload.yml workflow.
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./frontend/coverage
+          flags: frontend
+          fail_ci_if_error: false

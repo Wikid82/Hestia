@@ -86,13 +86,15 @@ for MODULE in "${NPM_MODULES[@]}"; do
     rm -rf node_modules package-lock.json
     npm install
     npm dedupe
-    npm run build
-    npm run lint
+    npm run --if-present build
+    npm run --if-present type-check
+    npm run --if-present lint
 
     # No audit-ci.json here (yet) — see Charon's scripts/charon_dep_update.sh
     # for the allowlist pattern if Hestia ever needs to carve out a specific
     # known-unfixable finding. For now, any high/critical finding fails the
     # script outright.
+    npm run audit:ci
     npm audit --audit-level=high
     npm audit fix || true
     npm outdated || true

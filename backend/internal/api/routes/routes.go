@@ -15,7 +15,8 @@ import (
 func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.AuthService) {
 	requireHousehold := middleware.RequireHousehold(auth, db)
 	requireProfile := middleware.RequireProfile(auth, db)
-	requireAdmin := middleware.RequireAdmin()
+	requireHoH := middleware.RequireHoH()
+	requireSystemAdmin := middleware.RequireSystemAdmin()
 
 	router.GET("/api/health", d.Health)
 	router.GET("/api/ws", d.WS)
@@ -28,6 +29,16 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 		authGroup.POST("/login", d.Login)
 		authGroup.POST("/logout", d.Logout)
 		authGroup.GET("/me", requireHousehold, d.Me)
+		authGroup.POST("/forgot-password", d.ForgotPassword)
+		authGroup.POST("/reset-password", d.ResetPassword)
+	}
+
+	// Invite preview/accept are public: the invitee has no session yet —
+	// that's the whole point of an invite link.
+	invites := api.Group("/invites")
+	{
+		invites.GET("/:token", d.GetInvitePreview)
+		invites.POST("/:token/accept", d.AcceptInvite)
 	}
 
 	// Profiles: listing/switching only needs a household session, not an
@@ -46,25 +57,35 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 	authed.Use(requireHousehold, requireProfile)
 	{
 		authed.GET("/household", d.GetHousehold)
-		authed.PATCH("/household", requireAdmin, d.UpdateHousehold)
+		authed.PATCH("/household", requireHoH, d.UpdateHousehold)
 
 		members := authed.Group("/members")
 		{
 			members.GET("", d.ListMembers)
 			members.GET("/:id", d.GetMember)
-			members.POST("", requireAdmin, d.CreateMember)
-			members.PATCH("/:id", requireAdmin, d.UpdateMember)
-			members.DELETE("/:id/pin", requireAdmin, d.ClearMemberPIN)
-			members.DELETE("/:id", requireAdmin, d.DeleteMember)
+			members.POST("", requireHoH, d.CreateMember)
+			members.PATCH("/:id", requireHoH, d.UpdateMember)
+			members.PATCH("/me/credentials", d.SetOwnCredentials)
+			members.PATCH("/:id/credentials", requireHoH, d.SetMemberCredentials)
+			members.DELETE("/:id/pin", requireHoH, d.ClearMemberPIN)
+			members.DELETE("/:id", requireHoH, d.DeleteMember)
+
+			memberInvites := members.Group("/invites")
+			memberInvites.Use(requireHoH)
+			{
+				memberInvites.POST("", d.CreateMemberInvite)
+				memberInvites.GET("", d.ListMemberInvites)
+				memberInvites.DELETE("/:id", d.RevokeMemberInvite)
+			}
 		}
 
 		chores := authed.Group("/chores")
 		{
 			chores.GET("", d.ListChores)
 			chores.GET("/:id", d.GetChore)
-			chores.POST("", requireAdmin, d.CreateChore)
-			chores.PATCH("/:id", requireAdmin, d.UpdateChore)
-			chores.DELETE("/:id", requireAdmin, d.DeleteChore)
+			chores.POST("", requireHoH, d.CreateChore)
+			chores.PATCH("/:id", requireHoH, d.UpdateChore)
+			chores.DELETE("/:id", requireHoH, d.DeleteChore)
 			chores.POST("/:id/complete", d.CompleteChore)
 			chores.POST("/:id/uncomplete", d.UncompleteChore)
 		}
@@ -80,11 +101,23 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 		rewards := authed.Group("/rewards")
 		{
 			rewards.GET("", d.ListRewards)
-			rewards.POST("", requireAdmin, d.CreateReward)
-			rewards.PATCH("/:id", requireAdmin, d.UpdateReward)
-			rewards.PATCH("/:id/toggle", requireAdmin, d.ToggleRewardActive)
-			rewards.DELETE("/:id", requireAdmin, d.DeleteReward)
+			rewards.POST("", requireHoH, d.CreateReward)
+			rewards.PATCH("/:id", requireHoH, d.UpdateReward)
+			rewards.PATCH("/:id/toggle", requireHoH, d.ToggleRewardActive)
+			rewards.DELETE("/:id", requireHoH, d.DeleteReward)
 			rewards.POST("/:id/redeem", d.RedeemReward)
+		}
+
+		admin := authed.Group("/admin")
+		admin.Use(requireSystemAdmin)
+		{
+			admin.GET("/notification-settings", d.GetNotificationSettings)
+			admin.PUT("/notification-settings", d.UpdateNotificationSettings)
+			admin.POST("/notification-settings/test", d.TestNotificationSettings)
+
+			admin.POST("/invites", d.CreateHoHInvite)
+			admin.GET("/invites", d.ListHoHInvites)
+			admin.DELETE("/invites/:id", d.RevokeHoHInvite)
 		}
 	}
 }

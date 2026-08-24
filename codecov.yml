@@ -1,0 +1,74 @@
+# =============================================================================
+# Codecov Configuration
+# Require 85% overall (project) and 85% patch (changed-lines) coverage —
+# matches Charon's Definition of Done, and docs/current_spec.md Decision 1:
+# both gates are on from the start, accepting an initially-red state until
+# PR5/PR6's backfill lands, rather than a softer ramp-up.
+# =============================================================================
+
+coverage:
+  status:
+    project:
+      default:
+        target: 85%
+        threshold: 1%
+    patch:
+      default:
+        target: 85%
+        threshold: 1%
+
+# Fail CI if Codecov upload/report indicates a problem
+require_ci_to_pass: yes
+
+# -----------------------------------------------------------------------------
+# PR Comment Configuration
+# -----------------------------------------------------------------------------
+comment:
+  require_changes: false
+  require_base: false
+  require_head: true
+  layout: "reach, diff, flags, files"
+  behavior: default
+
+# -----------------------------------------------------------------------------
+# Exclude from coverage reporting
+# -----------------------------------------------------------------------------
+ignore:
+  # Test files
+  - "**/*_test.go"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+
+  # E2E tests (added in a later PR)
+  - "frontend/e2e/**"
+
+  # Documentation
+  - "docs/**"
+  - "*.md"
+
+  # CI/CD & config
+  - ".github/**"
+  - "scripts/**"
+  - "*.yml"
+  - "*.yaml"
+  - "*.json"
+
+  # Frontend build artifacts, dependencies, test infrastructure
+  - "frontend/node_modules/**"
+  - "frontend/dist/**"
+  - "frontend/coverage/**"
+  - "frontend/public/**"
+  - "frontend/src/test/**"
+  - "frontend/vitest.config.ts"
+  - "frontend/vite.config.ts"
+  - "frontend/eslint.config.js"
+  - "frontend/postcss.config.js"
+  - "frontend/tailwind.config.js"
+  - "**/*.d.ts"
+
+  # Backend entrypoint — bootstrap code only, no business logic worth unit
+  # testing — and test infrastructure (only ever called from *_test.go
+  # files). Matches scripts/go-test-coverage.sh's EXCLUDE_PACKAGES — keep
+  # the two in sync manually, per CLAUDE.md's Conventions section.
+  - "backend/cmd/api/**"
+  - "backend/internal/testutil/**"

@@ -30,9 +30,14 @@ export default function AppShell() {
                   {link.label}
                 </NavLink>
               ))}
-              {profile?.role === "admin" && (
+              {profile?.role === "hoh" && (
                 <NavLink to="/household" className={navClass}>
                   Household
+                </NavLink>
+              )}
+              {profile?.isSystemAdmin && (
+                <NavLink to="/admin" className={navClass}>
+                  Admin
                 </NavLink>
               )}
             </nav>
@@ -44,6 +49,9 @@ export default function AppShell() {
               <span>{profile?.name}</span>
               <span className="text-muted-foreground">· {profile?.points} pts</span>
             </span>
+            <NavLink to="/account" className={navClass}>
+              Account
+            </NavLink>
             <button
               onClick={() => switchToPicker()}
               className="text-muted-foreground hover:text-foreground"
