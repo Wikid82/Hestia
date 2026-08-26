@@ -15,7 +15,7 @@
     "e2e:install": "playwright install --with-deps chromium"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.102.3",
+    "@tanstack/react-query": "^5.102.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^8.3.0"
@@ -37,7 +37,7 @@
     "audit-ci": "^7.1.0",
     "eslint": "^10.9.1",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.4",
+    "eslint-plugin-react-refresh": "^0.5.5",
     "globals": "^17.11.0",
     "jsdom": "^30.0.1",
     "tailwindcss": "^4.3.3",
