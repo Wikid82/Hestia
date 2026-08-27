@@ -5,7 +5,16 @@
 # this app (musl/apk's package set vs Debian's) — measured via a full-severity
 # Trivy scan of both before switching: node:24-slim came back with 152
 # findings, node:24-alpine with 11 and zero HIGH/CRITICAL either way.
-FROM node:24.20.0-alpine AS frontend
+#
+# Pinned by manifest-list digest, not just the tag. The multi-arch build
+# runs amd64 and arm64 on separate native runners, and Docker's official
+# `node` images publish each arch asynchronously — a same-day patch tag
+# (e.g. 24.20.0-alpine on 2026-08-27) can have amd64 live while arm64 is
+# still minutes/hours behind, which fails the arm64 leg with "no match for
+# platform in manifest: not found". Only bump this to a tag whose
+# manifest list already carries linux/amd64 AND linux/arm64, and update
+# the digest with it. 24.19.0-alpine is the newest fully multi-arch tag.
+FROM node:24.19.0-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
