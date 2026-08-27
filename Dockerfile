@@ -5,7 +5,7 @@
 # this app (musl/apk's package set vs Debian's) — measured via a full-severity
 # Trivy scan of both before switching: node:24-slim came back with 152
 # findings, node:24-alpine with 11 and zero HIGH/CRITICAL either way.
-FROM node:24.12.0-alpine AS frontend
+FROM node:24.20.0-alpine AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
