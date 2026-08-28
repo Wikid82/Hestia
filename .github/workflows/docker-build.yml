@@ -277,7 +277,7 @@ jobs:
           category: trivy-image-scan
 
       - name: Generate SBOM
-        version: v2.13.2uses: anchore/sbom-action@aa80c8c5bd439a416a62804f2151ab38c671a638 # v0.24.1
+        uses: anchore/sbom-action@aa80c8c5bd439a416a62804f2151ab38c671a638 # v0.24.1
         with:
           image: ${{ env.REGISTRY_IMAGE }}@${{ steps.scan.outputs.digest }}
           format: cyclonedx-json
