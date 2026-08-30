@@ -51,6 +51,17 @@ WORKDIR /app
 # any outbound HTTPS calls now or in the future.
 RUN apk add --no-cache tzdata ca-certificates
 
+# patching known CVE's
+
+# renovate: datasource=repology depName=alpine_3_20/openssl3 versioning=loose
+ENV LIBSSL_VERSION="3.5.8-r0"
+
+RUN apk update && \
+    apk add --no-cache \
+    "libssl3=${LIBSSL_VERSION}" \
+    "libcrypto3=${LIBSSL_VERSION}"
+
+
 ENV GIN_MODE=release
 ENV DB_PATH=/data/hestia.db
 ENV STATIC_DIR=/app/web
