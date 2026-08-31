@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1](https://github.com/Wikid82/Hestia/compare/v0.4.0...v0.4.1) (2026-08-31)
+
+
+### Bug Fixes
+
+* **ci:** remove stray text before uses key in Generate SBOM step ([11d7129](https://github.com/Wikid82/Hestia/commit/11d7129217482f2d7d0b19c6863aa13f7008c681))
+* patch openssl CVEs by pinning libssl3/libcrypto3 in Dockerfile ([55b3742](https://github.com/Wikid82/Hestia/commit/55b37427c82ad20570f24e43dccbca2258e95b74))
+* pin frontend node base image to a fully multi-arch digest ([da8abc7](https://github.com/Wikid82/Hestia/commit/da8abc7ff67a8d79faad3f0cb664f23d64584895))
+* pin frontend node base image to a fully multi-arch digest ([#95](https://github.com/Wikid82/Hestia/issues/95)) ([5b75b67](https://github.com/Wikid82/Hestia/commit/5b75b67108a7e4b7b1513189d75e34f94bc840e0))
+
 ## [0.4.0](https://github.com/Wikid82/Hestia/compare/v0.3.0...v0.4.0) (2026-08-24)
 
 
