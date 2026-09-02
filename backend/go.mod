@@ -1,6 +1,6 @@
 module hestia/backend
 
-go 1.27.0
+go 1.27.1
 
 require (
 	github.com/Wikid82/go_notify_yourself v0.2.1
