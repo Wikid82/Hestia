@@ -49,18 +49,13 @@ WORKDIR /app
 # tzdata: lets the TZ env var control time.Local (chore due-dates are
 # computed from the container's local clock). ca-certificates: needed for
 # any outbound HTTPS calls now or in the future.
-RUN apk add --no-cache tzdata ca-certificates
-
-# patching known CVE's
-
-# renovate: datasource=repology depName=alpine_3_20/openssl3 versioning=loose
-ENV LIBSSL_VERSION="3.5.8-r0"
-
-RUN apk update && \
-    apk add --no-cache \
-    "libssl3=${LIBSSL_VERSION}" \
-    "libcrypto3=${LIBSSL_VERSION}"
-
+#
+# apk upgrade picks up any package patches (openssl/libssl3 CVEs included)
+# published to the Alpine 3.24 branch since the base image digest was cut,
+# rather than pinning an exact libssl3 version that goes stale on the next
+# -rN bump and hard-fails the build.
+RUN apk update && apk upgrade --no-cache && \
+    apk add --no-cache tzdata ca-certificates
 
 ENV GIN_MODE=release
 ENV DB_PATH=/data/hestia.db
