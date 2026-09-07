@@ -63,7 +63,7 @@ jobs:
           docker run --rm --network host \
             -v "$PWD/frontend:/work" -w /work \
             -e PLAYWRIGHT_BASE_URL \
-            mcr.microsoft.com/playwright:v1.62.1-noble \
+            mcr.microsoft.com/playwright:v1.63.0-noble \
             bash -c "npm ci && npx playwright test"
 
       - name: Upload Playwright report
