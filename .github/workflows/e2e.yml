@@ -45,9 +45,12 @@ jobs:
           exit 1
 
       # Runs npm ci + the suite inside Microsoft's official Playwright
-      # image (pinned to match frontend/package.json's @playwright/test
-      # version exactly) instead of `npx playwright install --with-deps`
-      # on the bare runner. The prior approach repeatedly hit severe
+      # image, whose tag is derived from the resolved @playwright/test
+      # version in frontend/package-lock.json so the pre-baked browsers
+      # always match the npm-installed client (a hardcoded tag silently
+      # drifts the moment a dep bump lands on one branch but not the
+      # other). This replaces `npx playwright install --with-deps` on
+      # the bare runner. The prior approach repeatedly hit severe
       # `azure.archive.ubuntu.com` mirror flakiness fetching apt's font
       # packages (one run saw a 107KB package take 7 minutes, then
       # timed out entirely on the next one) — a real, recurring
@@ -60,10 +63,12 @@ jobs:
       - name: Run e2e suite (official Playwright image — pre-baked browsers/deps)
         timeout-minutes: 10
         run: |
+          PW_VERSION=$(jq -r '.packages["node_modules/@playwright/test"].version' frontend/package-lock.json)
+          echo "Using Playwright image mcr.microsoft.com/playwright:v${PW_VERSION}-noble"
           docker run --rm --network host \
             -v "$PWD/frontend:/work" -w /work \
             -e PLAYWRIGHT_BASE_URL \
-            mcr.microsoft.com/playwright:v1.62.1-noble \
+            "mcr.microsoft.com/playwright:v${PW_VERSION}-noble" \
             bash -c "npm ci && npx playwright test"
 
       - name: Upload Playwright report
