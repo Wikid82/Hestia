@@ -56,6 +56,26 @@ adding a new external dependency) before just doing it.
   changelog entries; an unprefixed title fails the check and would
   silently drop out of release automation even if merged. Individual
   commit messages within a PR aren't checked — only the PR title matters.
+- Commit-prefix conventions (applies to the PR title, and to local
+  commits so a bundled promotion still parses):
+  - `deps:` for any dependency bump that ends up in the shipped binary
+    or image — Go modules, npm packages, the Dockerfile base image.
+    These cut a patch release and land in the changelog's "Dependencies"
+    section, which is the point: a vuln fix in a dependency should ship.
+    Renovate emits this prefix automatically (`.github/renovate.json` →
+    `semanticCommitType: deps`).
+  - `chore:` for dependency bumps that don't change what a self-hoster
+    runs — GitHub Actions digest pins, CI-only tooling. Non-releasable
+    by design.
+  - `ci:` for `.github/workflows/*` changes, `build:` for Dockerfile /
+    build-tooling changes that aren't dep bumps, `docs:` for docs-only.
+    All non-releasable.
+  - `feat:` / `fix:` for actual product changes, as normal.
+  - Only `feat:`, `fix:`, `perf:`, `deps:`, and breaking changes (`!` /
+    `BREAKING CHANGE:`) trigger a release — `release-please-config.json`
+    → `changelog-sections` defines the set (a type listed there without
+    `"hidden": true` is release-triggering; that's why `deps` bumps a
+    version and `chore`/`ci` don't).
 - Do not include the `Claude-Session: https://claude.ai/code/session_...`
   link in commit messages or PR descriptions for this repo.
 
