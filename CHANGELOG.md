@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/Wikid82/Hestia/compare/v0.4.1...v0.4.2) (2026-09-07)
+
+
+### Bug Fixes
+
+* **deps:** bump dev dependencies in frontend ([d3ad36e](https://github.com/Wikid82/Hestia/commit/d3ad36e1e363fa3dcbde74f933ab16cd5004e92e))
+* **deps:** bump gin-contrib/static, sse, and mongo-driver ([16b6634](https://github.com/Wikid82/Hestia/commit/16b663406bb6c6279bd363646546e09dfb8f983b))
+
 ## [0.4.1](https://github.com/Wikid82/Hestia/compare/v0.4.0...v0.4.1) (2026-08-31)
 
 
