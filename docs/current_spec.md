@@ -106,33 +106,42 @@ service-worker file.
   in this codebase (e.g. `AcceptInvite`-style "don't leak whether it existed" isn't the
   concern here, just ordinary idempotency).
 
-## PR slicing
+## PR / commit slicing
 
-- [x] **PR1 — `feat: minimal PWA shell for Web Push (manifest + service worker)`.**
+One feature is one PR — the whole thing merges to `development` together, as a single
+squash commit, once it clears the full Definition of Done bar (unit coverage, e2e, security
+scanning). The steps below are **commits on one feature branch/PR (`feat/web-push-pwa-shell`,
+currently open as PR #113)**, not separate PRs — nothing here merges on its own. PR #113's
+title/description will be updated to describe the whole feature before it's ready, and it
+stays open (not merged) until every step below is done.
+
+- [x] **Commit 1 — PWA shell for Web Push (manifest + service worker).**
       `frontend/public/manifest.json` (name, icons, `display: standalone`, theme color) and
       `frontend/public/sw.js` (install/activate, `push` listener → `showNotification`,
       `notificationclick` listener → focus/open the relevant chore). Register the service
       worker from `main.tsx`. Scoped narrowly to what push needs — full offline-shell asset
       caching stays #32's scope if #32 gets its own pass later. Manual verification: "Add to
       Home Screen" on iOS Safari and Android Chrome, per #32's own acceptance criteria (no
-      Lighthouse gate added here, that's #32's bar).
-- [ ] **PR2 — `deps: bump go_notify_yourself to v0.3.0` + `feat: VAPID config, push
-      subscription model/service/endpoints`.** Bump `go.mod` (this ships in the binary, so
-      `deps:` per the commit-prefix convention, not `chore:`). `PushConfig` singleton model
-      (mirrors `NotificationSettings`), `PushSubscription` model (`ID`, `UserID` indexed,
-      `Endpoint` uniqueIndex-with-UserID, `P256dh`, `Auth`, `CreatedAt`). `PushService` in
-      `backend/internal/services`: `GetOrCreateVAPIDKeys`, `Subscribe`, `Unsubscribe`,
-      `SendToUser(ctx, userID, title, body, data)` (loads all subscriptions for the user,
-      builds one `webpush.Client` per subscription via the shared `transport.Wrapper`
-      pattern `NotifyService` already establishes, sends to each, prunes on 404/410 per
-      decision 4). Handlers + routes for the three endpoints above, wired into
+      Lighthouse gate added here, that's #32's bar). Landed as commit e9b9e8e.
+- [ ] **Commit 2 — `deps: bump go_notify_yourself to v0.3.0` + VAPID config, push
+      subscription model/service/endpoints.** Bump `go.mod` (this ships in the binary, so
+      `deps:` per the commit-prefix convention, not `chore:` — note the *overall PR title*
+      is still whatever `feat:`/`fix:` best summarizes the full feature, since only the PR
+      title drives release-please; this is about the individual commit message). `PushConfig`
+      singleton model (mirrors `NotificationSettings`), `PushSubscription` model (`ID`,
+      `UserID` indexed, `Endpoint` uniqueIndex-with-UserID, `P256dh`, `Auth`, `CreatedAt`).
+      `PushService` in `backend/internal/services`: `GetOrCreateVAPIDKeys`, `Subscribe`,
+      `Unsubscribe`, `SendToUser(ctx, userID, title, body, data)` (loads all subscriptions
+      for the user, builds one `webpush.Client` per subscription via the shared
+      `transport.Wrapper` pattern `NotifyService` already establishes, sends to each, prunes
+      on 404/410 per decision 4). Handlers + routes for the three endpoints above, wired into
       `Deps`/`main.go`/`testutil/app.go`/`routes.go` matching the existing service-wiring
       pattern. Unit tests: VAPID lazy-generation (and that it's stable across repeated
       calls), subscribe upsert, unsubscribe idempotency, `SendToUser` fan-out to multiple
       subscriptions, dead-subscription pruning on 404/410 (via a fake transport/mock
       `transport.Wrapper` target, not a real push service), `BASE_URL`-unset error path.
       Integration tests for the three handlers mirroring `notifications_test.go`'s style.
-- [ ] **PR3 — `feat: frontend push subscribe/unsubscribe flow`.** A settings toggle (likely
+- [ ] **Commit 3 — frontend push subscribe/unsubscribe flow.** A settings toggle (likely
       alongside wherever per-user preferences already live, or a new small "Notifications"
       section) that requests `Notification` permission, calls
       `navigator.serviceWorker.ready` → `pushManager.subscribe({applicationServerKey})`
@@ -141,25 +150,28 @@ service-worker file.
       `pushManager.getSubscription()` → `.unsubscribe()` → `POST /api/push/unsubscribe`.
       `frontend/src/api/push.ts` for the fetch calls, unit tests for the component
       (permission granted/denied/dismissed states, subscribe success/error, unsubscribe).
-- [ ] **PR4 — `feat: send push on chore assignment`.** Wire `PushService.SendToUser` into
+- [ ] **Commit 4 — send push on chore assignment.** Wire `PushService.SendToUser` into
       `ChoreService` at the point `AssignedToUserID` is set on create or changed on update
       (only when it's a real assignment change, not every edit) — title/body naming the
-      chore, `data` carrying the chore ID so `notificationclick` (PR1's service worker) can
-      deep-link to it. Best-effort: a push failure must not fail the chore
+      chore, `data` carrying the chore ID so `notificationclick` (commit 1's service worker)
+      can deep-link to it. Best-effort: a push failure must not fail the chore
       create/update request, same "optional side-channel, don't fail the primary action"
       posture `NotifyService.Notify` already takes for admin alerts. Unit tests: push fires
       on new assignment and on reassignment, does not fire on unrelated edits or
       unassignment, chore mutation still succeeds if `SendToUser` errors.
-- [ ] **PR5 — `test: e2e coverage for push subscribe/unsubscribe`.** Real push *delivery*
+- [ ] **Commit 5 — e2e coverage for push subscribe/unsubscribe.** Real push *delivery*
       isn't meaningfully testable in CI — it requires a live browser push service (FCM /
       Mozilla autopush) that a headless Playwright run in `docker-compose.e2e.yml` has no
       route to, and issue #39's own acceptance criteria ("works on iOS/Android") is
-      inherently a manual, real-device check, not an automatable one. Scope this spec to
-      what *is* real e2e-able: service worker registers successfully, the settings toggle
-      flow reaches `POST /api/push/subscribe` and a row lands in the DB (assert via the
-      API, same pattern other specs use), and unsubscribe removes it. New
+      inherently a manual, real-device check, not an automatable one. Scope this to what
+      *is* real e2e-able: service worker registers successfully, the settings toggle flow
+      reaches `POST /api/push/subscribe` and a row lands in the DB (assert via the API, same
+      pattern other specs use), and unsubscribe removes it. New
       `frontend/e2e/push-notifications.spec.ts`. Document the manual-verification gap in the
-      PR description rather than silently having thinner e2e coverage than other features.
+      final PR description rather than silently having thinner e2e coverage than other
+      features. **This commit is the one that makes the feature mergeable** — once it's in,
+      PR #113 gets its title/description finalized to describe the whole feature and is
+      opened up for review/merge.
 
 ## Open questions / not yet decided
 
