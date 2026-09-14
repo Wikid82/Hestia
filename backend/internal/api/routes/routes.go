@@ -90,6 +90,13 @@ func Register(router *gin.Engine, d *handlers.Deps, db *gorm.DB, auth *services.
 			chores.POST("/:id/uncomplete", d.UncompleteChore)
 		}
 
+		push := authed.Group("/push")
+		{
+			push.GET("/vapid-public-key", d.GetVAPIDPublicKey)
+			push.POST("/subscribe", d.Subscribe)
+			push.POST("/unsubscribe", d.Unsubscribe)
+		}
+
 		reminders := authed.Group("/reminders")
 		{
 			reminders.GET("", d.ListReminders)

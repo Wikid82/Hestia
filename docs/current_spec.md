@@ -123,7 +123,7 @@ stays open (not merged) until every step below is done.
       caching stays #32's scope if #32 gets its own pass later. Manual verification: "Add to
       Home Screen" on iOS Safari and Android Chrome, per #32's own acceptance criteria (no
       Lighthouse gate added here, that's #32's bar). Landed as commit e9b9e8e.
-- [ ] **Commit 2 — `deps: bump go_notify_yourself to v0.3.0` + VAPID config, push
+- [x] **Commit 2 — `deps: bump go_notify_yourself to v0.3.0` + VAPID config, push
       subscription model/service/endpoints.** Bump `go.mod` (this ships in the binary, so
       `deps:` per the commit-prefix convention, not `chore:` — note the *overall PR title*
       is still whatever `feat:`/`fix:` best summarizes the full feature, since only the PR

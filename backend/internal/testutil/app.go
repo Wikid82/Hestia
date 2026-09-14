@@ -114,6 +114,7 @@ func NewWithOptions(t *testing.T, opts Options) *App {
 		HHAuth:            services.NewHouseholdAuthService(db),
 		Mailer:            services.NewMailer(mailerCfg),
 		Notify:            services.NewNotifyService(db),
+		Push:              services.NewPushService(db, baseURL),
 		Invite:            services.NewInviteService(db),
 		PasswordReset:     services.NewPasswordResetService(db),
 		Hub:               hub,
