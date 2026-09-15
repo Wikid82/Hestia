@@ -141,7 +141,7 @@ stays open (not merged) until every step below is done.
       subscriptions, dead-subscription pruning on 404/410 (via a fake transport/mock
       `transport.Wrapper` target, not a real push service), `BASE_URL`-unset error path.
       Integration tests for the three handlers mirroring `notifications_test.go`'s style.
-- [ ] **Commit 3 — frontend push subscribe/unsubscribe flow.** A settings toggle (likely
+- [x] **Commit 3 — frontend push subscribe/unsubscribe flow.** A settings toggle (likely
       alongside wherever per-user preferences already live, or a new small "Notifications"
       section) that requests `Notification` permission, calls
       `navigator.serviceWorker.ready` → `pushManager.subscribe({applicationServerKey})`
