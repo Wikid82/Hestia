@@ -57,6 +57,10 @@ type Options struct {
 	// forgot-password still returning a generic 200 rather than leaking
 	// server config to an unauthenticated caller).
 	SMTPUnconfigured bool
+	// BaseURL overrides the default "http://localhost:5173" test BASE_URL
+	// when non-nil (an empty string included) — for exercising
+	// BASE_URL-unset branches, e.g. Web Push's ErrBaseURLNotConfigured.
+	BaseURL *string
 }
 
 // New starts a fresh App (public signup open) for the duration of the
@@ -89,6 +93,9 @@ func NewWithOptions(t *testing.T, opts Options) *App {
 	authService := services.NewAuthService("test-auth-secret")
 
 	baseURL := "http://localhost:5173"
+	if opts.BaseURL != nil {
+		baseURL = *opts.BaseURL
+	}
 	var mailerCfg *config.SMTPConfig
 	if !opts.SMTPUnconfigured {
 		mailerCfg = &config.SMTPConfig{

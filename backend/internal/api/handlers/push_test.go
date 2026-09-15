@@ -73,6 +73,43 @@ func TestPush_SubscribeMissingFieldsRejected(t *testing.T) {
 	}
 }
 
+func TestPush_GetVAPIDPublicKeyRequiresBaseURL(t *testing.T) {
+	empty := ""
+	app := testutil.NewWithOptions(t, testutil.Options{BaseURL: &empty})
+	client, _ := testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	resp := testutil.Do(t, client, "GET", app.BaseURL+"/api/push/vapid-public-key", nil, nil)
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("vapid-public-key with no BASE_URL: status = %d, want 503", resp.StatusCode)
+	}
+}
+
+func TestPush_GetVAPIDPublicKeyDBErrorReturns500(t *testing.T) {
+	app := testutil.New(t)
+	client, _ := testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	testutil.PoisonTable(app.DB, "push_configs")
+
+	resp := testutil.Do(t, client, "GET", app.BaseURL+"/api/push/vapid-public-key", nil, nil)
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Errorf("vapid-public-key with poisoned config table: status = %d, want 500", resp.StatusCode)
+	}
+}
+
+func TestPush_UnsubscribeDBErrorReturns500(t *testing.T) {
+	app := testutil.New(t)
+	client, _ := testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")
+
+	testutil.PoisonTableWrites(app.DB, "push_subscriptions")
+
+	resp := testutil.Do(t, client, "POST", app.BaseURL+"/api/push/unsubscribe", map[string]any{
+		"endpoint": "https://push.example.com/sub-1",
+	}, nil)
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Errorf("Unsubscribe with poisoned table: status = %d, want 500", resp.StatusCode)
+	}
+}
+
 func TestPush_SubscribeInvalidBodyRejected(t *testing.T) {
 	app := testutil.New(t)
 	client, _ := testutil.Signup(t, app, "Test HH", "Admin", "admin@example.com", "password123")

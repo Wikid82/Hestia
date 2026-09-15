@@ -8,6 +8,8 @@ import (
 	"hestia/backend/internal/models"
 	"hestia/backend/internal/services"
 	"hestia/backend/internal/testutil"
+
+	"gorm.io/gorm"
 )
 
 func TestPushService_VAPIDPublicKeyGeneratesAndPersists(t *testing.T) {
@@ -128,6 +130,94 @@ func TestPushService_UnsubscribeIdempotent(t *testing.T) {
 	db.Model(&models.PushSubscription{}).Where("user_id = ?", "user-1").Count(&count)
 	if count != 0 {
 		t.Errorf("expected the subscription to be removed, got %d rows", count)
+	}
+}
+
+func TestPushService_GetOrCreateConfig_ConcurrentCreateRaceRecovers(t *testing.T) {
+	db := testutil.NewDB(t)
+	svc := services.NewPushService(db, "https://hestia.example.com")
+
+	// Simulate a concurrent first-caller winning the race: right before
+	// our own INSERT executes, another row lands in push_configs with the
+	// same fixed ID, so our INSERT fails on the primary key and
+	// getOrCreateConfig should recover by re-reading the row that won.
+	_ = db.Callback().Create().Before("gorm:create").Register("test:concurrent-push-config", func(tx *gorm.DB) {
+		if tx.Statement.Table != "push_configs" {
+			return
+		}
+		_ = db.Callback().Create().Remove("test:concurrent-push-config")
+		concurrent := models.PushConfig{ID: models.PushConfigID, VAPIDPublicKey: "concurrent-pub", VAPIDPrivateKey: "concurrent-priv"}
+		if err := db.Create(&concurrent).Error; err != nil {
+			t.Fatalf("seeding concurrent row: %v", err)
+		}
+	})
+
+	key, err := svc.VAPIDPublicKey()
+	if err != nil {
+		t.Fatalf("VAPIDPublicKey returned an error: %v", err)
+	}
+	if key != "concurrent-pub" {
+		t.Errorf("VAPIDPublicKey() = %q, want the concurrently-created row's key %q", key, "concurrent-pub")
+	}
+}
+
+func TestPushService_GetOrCreateConfig_ReadDBErrorPropagates(t *testing.T) {
+	db := testutil.NewDB(t)
+	testutil.PoisonTable(db, "push_configs")
+	svc := services.NewPushService(db, "https://hestia.example.com")
+
+	if _, err := svc.VAPIDPublicKey(); err == nil {
+		t.Error("expected an error when the push_configs table is poisoned")
+	}
+}
+
+func TestPushService_UnsubscribeEmptyEndpointNoop(t *testing.T) {
+	db := testutil.NewDB(t)
+	svc := services.NewPushService(db, "https://hestia.example.com")
+
+	if err := svc.Unsubscribe("user-1", ""); err != nil {
+		t.Errorf("Unsubscribe with an empty endpoint: err = %v, want nil", err)
+	}
+}
+
+func TestPushService_SendToUserSubscriptionLookupDBErrorPropagates(t *testing.T) {
+	db := testutil.NewDB(t)
+	testutil.PoisonTable(db, "push_subscriptions")
+	svc := services.NewPushService(db, "https://hestia.example.com")
+
+	if err := svc.SendToUser(context.Background(), "user-1", services.PushMessage{Title: "T", Body: "B"}); err == nil {
+		t.Error("expected an error when the push_subscriptions table is poisoned")
+	}
+}
+
+func TestPushService_SendToUserConfigDBErrorPropagates(t *testing.T) {
+	db := testutil.NewDB(t)
+	svc := services.NewPushService(db, "https://hestia.example.com")
+	if err := svc.Subscribe("user-1", services.SubscriptionInput{
+		Endpoint: "https://push.example.com/sub-1", P256dh: "p", Auth: "a",
+	}); err != nil {
+		t.Fatalf("Subscribe: %v", err)
+	}
+
+	testutil.PoisonTable(db, "push_configs")
+
+	if err := svc.SendToUser(context.Background(), "user-1", services.PushMessage{Title: "T", Body: "B"}); err == nil {
+		t.Error("expected an error when the push_configs table is poisoned")
+	}
+}
+
+func TestPushService_SendToUserRequiresBaseURL(t *testing.T) {
+	db := testutil.NewDB(t)
+	svc := services.NewPushService(db, "")
+	if err := svc.Subscribe("user-1", services.SubscriptionInput{
+		Endpoint: "https://push.example.com/sub-1", P256dh: "p", Auth: "a",
+	}); err != nil {
+		t.Fatalf("Subscribe: %v", err)
+	}
+
+	err := svc.SendToUser(context.Background(), "user-1", services.PushMessage{Title: "T", Body: "B"})
+	if !errors.Is(err, services.ErrBaseURLNotConfigured) {
+		t.Errorf("SendToUser with no BASE_URL: err = %v, want ErrBaseURLNotConfigured", err)
 	}
 }
 
