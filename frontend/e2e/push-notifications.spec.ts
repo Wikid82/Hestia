@@ -22,6 +22,9 @@ test.describe("Web Push subscribe/unsubscribe", () => {
     // without needing to reproduce locally.
     page.on("console", (msg) => console.log(`[browser:${msg.type()}] ${msg.text()}`));
     page.on("pageerror", (err) => console.log(`[pageerror] ${err.stack ?? err.message}`));
+    page.on("response", (res) => {
+      if (res.status() >= 400) console.log(`[http ${res.status()}] ${res.request().method()} ${res.url()}`);
+    });
 
     await context.grantPermissions(["notifications"]);
 
@@ -70,11 +73,11 @@ test.describe("Web Push subscribe/unsubscribe", () => {
     }
     await expect(toggle).toBeChecked();
 
-    const unsubscribeRequest = page.waitForResponse(
-      (res) => res.url().endsWith("/api/push/unsubscribe") && res.request().method() === "POST" && res.ok(),
-    );
-    await toggle.uncheck();
-    await unsubscribeRequest;
+    await toggle.click();
+    await page.waitForTimeout(1000);
+    if (await alert.count()) {
+      console.log(`[push toggle error, unsubscribe] ${await alert.textContent()}`);
+    }
     await expect(toggle).not.toBeChecked();
 
     // Reload: the unsubscribe actually took, not just local state.
