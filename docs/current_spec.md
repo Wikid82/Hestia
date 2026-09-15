@@ -173,6 +173,22 @@ stays open (not merged) until every step below is done.
       `npx eslint` and `tsc --noEmit` on the new file are clean. This was the last planned
       commit — PR #113 is now ready for the Definition of Done review pass (coverage gate,
       full CI, security scanning) and merge.
+      - Turns out even *subscribing* isn't reachable from CI either — `PushManager.subscribe()`
+        itself tries to register with the real push service over the network, which the
+        runner can't reach, so the real call rejected and the checkbox silently reverted.
+        Fixed by stubbing `PushManager.prototype.subscribe`/`getSubscription` via
+        `addInitScript` (the spec still exercises the real UI and real
+        `/api/push/subscribe`+`/api/push/unsubscribe` round trip against the real backend,
+        just not real external push registration — already out of scope per this note).
+        Also switched from Playwright's `.check()`/`.uncheck()` to `.click()` + an explicit
+        `toBeChecked`/`not.toBeChecked` wait: those helpers expect the checkbox's native
+        `checked` property to flip immediately off the click, but the enable/disable
+        mutations here are multi-step async chains (permission request, VAPID fetch, service
+        worker, subscribe/unsubscribe, backend POST) that don't resolve in time for that
+        stricter check. Took 3 CI round-trips (with temporary console/response-URL logging,
+        since the workflow's `playwright-report` artifact wasn't landing on failure — worth
+        a follow-up look, not chased further here) to find both causes; e2e now passes
+        cleanly.
       - **Near-incident during this commit, not caused by the spec's own code**: running
         `docker compose -f docker-compose.yml -f docker-compose.e2e.yml build` to verify the
         spec locally retagged the shared `hestia:latest` image with this branch's dev/e2e

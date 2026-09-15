@@ -7,25 +7,14 @@ import { signupNewHousehold } from "./fixtures/household";
 // iOS/Android") is an inherently manual, real-device check. It turns out
 // even *subscribing* isn't e2e-able either: PushManager.subscribe() itself
 // registers with the real push service over the network, which a locked-
-// down CI runner can't reach (confirmed failure: "Clicking the checkbox
-// did not change its state", because the real subscribe() call rejected).
-// So PushManager.prototype.subscribe/getSubscription are stubbed via
-// addInitScript below — this spec exercises the real UI, the real
-// /api/push/subscribe + /api/push/unsubscribe round trip against the real
-// backend, and real persistence, without depending on external push
-// infrastructure being reachable. See docs/current_spec.md's Commit 5 note.
+// down CI runner can't reach. So PushManager.prototype.subscribe/
+// getSubscription are stubbed via addInitScript below — this spec
+// exercises the real UI, the real /api/push/subscribe +
+// /api/push/unsubscribe round trip against the real backend, and real
+// persistence, without depending on external push infrastructure being
+// reachable. See docs/current_spec.md's Commit 5 note.
 test.describe("Web Push subscribe/unsubscribe", () => {
   test("toggling on subscribes and toggling off unsubscribes", async ({ page, context }) => {
-    // TEMP diagnostics: surface any browser-side error directly in the CI
-    // log (the workflow's playwright-report artifact hasn't been landing
-    // on failure) so the real cause of a prior failure here is visible
-    // without needing to reproduce locally.
-    page.on("console", (msg) => console.log(`[browser:${msg.type()}] ${msg.text()}`));
-    page.on("pageerror", (err) => console.log(`[pageerror] ${err.stack ?? err.message}`));
-    page.on("response", (res) => {
-      if (res.status() >= 400) console.log(`[http ${res.status()}] ${res.request().method()} ${res.url()}`);
-    });
-
     await context.grantPermissions(["notifications"]);
 
     await page.addInitScript(() => {
@@ -65,20 +54,17 @@ test.describe("Web Push subscribe/unsubscribe", () => {
     await expect(toggle).toBeVisible();
     await expect(toggle).not.toBeChecked();
 
+    // .click() + an explicit wait, not .check(): the enable/disable
+    // mutations are multi-step (permission request, VAPID key fetch,
+    // service worker, subscribe/unsubscribe, backend POST), and
+    // Playwright's .check()/.uncheck() expect the checked property to
+    // flip immediately off the native click rather than after an async
+    // chain settles.
     await toggle.click();
-    await page.waitForTimeout(1000);
-    const alert = page.getByRole("alert");
-    if (await alert.count()) {
-      console.log(`[push toggle error] ${await alert.textContent()}`);
-    }
-    await expect(toggle).toBeChecked();
+    await expect(toggle).toBeChecked({ timeout: 10_000 });
 
     await toggle.click();
-    await page.waitForTimeout(1000);
-    if (await alert.count()) {
-      console.log(`[push toggle error, unsubscribe] ${await alert.textContent()}`);
-    }
-    await expect(toggle).not.toBeChecked();
+    await expect(toggle).not.toBeChecked({ timeout: 10_000 });
 
     // Reload: the unsubscribe actually took, not just local state.
     await page.reload();
