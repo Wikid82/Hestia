@@ -102,7 +102,7 @@ export function PushNotificationSettings() {
   });
 
   if (!supported) {
-    return <p className="text-sm text-muted-foreground">Push notifications aren't supported in this browser.</p>;
+    return <p className="text-sm text-muted-foreground">Push notifications are not supported in this browser.</p>;
   }
 
   const pending = checking || enableMutation.isPending || disableMutation.isPending;

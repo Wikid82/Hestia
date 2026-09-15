@@ -59,7 +59,7 @@ afterEach(() => {
 describe("PushNotificationSettings", () => {
   it("shows an unsupported message when the browser lacks service worker/push support", async () => {
     renderWithQueryClient();
-    expect(await screen.findByText(/aren't supported/i)).toBeInTheDocument();
+    expect(await screen.findByText(/not supported/i)).toBeInTheDocument();
   });
 
   it("reflects an existing subscription as checked", async () => {
