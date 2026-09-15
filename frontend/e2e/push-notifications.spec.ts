@@ -4,14 +4,47 @@ import { signupNewHousehold } from "./fixtures/household";
 // Real push *delivery* isn't e2e-able here — it requires a live browser
 // push service (FCM/Mozilla autopush) a CI runner has no meaningful way to
 // assert against, and issue #39's own acceptance criteria ("works on
-// iOS/Android") is an inherently manual, real-device check. This spec
-// covers what is real e2e-able: the service worker registers, the
-// Notifications toggle drives a real PushManager.subscribe() through to
-// POST /api/push/subscribe, and unsubscribing removes it — see
-// docs/current_spec.md's Commit 5 note.
+// iOS/Android") is an inherently manual, real-device check. It turns out
+// even *subscribing* isn't e2e-able either: PushManager.subscribe() itself
+// registers with the real push service over the network, which a locked-
+// down CI runner can't reach (confirmed failure: "Clicking the checkbox
+// did not change its state", because the real subscribe() call rejected).
+// So PushManager.prototype.subscribe/getSubscription are stubbed via
+// addInitScript below — this spec exercises the real UI, the real
+// /api/push/subscribe + /api/push/unsubscribe round trip against the real
+// backend, and real persistence, without depending on external push
+// infrastructure being reachable. See docs/current_spec.md's Commit 5 note.
 test.describe("Web Push subscribe/unsubscribe", () => {
   test("toggling on subscribes and toggling off unsubscribes", async ({ page, context }) => {
     await context.grantPermissions(["notifications"]);
+
+    await page.addInitScript(() => {
+      let fakeSubscription: { endpoint: string; toJSON: () => unknown; unsubscribe: () => Promise<boolean> } | null =
+        null;
+
+      const makeFakeSubscription = () => ({
+        endpoint: "https://fake-push-service.e2e.test/endpoint",
+        toJSON: () => ({
+          endpoint: "https://fake-push-service.e2e.test/endpoint",
+          keys: { p256dh: "ZmFrZS1wMjU2ZGg", auth: "ZmFrZS1hdXRo" },
+        }),
+        unsubscribe: async () => {
+          fakeSubscription = null;
+          return true;
+        },
+      });
+
+      if ("PushManager" in window) {
+        window.PushManager.prototype.subscribe = async function () {
+          fakeSubscription = makeFakeSubscription();
+          return fakeSubscription as unknown as PushSubscription;
+        };
+        window.PushManager.prototype.getSubscription = async function () {
+          return fakeSubscription as unknown as PushSubscription;
+        };
+      }
+    });
+
     await signupNewHousehold(page, "push");
 
     await page.waitForFunction(() => "serviceWorker" in navigator);
