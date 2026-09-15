@@ -150,7 +150,7 @@ stays open (not merged) until every step below is done.
       `pushManager.getSubscription()` → `.unsubscribe()` → `POST /api/push/unsubscribe`.
       `frontend/src/api/push.ts` for the fetch calls, unit tests for the component
       (permission granted/denied/dismissed states, subscribe success/error, unsubscribe).
-- [ ] **Commit 4 — send push on chore assignment.** Wire `PushService.SendToUser` into
+- [x] **Commit 4 — send push on chore assignment.** Wire `PushService.SendToUser` into
       `ChoreService` at the point `AssignedToUserID` is set on create or changed on update
       (only when it's a real assignment change, not every edit) — title/body naming the
       chore, `data` carrying the chore ID so `notificationclick` (commit 1's service worker)

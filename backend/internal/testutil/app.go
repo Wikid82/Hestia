@@ -32,6 +32,16 @@ type App struct {
 	DB      *gorm.DB
 }
 
+// newPushService wires services.NewPushService with
+// services.WithAllowHTTPTransport when allowHTTP is set — see
+// Options.PushAllowHTTP.
+func newPushService(db *gorm.DB, baseURL string, allowHTTP bool) *services.PushService {
+	if allowHTTP {
+		return services.NewPushService(db, baseURL, services.WithAllowHTTPTransport())
+	}
+	return services.NewPushService(db, baseURL)
+}
+
 // NewDB opens a fresh temp-file SQLite database with migrations applied —
 // for service-level unit tests that don't need a full HTTP server.
 func NewDB(t *testing.T) *gorm.DB {
@@ -61,6 +71,12 @@ type Options struct {
 	// when non-nil (an empty string included) — for exercising
 	// BASE_URL-unset branches, e.g. Web Push's ErrBaseURLNotConfigured.
 	BaseURL *string
+	// PushAllowHTTP wires the app's PushService with
+	// services.WithAllowHTTPTransport, so a test can point a
+	// PushSubscription's endpoint at a local httptest.Server and observe
+	// real delivery — the default SSRF-safe transport otherwise rejects
+	// loopback/plain-HTTP destinations, which is correct in production.
+	PushAllowHTTP bool
 }
 
 // New starts a fresh App (public signup open) for the duration of the
@@ -121,7 +137,7 @@ func NewWithOptions(t *testing.T, opts Options) *App {
 		HHAuth:            services.NewHouseholdAuthService(db),
 		Mailer:            services.NewMailer(mailerCfg),
 		Notify:            services.NewNotifyService(db),
-		Push:              services.NewPushService(db, baseURL),
+		Push:              newPushService(db, baseURL, opts.PushAllowHTTP),
 		Invite:            services.NewInviteService(db),
 		PasswordReset:     services.NewPasswordResetService(db),
 		Hub:               hub,

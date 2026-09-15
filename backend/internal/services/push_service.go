@@ -40,8 +40,24 @@ type PushService struct {
 	baseURL string
 }
 
-func NewPushService(db *gorm.DB, baseURL string) *PushService {
-	return &PushService{db: db, wrapper: transport.NewWrapper(), baseURL: baseURL}
+// PushServiceOption configures a PushService at construction time.
+type PushServiceOption func(*PushService)
+
+// WithAllowHTTPTransport allows plain-HTTP and loopback push endpoints —
+// the default transport.Wrapper's SSRF hardening otherwise rejects both,
+// which is correct for production but blocks integration tests from
+// pointing a subscription's endpoint at a local httptest.Server. Never
+// pass this outside tests.
+func WithAllowHTTPTransport() PushServiceOption {
+	return func(s *PushService) { s.wrapper = transport.NewWrapper(transport.WithAllowHTTP(true)) }
+}
+
+func NewPushService(db *gorm.DB, baseURL string, opts ...PushServiceOption) *PushService {
+	s := &PushService{db: db, wrapper: transport.NewWrapper(), baseURL: baseURL}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // vapidSubject derives the RFC 8292 VAPID JWT "sub" claim from baseURL:
