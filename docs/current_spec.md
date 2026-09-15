@@ -159,19 +159,41 @@ stays open (not merged) until every step below is done.
       posture `NotifyService.Notify` already takes for admin alerts. Unit tests: push fires
       on new assignment and on reassignment, does not fire on unrelated edits or
       unassignment, chore mutation still succeeds if `SendToUser` errors.
-- [ ] **Commit 5 — e2e coverage for push subscribe/unsubscribe.** Real push *delivery*
+- [x] **Commit 5 — e2e coverage for push subscribe/unsubscribe.** Real push *delivery*
       isn't meaningfully testable in CI — it requires a live browser push service (FCM /
       Mozilla autopush) that a headless Playwright run in `docker-compose.e2e.yml` has no
       route to, and issue #39's own acceptance criteria ("works on iOS/Android") is
-      inherently a manual, real-device check, not an automatable one. Scope this to what
-      *is* real e2e-able: service worker registers successfully, the settings toggle flow
-      reaches `POST /api/push/subscribe` and a row lands in the DB (assert via the API, same
-      pattern other specs use), and unsubscribe removes it. New
-      `frontend/e2e/push-notifications.spec.ts`. Document the manual-verification gap in the
-      final PR description rather than silently having thinner e2e coverage than other
-      features. **This commit is the one that makes the feature mergeable** — once it's in,
-      PR #113 gets its title/description finalized to describe the whole feature and is
-      opened up for review/merge.
+      inherently a manual, real-device check, not an automatable one. Scoped to what *is*
+      real e2e-able: `frontend/e2e/push-notifications.spec.ts` grants the `notifications`
+      permission, waits for the service worker to be ready, toggles the Account page's
+      "Push notifications" checkbox on (asserting a real `POST /api/push/subscribe` round
+      trip and a re-check-after-reload that it persisted) and off again (`POST
+      /api/push/unsubscribe`). **Not run locally** — see the incident note below;
+      verification relies on CI (`.github/workflows/e2e.yml`) running it in a clean runner.
+      `npx eslint` and `tsc --noEmit` on the new file are clean. This was the last planned
+      commit — PR #113 is now ready for the Definition of Done review pass (coverage gate,
+      full CI, security scanning) and merge.
+      - **Near-incident during this commit, not caused by the spec's own code**: running
+        `docker compose -f docker-compose.yml -f docker-compose.e2e.yml build` to verify the
+        spec locally retagged the shared `hestia:latest` image with this branch's dev/e2e
+        build — `docker-compose.yml` pins `image: hestia:latest` + `build: .`, and Compose's
+        `build` (not just `up`) reassigns that tag regardless of which override files are
+        also passed. This is the same class of footgun as PR3's incident in the (now
+        superseded) forgot/reset-password spec, but triggered one step earlier (`build`
+        rather than `up`) and this time nothing actually restarted — the real, already-
+        running `hestia` container keeps executing from its original image layer regardless
+        of what the tag now points to, so no downtime occurred. Caught before running `up`;
+        recovered by re-tagging the real container's live image ID (`docker inspect hestia
+        --format '{{.Image}}'`) back onto `hestia:latest`, confirmed via `docker inspect
+        hestia --format '{{.State.Status}} {{.Image}}'` still showing the original SHA
+        running. **Not fixed here, flagged for Jeremy**: `docker-compose.e2e.yml`'s own
+        `name: hestia-e2e` project pin (added after PR3's incident) prevents `up`/`down` from
+        touching the real container, but does nothing about `build` retagging the shared
+        `hestia:latest` name — a real fix needs the e2e stack to build under its own image
+        tag (e.g. `image: hestia:e2e` in `docker-compose.e2e.yml`, or an explicit `docker
+        build -t hestia:e2e .` step) rather than relying on `docker-compose.yml`'s shared
+        tag. Worth doing before the next person (including a future Claude session) runs
+        `docker compose build` against this checkout.
 
 ## Open questions / not yet decided
 
