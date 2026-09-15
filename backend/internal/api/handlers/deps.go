@@ -23,6 +23,7 @@ type Deps struct {
 	HHAuth        *services.HouseholdAuthService
 	Mailer        *services.Mailer
 	Notify        *services.NotifyService
+	Push          *services.PushService
 	Invite        *services.InviteService
 	PasswordReset *services.PasswordResetService
 	Hub           *realtime.Hub

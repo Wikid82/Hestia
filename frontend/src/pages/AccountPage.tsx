@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { setOwnCredentials } from "@/api/members";
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { PushNotificationSettings } from "@/components/PushNotificationSettings";
 
 export default function AccountPage() {
   const { profile, setProfile } = useAuth();
@@ -103,6 +104,11 @@ export default function AccountPage() {
           {mutation.isPending ? "Saving..." : hasLogin ? "Update login" : "Set up login"}
         </button>
       </form>
+
+      <div className="space-y-2 border-t border-border pt-6">
+        <h2 className="text-sm font-semibold">Notifications</h2>
+        <PushNotificationSettings />
+      </div>
     </div>
   );
 }

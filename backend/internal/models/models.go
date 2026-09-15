@@ -208,6 +208,38 @@ func (p PasswordReset) IsExpired() bool {
 	return p.UsedAt == nil && time.Now().After(p.ExpiresAt)
 }
 
+// PushConfig is a singleton row (always ID PushConfigID) holding this
+// instance's VAPID application-server identity for Web Push (RFC 8292).
+// Generated once, lazily, the first time it's needed rather than admin-
+// configured — there is nothing for an admin to enter here. Deliberately
+// DB-backed rather than an env var (unlike SMTP/BASE_URL): a VAPID key
+// doesn't authenticate this app to an external system, it's a self-
+// generated identity that browsers pin their subscription to, and it
+// needs to persist across restarts (rotating it invalidates every
+// existing subscription) — see CLAUDE.md's "Product shape" for the
+// SMTP/BASE_URL env-only rationale this deliberately doesn't extend to.
+type PushConfig struct {
+	ID              string `gorm:"primaryKey" json:"-"`
+	VAPIDPublicKey  string `json:"-"`
+	VAPIDPrivateKey string `json:"-"`
+}
+
+// PushConfigID is the fixed primary key of the singleton PushConfig row.
+const PushConfigID = "default"
+
+// PushSubscription is one browser's Web Push subscription for one user. A
+// user can have several (phone, tablet, etc.) — one row each, unique on
+// (UserID, Endpoint) so re-subscribing the same endpoint upserts instead
+// of duplicating.
+type PushSubscription struct {
+	ID        string    `gorm:"primaryKey" json:"id"`
+	UserID    string    `gorm:"not null;uniqueIndex:idx_push_subscription_user_endpoint" json:"userId"`
+	Endpoint  string    `gorm:"not null;uniqueIndex:idx_push_subscription_user_endpoint" json:"endpoint"`
+	P256dh    string    `gorm:"not null" json:"-"`
+	Auth      string    `gorm:"not null" json:"-"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 // MarshalJSON exposes ConfigJSON (stored as a raw string for simple
 // GORM persistence) as a parsed "config" object in the API response.
 func (n NotificationSettings) MarshalJSON() ([]byte, error) {

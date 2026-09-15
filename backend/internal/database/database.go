@@ -48,6 +48,8 @@ func Open(path string) (*gorm.DB, error) {
 		&models.NotificationSettings{},
 		&models.Invite{},
 		&models.PasswordReset{},
+		&models.PushConfig{},
+		&models.PushSubscription{},
 	); err != nil {
 		return nil, fmt.Errorf("running auto-migration: %w", err)
 	}
