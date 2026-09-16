@@ -192,6 +192,15 @@ adding a new external dependency) before just doing it.
   it does) in the same change. `.env.example` points to that doc rather
   than explaining each variable inline, so don't let the two drift —
   a variable missing from either one is a bug.
+- Keep `docs-site/docs/` (the published GitHub Pages site, built by
+  `.github/workflows/docs.yml`) in sync with any user-facing change —
+  new/changed features, env vars that affect setup, new troubleshooting
+  cases. Update the relevant page (`features.md`, `quick-start.md`,
+  `troubleshooting.md`, `faq.md`) in the same PR, not as a follow-up —
+  same "don't let it drift" reasoning as the `.env.example`/
+  `docs/environment.md` pairing above. This is distinct from `docs/` at
+  the repo root, which holds internal working docs (`current_spec.md`,
+  `environment.md`) rather than published site content.
 
 ## Definition of Done
 
@@ -238,6 +247,12 @@ Every PR is expected to clear this bar before it's mergeable — not just
   `docker-build.yml`. golangci-lint is advisory in CI
   (`continue-on-error: true`) since it's already blocking locally via
   lefthook.
+- **Docs updated for anything user-facing.** A PR that adds or changes
+  behavior a self-hoster would notice (a new feature, a changed setup
+  step, a new failure mode worth documenting) isn't done until the
+  matching `docs-site/docs/` page reflects it — see the Conventions note
+  above. A PR with no user-facing change (internal refactor, CI tweak,
+  dependency bump) doesn't need a docs update just to check a box.
 
 ## Subagents
 
