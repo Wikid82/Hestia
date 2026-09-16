@@ -69,7 +69,15 @@ jobs:
             -v "$PWD/frontend:/work" -w /work \
             -e PLAYWRIGHT_BASE_URL \
             "mcr.microsoft.com/playwright:v${PW_VERSION}-noble" \
-            bash -c "npm ci && npx playwright test"
+            bash -c '
+              for i in 1 2 3; do
+                npm ci && exit_code=0 && break || exit_code=$?
+                echo "npm ci failed (attempt $i/3), retrying..." >&2
+                sleep 5
+              done
+              [ "$exit_code" = 0 ] || exit "$exit_code"
+              npx playwright test
+            '
 
       - name: Upload Playwright report
         if: failure()
