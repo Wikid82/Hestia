@@ -64,11 +64,13 @@ echo ""
 
 export PATH="/usr/share/nodejs/corepack/shims:$PATH"
 
-# Hestia has a single npm workspace: the Vite frontend. The Go backend has
-# no package.json (see the Go modules section above), and there's no root
+# Hestia has two npm packages: the Vite frontend and the Docusaurus docs
+# site (docs-site/, published to GitHub Pages). The Go backend has no
+# package.json (see the Go modules section above), and there's no root
 # package.json anymore since the Next.js app was removed.
 NPM_MODULES=(
     "$REPO_ROOT/frontend"
+    "$REPO_ROOT/docs-site"
 )
 
 for MODULE in "${NPM_MODULES[@]}"; do
