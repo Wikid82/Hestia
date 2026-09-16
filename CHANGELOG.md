@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/Wikid82/Hestia/compare/v0.4.2...v0.5.0) (2026-09-16)
+
+
+### Features
+
+* docs site (Docusaurus) with quick start, features, troubleshooting, FAQ ([b2ef01c](https://github.com/Wikid82/Hestia/commit/b2ef01c7ba0c2950bc9cf730ce7eb391e8289a77))
+
 ## [0.4.2](https://github.com/Wikid82/Hestia/compare/v0.4.1...v0.4.2) (2026-09-07)
 
 
