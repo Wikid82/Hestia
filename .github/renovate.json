@@ -57,6 +57,12 @@
       "groupSlug": "dockerfile-non-major"
     },
     {
+      "description": "node and golang are discarded multi-stage build images (only alpine, the runner stage, ships) — keep their bumps as chore: (non-releasable) rather than deps:, matching the shipped-vs-build-only distinction used for GitHub Actions above.",
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["node", "golang"],
+      "semanticCommitType": "chore"
+    },
+    {
       "description": "Safety: keep major updates separate and require manual review",
       "matchUpdateTypes": ["major"],
       "automerge": false,
