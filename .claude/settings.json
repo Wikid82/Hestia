@@ -3,7 +3,8 @@
     "bgIsolation": "none"
   },
   "attribution": {
-    "commit": "",
-    "pr": ""
+     "sessionUrl": false,
+     "commit": "",
+     "pr": ""
   }
 }

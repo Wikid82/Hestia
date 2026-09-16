@@ -46,6 +46,7 @@ func main() {
 		HHAuth:            services.NewHouseholdAuthService(db),
 		Mailer:            services.NewMailer(cfg.SMTP),
 		Notify:            services.NewNotifyService(db),
+		Push:              services.NewPushService(db, cfg.BaseURL),
 		Invite:            services.NewInviteService(db),
 		PasswordReset:     services.NewPasswordResetService(db),
 		Hub:               hub,

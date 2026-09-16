@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"hestia/backend/internal/api/middleware"
+	"hestia/backend/internal/models"
 	"hestia/backend/internal/services"
 )
 
@@ -110,6 +111,7 @@ func (d *Deps) CreateChore(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create chore"})
 		return
 	}
+	d.notifyChoreAssigned(c, chore)
 	c.JSON(http.StatusCreated, chore)
 }
 
@@ -127,6 +129,8 @@ func (d *Deps) UpdateChore(c *gin.Context) {
 		return
 	}
 
+	previousAssignee := d.currentAssignee(household.ID, c.Param("id"))
+
 	chore, err := d.Chore.Update(household.ID, c.Param("id"), input)
 	if err != nil {
 		if errors.Is(err, services.ErrNotFound) {
@@ -136,7 +140,38 @@ func (d *Deps) UpdateChore(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update chore"})
 		return
 	}
+	if chore.AssignedToUserID != nil && *chore.AssignedToUserID != previousAssignee {
+		d.notifyChoreAssigned(c, chore)
+	}
 	c.JSON(http.StatusOK, chore)
+}
+
+// currentAssignee returns id's current AssignedToUserID before an update
+// is applied (empty string if the chore can't be found or has none) — used
+// to detect a real reassignment vs. an unrelated edit. Best-effort: a
+// lookup failure here just means UpdateChore.notifyChoreAssigned may fire
+// when it strictly didn't need to, not that the update itself fails.
+func (d *Deps) currentAssignee(householdID, id string) string {
+	existing, err := d.Chore.Get(householdID, id)
+	if err != nil || existing.AssignedToUserID == nil {
+		return ""
+	}
+	return *existing.AssignedToUserID
+}
+
+// notifyChoreAssigned sends a best-effort Web Push to chore's assignee.
+// A push failure must not fail the chore create/update request itself —
+// same "optional side-channel" posture NotifyService.Notify takes for
+// admin alerts (see AcceptInvite).
+func (d *Deps) notifyChoreAssigned(c *gin.Context, chore *models.Chore) {
+	if chore.AssignedToUserID == nil {
+		return
+	}
+	_ = d.Push.SendToUser(c.Request.Context(), *chore.AssignedToUserID, services.PushMessage{
+		Title: "New chore assigned",
+		Body:  chore.Title,
+		Data:  map[string]any{"choreId": chore.ID, "url": "/chores"},
+	})
 }
 
 func (d *Deps) DeleteChore(c *gin.Context) {

@@ -8,9 +8,13 @@ A self-hosted household chore chart for families. Add your chores, assign
 them (or let anyone claim them), check them off, and earn points — no
 subscription, no cloud account, your data stays on your own server.
 
-Hestia exists because most task trackers you'll find are built for software
-teams, not families. It's meant to be free, simple, and something a
-non-technical family member can actually use from a tablet on the fridge.
+Hestia exists because the alternatives are either subscription SaaS (e.g.
+[Sweepy](https://sweepy.app)) or general-purpose task trackers repurposed for
+a use case they weren't designed for. If you're looking for a self-hosted
+chore chart, a free family chore tracker, or a Sweepy alternative you can
+run on your own Raspberry Pi or NAS, this is built for exactly that — free,
+simple, MIT-licensed, and something a non-technical family member can
+actually use from a tablet on the fridge.
 
 ## Status
 
