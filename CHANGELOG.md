@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.0](https://github.com/Wikid82/Hestia/compare/v0.5.0...v0.6.0) (2026-09-21)
+
+
+### Features
+
+* docs site (Docusaurus) with quick start, features, troubleshooting, FAQ ([#116](https://github.com/Wikid82/Hestia/issues/116)) ([2128852](https://github.com/Wikid82/Hestia/commit/21288522110d9e7528b7dcde07202123cd011dc8))
+
+
+### Bug Fixes
+
+* restore actions/setup-node ([8c1ee6d](https://github.com/Wikid82/Hestia/commit/8c1ee6d0723cc2bec8f6fbde5d5635eb63a63e56))
+* use setup-node action for Node.js setup in docs workflow ([a6b730e](https://github.com/Wikid82/Hestia/commit/a6b730e63ebd2d2a65013831b243c2ae32880df1))
+
+
+### Dependencies
+
+* pin golang/alpine base images to latest digest, fix Renovate commit type ([7df0e9d](https://github.com/Wikid82/Hestia/commit/7df0e9d56a66faff7ff437c9a484c1391b3d68c6))
+
 ## [0.5.0](https://github.com/Wikid82/Hestia/compare/v0.4.2...v0.5.0) (2026-09-16)
 
 
