@@ -98,20 +98,25 @@ on `main` (since that's the branch Actions runs from; `propagate-main-to-develop
 carries it back down). Everything else — Docusaurus scaffold, real content, `CLAUDE.md`
 update — is commit-sliced within one branch/PR, not split into separate PRs per step.
 
-- **`feat/docs-site` branch, one PR against `development`** (commits, not separate PRs):
+- [x] **Direct commit to `main`, `ci:` prefix — GitHub Pages workflow.** Landed as
+      `2111b3b`, `ci: add GitHub Pages docs-site deploy workflow`. Sits dormant (no
+      `docs-site/` on `main` yet) until the `feat/docs-site` PR below merges to
+      `development` and a subsequent `development` → `main` sync brings the directory over
+      — expected, not a bug. **Still needed**: enable Pages in repo settings (source:
+      GitHub Actions) once `docs-site/` exists on `main` — not done yet, flagging for
+      Jeremy since it's a repo-settings change outside git.
+- [x] **`feat/docs-site` branch, one PR against `development`** (commits, not separate
+      PRs) — landed as commit `fc71117` on the branch, PR not yet opened:
   1. Docusaurus scaffold (`npx create-docusaurus@latest docs-site classic --typescript`),
-     default tutorial content stripped out.
+     default tutorial/blog content stripped out, docs mounted at site root
+     (`routeBasePath: '/'`).
   2. Real content for the five pages (index, quick start, features, troubleshooting, FAQ)
      per the content scope above.
   3. `CLAUDE.md` Definition of Done + Conventions update requiring docs stay current with
      user-facing changes going forward.
-  Verify locally with `npm run build` inside `docs-site/` before opening the PR — the GitHub
-  Pages workflow (below) is what actually publishes it, not this PR by itself.
-- **Direct commit to `main`, `ci:` prefix — GitHub Pages workflow.**
-  `.github/workflows/docs.yml`: triggers on push to `main` when `docs-site/**` or the
-  workflow file itself changes, plus `workflow_dispatch` for manual re-runs; steps are
-  `npm ci` + `npm run build` inside `docs-site/`, then `actions/upload-pages-artifact` +
-  `actions/deploy-pages`. Enable Pages in repo settings (source: GitHub Actions, not a
-  branch) as part of this rollout. This will sit dormant (no `docs-site/` to build yet) until
-  the `feat/docs-site` PR merges to `development` and a subsequent `development` → `main`
-  sync brings the directory over — that's expected, not a bug to chase.
+  Verified locally: `npm run build` and `npm run typecheck` both clean inside `docs-site/`.
+  **Not yet done**: no real favicon exists for the docs site (Docusaurus's default
+  `favicon.ico` is a placeholder) — flagging as a small follow-up, not blocking. PR still
+  needs to be opened against `development` and pushed through the normal DoD bar (this repo
+  has no coverage/e2e surface for `docs-site/`, so the applicable DoD bar here is lefthook +
+  build clean, not the coverage/e2e gates meant for `backend`/`frontend`).

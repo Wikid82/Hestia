@@ -14,7 +14,7 @@
 # platform in manifest: not found". Only bump this to a tag whose
 # manifest list already carries linux/amd64 AND linux/arm64, and update
 # the digest with it. 24.19.0-alpine is the newest fully multi-arch tag.
-FROM node:24.21.0-alpine@sha256:be80f76cf40ec8e42b9bec49f60a55e0660f30af58d3e5a25530785b30ea67e2 AS frontend
+FROM node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
@@ -26,7 +26,7 @@ RUN npm run build
 # pure-Go transpile of SQLite with no cgo involved, so a plain
 # CGO_ENABLED=0 cross-compile from the Go toolchain's own GOARCH support is
 # sufficient — no C cross-compiler or the `tonistiigi/xx` toolchain needed.
-FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS backend
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:4cb7ac979db5fcc41cae44b2227ba5ab8a51e8807f40d9ba4dee20a0ad960b5b AS backend
 WORKDIR /app
 # go.mod can require a newer Go version than this base image ships (e.g.
 # go.mod's own "go 1.27.0" directive vs. this image's 1.26.6) — GOTOOLCHAIN
@@ -43,7 +43,10 @@ ENV CGO_ENABLED=0
 RUN cd backend && GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/hestia ./cmd/api
 
 # --- runner: minimal production image ---
-FROM alpine:3.24 AS runner
+# Pinned by manifest-list digest for the same reason as the node stage above:
+# this image ships in the final multi-arch build, so amd64/arm64 publish skew
+# under a floating tag can otherwise fail one leg of the build.
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS runner
 WORKDIR /app
 
 # tzdata: lets the TZ env var control time.Local (chore due-dates are
