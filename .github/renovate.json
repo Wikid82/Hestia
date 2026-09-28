@@ -36,6 +36,13 @@
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "github-actions-non-major",
       "groupSlug": "github-actions-non-major"
+      },
+    {
+      "description": "Configure Alpine v3.24 registry for APK packages",
+      "matchDatasources": ["apk"],
+      "registryUrls": [
+        "https://dl-cdn.alpinelinux.org/alpine?branch=v3.24&components=main,community&arch=x86_64"
+      ]
     },
     {
       "description": "GitHub Actions bumps are CI-only — they don't change the shipped binary or image, so keep them as chore: (non-releasable) rather than deps: (cuts a release).",
