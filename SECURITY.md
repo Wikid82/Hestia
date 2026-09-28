@@ -22,7 +22,7 @@ project, not a company with an SLA.
 
 ## Known Vulnerabilities
 
-Last reviewed: 2026-08-17
+Last reviewed: 2026-09-27
 
 Every entry below is suppressed in CI via [`.trivyignore`](./.trivyignore) and
 [`.grype.yaml`](./.grype.yaml), both scanned on every build (see
@@ -50,6 +50,26 @@ than assumed.
 
 Net result verified by rescanning the built image with both scanners: 152 Trivy findings → 0.
 Remaining findings (both tools): 3 → 1 unique CVE, see below.
+
+### [HIGH] CVE-2026-85091 · zlib (Alpine base image)
+
+| Field | Value |
+|---|---|
+| **Package** | zlib 1.3.2-r0 (Alpine 3.24 `main` repo) |
+| **Severity** | High |
+| **Status** | Awaiting upstream · review by 2026-10-18 |
+
+Flagged by Grype against the published image (`ghcr.io/wikid82/hestia`). No fixed `-rN` build
+has been published on the Alpine 3.24 branch as of 2026-09-27, so there's nothing to upgrade to
+yet — `apk upgrade` in the Dockerfile already pulls the latest available zlib on every rebuild,
+and that latest available version is still 1.3.2-r0.
+
+**What we did about it now**: pinned zlib explicitly in the Dockerfile via a `ZLIB_VERSION` env
+var with a `# renovate:` comment (datasource `repology`, tracking `alpine_3_24/zlib`), instead of
+leaving it to the blanket `apk upgrade`. That gives Renovate visibility to open a PR the moment
+Alpine ships a fixed build, rather than the fix silently landing (or not) on whatever the next
+unrelated rebuild happens to be. Bump `ZLIB_VERSION` and remove this entry (plus the
+`.trivyignore`/`.grype.yaml` suppressions) once a fix is available.
 
 ### [MEDIUM] CVE-2025-60876 · BusyBox wget HTTP request-splitting (Alpine base image)
 

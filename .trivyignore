@@ -30,3 +30,11 @@ CVE-2025-60876
 # hashing) — openpgp is never imported. Hestia has no PGP/OpenPGP feature.
 # exp: 2026-11-17
 GO-2026-5932
+
+# CVE-2026-85091: zlib high-severity finding, Alpine 3.24 branch (package
+# zlib 1.3.2-r0). No fixed -rN build published upstream on the 3.24 branch
+# yet as of 2026-09-27. Pinned explicitly in the Dockerfile (ZLIB_VERSION)
+# so Renovate opens a PR the moment a fix ships — bump the pin and drop this
+# suppression together at that point.
+# exp: 2026-10-18
+CVE-2026-85091

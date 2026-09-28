@@ -57,8 +57,17 @@ WORKDIR /app
 # published to the Alpine 3.24 branch since the base image digest was cut,
 # rather than pinning an exact libssl3 version that goes stale on the next
 # -rN bump and hard-fails the build.
+#
+# zlib is pinned explicitly (rather than left to the blanket `apk upgrade`
+# above) so Renovate tracks it directly and opens a PR the moment Alpine
+# ships a fixed build for CVE-2026-85091 — `apk upgrade` alone would just
+# silently pick up the fix on some future rebuild with no visible signal to
+# act on. Bump this pin (and drop the matching SECURITY.md/.trivyignore/
+# .grype.yaml suppression) once a fixed version lands.
+# renovate: datasource=repology depName=alpine_3_24/zlib versioning=loose
+ENV ZLIB_VERSION="1.3.2-r0"
 RUN apk update && apk upgrade --no-cache && \
-    apk add --no-cache tzdata ca-certificates
+    apk add --no-cache tzdata ca-certificates "zlib=${ZLIB_VERSION}"
 
 ENV GIN_MODE=release
 ENV DB_PATH=/data/hestia.db
