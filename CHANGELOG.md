@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.1](https://github.com/Wikid82/Hestia/compare/v0.6.0...v0.6.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* revert zlib tracking to alpine_3_24, repology outage was the cause ([d583966](https://github.com/Wikid82/Hestia/commit/d5839667631a46602d1aeb1155e0653e7cb1c3b0))
+* track and suppress zlib CVE-2026-85091 pending upstream fix ([a05dba8](https://github.com/Wikid82/Hestia/commit/a05dba868d3fc830dd7e7bfa7c8c461e3773f89f))
+* track zlib against alpine_edge, alpine_3_24 unresolvable on repology ([ebbba6f](https://github.com/Wikid82/Hestia/commit/ebbba6f9de098ece01387f8d8a32c43ded45a808))
+* update dependency @tanstack/react-query to ^5.103.2 ([1b7cbe2](https://github.com/Wikid82/Hestia/commit/1b7cbe27d41231e3ec550dac706d0637641962c1))
+* update dependency @tanstack/react-query to ^5.103.2 ([9899f1c](https://github.com/Wikid82/Hestia/commit/9899f1c9106725f1a1982c19196435aa83a0ffba))
+* update zlib datasource in Dockerfile to use apk instead of repology ([749fc85](https://github.com/Wikid82/Hestia/commit/749fc853eea6b045ed738dd0639b0131f8cd515a))
+* update zlib datasource in Dockerfile to use correct depName and versioning ([0c8db80](https://github.com/Wikid82/Hestia/commit/0c8db80688333039038163bde7f24b4f8c7a682f))
+
 ## [0.6.0](https://github.com/Wikid82/Hestia/compare/v0.5.0...v0.6.0) (2026-09-21)
 
 
