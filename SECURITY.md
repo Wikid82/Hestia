@@ -65,11 +65,13 @@ yet — `apk upgrade` in the Dockerfile already pulls the latest available zlib 
 and that latest available version is still 1.3.2-r0.
 
 **What we did about it now**: pinned zlib explicitly in the Dockerfile via a `ZLIB_VERSION` env
-var with a `# renovate:` comment (datasource `repology`, tracking `alpine_3_24/zlib`), instead of
-leaving it to the blanket `apk upgrade`. That gives Renovate visibility to open a PR the moment
-Alpine ships a fixed build, rather than the fix silently landing (or not) on whatever the next
-unrelated rebuild happens to be. Bump `ZLIB_VERSION` and remove this entry (plus the
-`.trivyignore`/`.grype.yaml` suppressions) once a fix is available.
+var with a `# renovate:` comment (datasource `repology`), instead of leaving it to the blanket
+`apk upgrade`. Tracked against `alpine_edge/zlib` rather than `alpine_3_24/zlib` — repology hasn't
+indexed the 3.24 branch yet (`depName=alpine_3_24/zlib` returned `no-result` when Renovate first
+tried it), while `edge` is always indexed. A Renovate PR bumping `ZLIB_VERSION` means a fix has
+landed in edge, not necessarily in the 3.24 stable branch yet — confirm it's actually there before
+merging. Remove this entry (plus the `.trivyignore`/`.grype.yaml` suppressions) once a fix is
+confirmed in 3.24.
 
 ### [MEDIUM] CVE-2025-60876 · BusyBox wget HTTP request-splitting (Alpine base image)
 

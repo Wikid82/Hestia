@@ -59,12 +59,15 @@ WORKDIR /app
 # -rN bump and hard-fails the build.
 #
 # zlib is pinned explicitly (rather than left to the blanket `apk upgrade`
-# above) so Renovate tracks it directly and opens a PR the moment Alpine
-# ships a fixed build for CVE-2026-85091 — `apk upgrade` alone would just
-# silently pick up the fix on some future rebuild with no visible signal to
-# act on. Bump this pin (and drop the matching SECURITY.md/.trivyignore/
-# .grype.yaml suppression) once a fixed version lands.
-# renovate: datasource=repology depName=alpine_3_24/zlib versioning=loose
+# above) so Renovate tracks it directly and opens a PR once a fix for
+# CVE-2026-85091 shows up — `apk upgrade` alone would just silently pick it
+# up on some future rebuild with no visible signal to act on. Tracked
+# against alpine_edge rather than alpine_3_24: repology's crawler doesn't
+# have the 3.24 branch indexed yet (depName=alpine_3_24/zlib returns
+# "no-result"), while edge is always indexed. A Renovate PR here means a fix
+# has landed in edge — confirm it's actually in the 3.24 stable branch
+# before bumping this pin, don't just take the edge version number as-is.
+# renovate: datasource=repology depName=alpine_edge/zlib versioning=loose
 ENV ZLIB_VERSION="1.3.2-r0"
 RUN apk update && apk upgrade --no-cache && \
     apk add --no-cache tzdata ca-certificates "zlib=${ZLIB_VERSION}"
