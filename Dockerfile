@@ -64,7 +64,7 @@ WORKDIR /app
 # up on some future rebuild with no visible signal to act on. Bump this pin
 # (and drop the matching SECURITY.md/.trivyignore/.grype.yaml suppression)
 # once a fixed version lands.
-# renovate: datasource=repology depName=alpine_3_24/zlib versioning=loose
+# renovate: datasource=apk depName=alpine_3_24/zlib versioning=loose
 ENV ZLIB_VERSION="1.3.2-r0"
 RUN apk update && apk upgrade --no-cache && \
     apk add --no-cache tzdata ca-certificates "zlib=${ZLIB_VERSION}"
