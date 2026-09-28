@@ -30,6 +30,7 @@
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/tsconfig": "3.10.2",
     "@docusaurus/types": "3.10.2",
+    "@types/node": "^26.6.3",
     "@types/react": "^19.3.0",
     "audit-ci": "^7.1.0",
     "typescript": "~6.0.3"
@@ -50,6 +51,6 @@
     "node": ">=24.21.0"
   },
   "overrides": {
-    "serialize-javascript": "^7.1.1"
+    "serialize-javascript": "^7.1.2"
   }
 }
