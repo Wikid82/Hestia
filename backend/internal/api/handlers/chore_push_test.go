@@ -21,10 +21,10 @@ import (
 // SSRF-safe transport otherwise rejects loopback destinations (correct in
 // production; these tests build the app with testutil.Options.PushAllowHTTP
 // to allow it).
-func newFakePushServer(t *testing.T) (*httptest.Server, *int32) {
+func newFakePushServer(t *testing.T) (server *httptest.Server, hitCount *int32) {
 	t.Helper()
 	var hits int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&hits, 1)
 		w.WriteHeader(http.StatusCreated)
 	}))

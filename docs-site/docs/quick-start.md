@@ -25,9 +25,11 @@ Open `.env` and set:
 
 - **`AUTH_SECRET`** — required, the server won't start without it. Generate
   one with:
+
   ```bash
   openssl rand -base64 32
   ```
+
 - **`TZ`** — your household's IANA timezone (e.g. `America/New_York`).
   Chore due-dates are computed from the container's local clock, so
   without this, chores roll over at UTC midnight instead of your local

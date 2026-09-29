@@ -237,9 +237,9 @@ jobs:
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create \
-            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf "${{ env.REGISTRY_IMAGE }}@sha256:%s " *)
+          mapfile -t tag_args < <(jq -r '.tags[] | "-t", .' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          mapfile -t image_refs < <(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s\n' *)
+          docker buildx imagetools create "${tag_args[@]}" "${image_refs[@]}"
         env:
           DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}
 
@@ -248,7 +248,7 @@ jobs:
         run: |
           # Either single-platform digest is representative for scanning —
           # OS package and npm dependency findings don't differ by arch.
-          echo "digest=sha256:$(ls /tmp/digests | head -n1)" >> "$GITHUB_OUTPUT"
+          echo "digest=sha256:$(find /tmp/digests -type f -printf '%f\n' | sort | head -n1)" >> "$GITHUB_OUTPUT"
 
       - name: Trivy vulnerability scan (table)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

@@ -114,7 +114,7 @@ func (s *PasswordResetService) Reset(rawToken, newPassword string) error {
 	})
 }
 
-func generateResetToken() (raw string, hash string, err error) {
+func generateResetToken() (raw, hash string, err error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", "", err

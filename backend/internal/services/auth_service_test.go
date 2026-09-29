@@ -89,6 +89,7 @@ func TestVerifySession_RejectsExpiredToken(t *testing.T) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-24 * time.Hour)),
 		},
 	}
+	// nosemgrep: go.jwt-go.security.jwt.hardcoded-jwt-key -- throwaway key for a test-only expired token
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte("test-secret"))
 	if err != nil {
 		t.Fatalf("failed to construct an expired test token: %v", err)

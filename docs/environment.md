@@ -52,9 +52,11 @@ your shell (e.g. a systemd unit or CI environment that happens to export it).
 
 - **Default**: none — the server refuses to start without it.
 - Random secret used to sign session cookies (household and profile JWTs). Generate one with:
-  ```
+
+  ```bash
   openssl rand -base64 32
   ```
+
   Changing this value invalidates every existing session (everyone gets logged out).
 
 ## Core

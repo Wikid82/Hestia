@@ -24,10 +24,11 @@ other, and out of scope here — that's a submission action, not something to bu
 now there's no docs site at all, just README + CLAUDE.md.
 
 Two things ship under this spec:
+
 1. A docs site built with Docusaurus, published to GitHub Pages via a new workflow.
 2. Initial doc content: index/home, quick start, features, troubleshooting, FAQ — the
    standard set for a self-hosted OSS project (structure informed by
-   https://www.atlassian.com/blog/loom/software-documentation-best-practices — audience-first
+   <https://www.atlassian.com/blog/loom/software-documentation-best-practices> — audience-first
    structure, task-oriented quick start, searchable/scannable pages).
 3. A `CLAUDE.md` Definition of Done update requiring docs to be created/updated as part of
    normal feature work going forward, so this doesn't stay a one-time push.
@@ -70,6 +71,7 @@ Two things ship under this spec:
 
 Structure per the Atlassian article's recommended shape — audience-first, scannable,
 task-oriented:
+
 - **Index/home** — what Hestia is, who it's for, links out to the sections below. Doubles as
   the SEO landing page (title/meta description should reuse the README's "why Hestia"
   language for consistency).

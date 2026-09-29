@@ -72,7 +72,7 @@ func (m *Mailer) Send(to, subject, body string) error {
 		return smtp.SendMail(addr, auth, m.cfg.From, []string{to}, msg)
 	}
 
-	conn, err := tls.Dial("tcp", addr, &tls.Config{ServerName: m.cfg.Server})
+	conn, err := tls.Dial("tcp", addr, &tls.Config{ServerName: m.cfg.Server, MinVersion: tls.VersionTLS12})
 	if err != nil {
 		return fmt.Errorf("connecting to SMTP server: %w", err)
 	}
@@ -80,18 +80,18 @@ func (m *Mailer) Send(to, subject, body string) error {
 	if err != nil {
 		return fmt.Errorf("starting SMTP session: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	if auth != nil {
-		if err := client.Auth(auth); err != nil {
+		if err = client.Auth(auth); err != nil {
 			return fmt.Errorf("SMTP auth failed: %w", err)
 		}
 	}
-	if err := client.Mail(m.cfg.From); err != nil {
-		return err
+	if mailErr := client.Mail(m.cfg.From); mailErr != nil {
+		return mailErr
 	}
-	if err := client.Rcpt(to); err != nil {
-		return err
+	if rcptErr := client.Rcpt(to); rcptErr != nil {
+		return rcptErr
 	}
 	w, err := client.Data()
 	if err != nil {

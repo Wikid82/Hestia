@@ -113,8 +113,8 @@ func (s *RewardService) Redeem(householdID, rewardID, userID string, userPoints 
 	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&redemption).Error; err != nil {
-			return err
+		if txErr := tx.Create(&redemption).Error; txErr != nil {
+			return txErr
 		}
 		return tx.Model(&models.User{}).Where("id = ?", userID).
 			Update("points", gorm.Expr("points - ?", reward.PointCost)).Error

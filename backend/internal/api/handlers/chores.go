@@ -48,7 +48,7 @@ type choreRequest struct {
 	RecurrenceDays   []int   `json:"recurrenceDays"`
 }
 
-func (r *choreRequest) toInput() (services.ChoreInput, string) {
+func (r *choreRequest) toInput() (input services.ChoreInput, errMsg string) {
 	if r.Title == "" {
 		return services.ChoreInput{}, "title is required"
 	}

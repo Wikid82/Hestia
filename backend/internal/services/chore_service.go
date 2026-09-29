@@ -168,10 +168,10 @@ func (s *ChoreService) Delete(householdID, id string) error {
 	return s.db.Where("id = ? AND household_id = ?", id, householdID).Delete(&models.Chore{}).Error
 }
 
-func todayRange() (time.Time, time.Time) {
+func todayRange() (start, end time.Time) {
 	now := time.Now()
-	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	end := start.AddDate(0, 0, 1)
+	start = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	end = start.AddDate(0, 0, 1)
 	return start, end
 }
 
@@ -211,8 +211,8 @@ func (s *ChoreService) Complete(householdID, choreID, actingUserID, actingRole s
 	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&completion).Error; err != nil {
-			return err
+		if txErr := tx.Create(&completion).Error; txErr != nil {
+			return txErr
 		}
 		return tx.Model(&models.User{}).Where("id = ?", assignedToUserID).
 			Update("points", gorm.Expr("points + ?", chore.Points)).Error
