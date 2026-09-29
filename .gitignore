@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies (root has no package.json anymore — frontend/.gitignore and
+# dependencies (root package.json only carries lefthook; frontend/.gitignore and
 # backend/.gitignore cover their own node_modules/build artifacts)
+/node_modules/
 
 # misc
 .DS_Store
@@ -43,3 +44,8 @@ frontend/e2e/.auth/
 frontend/test-results/
 frontend/playwright-report/
 frontend/blob-report/
+
+# Local CodeQL scans (lefthook run codeql) and security-scan reports
+codeql-db*/
+codeql-results*.sarif
+test-results/

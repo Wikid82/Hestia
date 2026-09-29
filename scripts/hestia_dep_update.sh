@@ -84,11 +84,12 @@ echo ""
 
 export PATH="/usr/share/nodejs/corepack/shims:$PATH"
 
-# Hestia has two npm packages: the Vite frontend and the Docusaurus docs
-# site (docs-site/, published to GitHub Pages). The Go backend has no
-# package.json (see the Go modules section above), and there's no root
-# package.json anymore since the Next.js app was removed.
+# Hestia has three npm packages: the Vite frontend, the Docusaurus docs
+# site (docs-site/, published to GitHub Pages), and the repo root, whose
+# package.json only carries lefthook (git hooks) as a devDependency. The
+# Go backend has no package.json (see the Go modules section above).
 NPM_MODULES=(
+    "$REPO_ROOT"
     "$REPO_ROOT/frontend"
     "$REPO_ROOT/docs-site"
 )
@@ -116,7 +117,7 @@ for MODULE in "${NPM_MODULES[@]}"; do
     # for the allowlist pattern if Hestia ever needs to carve out a specific
     # known-unfixable finding. For now, any high/critical finding fails the
     # script outright.
-    npm run audit:ci
+    npm run --if-present audit:ci
     npm audit --audit-level=high
     npm audit fix || true
     npm outdated || true
