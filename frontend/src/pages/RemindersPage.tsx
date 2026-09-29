@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listReminders } from "@/api/reminders";
 import { listMembers } from "@/api/members";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { ReminderItem } from "@/components/ReminderItem";
 import { ReminderForm } from "@/components/ReminderForm";
 

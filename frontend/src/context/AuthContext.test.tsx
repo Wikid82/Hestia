@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { mockApi } from "@/test/mockApi";
 import { renderWithProviders } from "@/test/render";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./useAuth";
 import type { Household, Profile } from "@/types";
 
 afterEach(() => {

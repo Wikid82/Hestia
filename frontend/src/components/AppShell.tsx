@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 
 const NAV_LINKS = [
   { to: "/", label: "Hub", end: true },

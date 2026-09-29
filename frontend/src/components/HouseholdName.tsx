@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateHousehold } from "@/api/household";
 import { ApiError } from "@/api/client";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 
 export function HouseholdName({ name }: { name: string }) {
   const { setHousehold } = useAuth();

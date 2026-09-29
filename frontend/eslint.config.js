@@ -26,6 +26,14 @@ export default tseslint.config(
     },
   },
   {
+    // Test helpers aren't part of the app bundle, so fast refresh doesn't
+    // apply — they can export helpers alongside re-exports freely.
+    files: ["src/test/**/*.{ts,tsx}"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
+  {
     // Playwright specs/fixtures run under Node, not the browser — process,
     // module resolution, etc. need Node's globals, not DOM's.
     files: ["e2e/**/*.ts"],

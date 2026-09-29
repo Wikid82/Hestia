@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { listChores } from "@/api/chores";
 import { listReminders } from "@/api/reminders";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { TodayChore } from "@/components/TodayChore";
 import { ReminderItem } from "@/components/ReminderItem";
 

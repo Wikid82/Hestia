@@ -1,31 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import * as authApi from "@/api/auth";
 import * as profilesApi from "@/api/profiles";
 import * as invitesApi from "@/api/invites";
 import type { Household, Profile } from "@/types";
-
-type Status = "loading" | "unauthenticated" | "need-profile" | "authed";
-
-type AuthState = {
-  status: Status;
-  household: Household | null;
-  profile: Profile | null;
-};
-
-type AuthContextValue = AuthState & {
-  refresh: () => Promise<void>;
-  login: (input: authApi.LoginInput) => Promise<void>;
-  signup: (input: authApi.SignupInput) => Promise<void>;
-  acceptInvite: (token: string, input: invitesApi.AcceptInviteInput) => Promise<void>;
-  logout: () => Promise<void>;
-  switchProfile: (userId: string, pin?: string) => Promise<void>;
-  switchToPicker: () => Promise<void>;
-  setHousehold: (household: Household) => void;
-  setProfile: (profile: Profile) => void;
-};
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { AuthContext } from "./useAuth";
+import type { AuthContextValue, AuthState } from "./useAuth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -124,10 +104,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
 }

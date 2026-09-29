@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { Chore, Profile, Recurrence } from "@/types";
-import { parseDueDate, parseRecurrenceDays, toDateInputValue } from "@/utils/recurrence";
+import type { Profile, Recurrence } from "@/types";
+import type { ChoreFieldsValue } from "./choreFieldsValue";
 
 const WEEKDAYS = [
   { value: 0, label: "Sun" },
@@ -11,39 +11,6 @@ const WEEKDAYS = [
   { value: 5, label: "Fri" },
   { value: 6, label: "Sat" },
 ];
-
-export type ChoreFieldsValue = {
-  title: string;
-  description: string;
-  points: number;
-  assignedToUserId: string;
-  recurrence: Recurrence;
-  dueDate: string;
-  recurrenceDays: number[];
-};
-
-export function defaultChoreFieldsValue(chore?: Chore): ChoreFieldsValue {
-  if (!chore) {
-    return {
-      title: "",
-      description: "",
-      points: 0,
-      assignedToUserId: "",
-      recurrence: "none",
-      dueDate: toDateInputValue(new Date()),
-      recurrenceDays: [],
-    };
-  }
-  return {
-    title: chore.title,
-    description: chore.description ?? "",
-    points: chore.points,
-    assignedToUserId: chore.assignedToUserId ?? "",
-    recurrence: chore.recurrence,
-    dueDate: toDateInputValue(parseDueDate(chore.dueDate)),
-    recurrenceDays: parseRecurrenceDays(chore.recurrenceDays),
-  };
-}
 
 export function ChoreFields({
   members,

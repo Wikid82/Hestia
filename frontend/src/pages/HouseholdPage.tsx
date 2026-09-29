@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMembers } from "@/api/members";
 import { createMemberInvite, listMemberInvites, revokeMemberInvite } from "@/api/invites";
 import { ApiError } from "@/api/client";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { HouseholdName } from "@/components/HouseholdName";
 import { MemberCard } from "@/components/MemberCard";
 import { ThemePicker } from "@/components/ThemePicker";

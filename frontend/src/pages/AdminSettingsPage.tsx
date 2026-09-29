@@ -8,7 +8,7 @@ import {
 } from "@/api/admin";
 import { createHoHInvite, listHoHInvites, revokeHoHInvite } from "@/api/invites";
 import { ApiError } from "@/api/client";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { InviteEmailForm } from "@/components/InviteEmailForm";
 import { InviteList } from "@/components/InviteList";
 import type { NotificationProvider } from "@/types";
