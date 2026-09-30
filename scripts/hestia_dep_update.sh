@@ -65,6 +65,13 @@ echo "Installing latest global npm..."
 npm install -g npm@latest
 echo ""
 
+# The global prefix's bin dir can sit behind the Node manager's bundled npm
+# on PATH (fnm/nvm), so the upgrade above would be invisible. Put it first.
+NPM_GLOBAL_BIN="$(npm prefix -g)/bin"
+export PATH="$NPM_GLOBAL_BIN:$PATH"
+hash -r
+echo "Now using npm $(npm -v) ($(command -v npm))"
+
 export PATH="/usr/share/nodejs/corepack/shims:$PATH"
 
 # Hestia has three npm packages: the Vite frontend, the Docusaurus docs
