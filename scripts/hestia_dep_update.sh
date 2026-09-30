@@ -8,24 +8,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Go modules
 # ---------------------------------------------------------------------------
 
-update_go() {(
-    cd "$REPO_ROOT" || exit 1
-
-    echo "============================================================================"
-    echo "Updating Go Modules"
-    echo "============================================================================"
-
-    # Update the Go toolchain to the latest version, and update all dependencies
-    # in the backend/ module. This is a single-module repo, so we don't need to
-    # iterate over multiple modules.
-    go get go@latest toolchain@latest
-    go get -u -t ./backend/...
-    go mod tidy
-    go mod verify
-    go vet ./backend/...
-    go build ./backend/...
-    go test ./backend/...
-)
+update_go() {
 GOPATH_BIN="$(go env GOPATH)/bin"
 export PATH="$GOPATH_BIN:$PATH"
 command -v govulncheck >/dev/null || go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -133,9 +116,12 @@ echo "All npm dependencies updated successfully."
 # Dispatch
 # ---------------------------------------------------------------------------
 
+PHASE="${1:-all}"
+
 case "$PHASE" in
     go) update_go ;;
     npm) update_npm ;;
     all) update_go && update_npm ;;
+    *) echo "Usage: $0 [go|npm|all]" >&2; exit 2 ;;
 esac
 
