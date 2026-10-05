@@ -50,6 +50,7 @@
     "node": ">=24.21.0"
   },
   "overrides": {
-    "serialize-javascript": "^7.1.2"
+    "serialize-javascript": "^7.1.2",
+    "feed": "^6.0.0"
   }
 }
