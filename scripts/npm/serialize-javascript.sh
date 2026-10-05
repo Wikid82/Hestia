@@ -4,8 +4,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 NPM_MODULES=(
-          "$REPO_ROOT/docs-site"
-    )
+    "$REPO_ROOT/docs-site"
+)
 
 for MODULE in "${NPM_MODULES[@]}"; do
     echo "============================================================================"
@@ -14,7 +14,8 @@ for MODULE in "${NPM_MODULES[@]}"; do
 
     cd "$MODULE" || exit 1
 
-    if [ -n "$(npm pkg get overrides.serialize-javascript)" ]; then
+    # `npm pkg get` prints "{}" when the key is absent, so test for that rather than empty output.
+    if [ "$(npm pkg get overrides.serialize-javascript)" != "{}" ]; then
         LATEST="$(npm view serialize-javascript version)"
         npm pkg set "overrides.serialize-javascript=^${LATEST}"
         npm install

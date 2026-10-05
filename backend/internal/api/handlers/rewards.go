@@ -26,7 +26,7 @@ type rewardRequest struct {
 	PointCost   int     `json:"pointCost"`
 }
 
-func (r *rewardRequest) toInput() (services.RewardInput, string) {
+func (r *rewardRequest) toInput() (input services.RewardInput, errMsg string) {
 	if r.Title == "" {
 		return services.RewardInput{}, "title is required"
 	}

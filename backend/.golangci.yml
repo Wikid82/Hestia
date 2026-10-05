@@ -7,7 +7,20 @@ run:
   timeout: 5m
   tests: true
 
+# Report every issue, not the default 3-per-text / 50-per-linter sample —
+# a truncated list hides how much is left to fix.
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
 linters:
+  exclusions:
+    rules:
+      # testutil.Do (and the other test HTTP helpers) already read and close
+      # the response body before returning, which bodyclose can't see.
+      - path: (_test\.go|internal/testutil/)
+        linters:
+          - bodyclose
   enable:
     - bodyclose
     - gocritic

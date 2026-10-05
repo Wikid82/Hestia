@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getInvitePreview } from "@/api/invites";
 import { ApiError } from "@/api/client";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 
 const STATUS_MESSAGE: Record<string, string> = {
   accepted: "This invite has already been used.",

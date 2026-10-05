@@ -20,7 +20,7 @@ import (
 // runs GORM AutoMigrate against all known models.
 func Open(path string) (*gorm.DB, error) {
 	if dir := filepath.Dir(path); dir != "." {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
 			return nil, fmt.Errorf("creating db directory: %w", err)
 		}
 	}

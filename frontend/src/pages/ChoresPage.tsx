@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listChores } from "@/api/chores";
 import { listMembers } from "@/api/members";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { TodayChore } from "@/components/TodayChore";
 import { ChoreRow } from "@/components/ChoreRow";
 import { ChoreForm } from "@/components/ChoreForm";

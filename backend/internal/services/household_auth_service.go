@@ -73,8 +73,8 @@ func (s *HouseholdAuthService) Signup(householdName, name, email, password strin
 	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&household).Error; err != nil {
-			return err
+		if txErr := tx.Create(&household).Error; txErr != nil {
+			return txErr
 		}
 		return tx.Create(&user).Error
 	})

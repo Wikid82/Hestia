@@ -2,7 +2,8 @@ import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
-import { ChoreFields, defaultChoreFieldsValue, type ChoreFieldsValue } from "./ChoreFields";
+import { ChoreFields } from "./ChoreFields";
+import { defaultChoreFieldsValue, type ChoreFieldsValue } from "./choreFieldsValue";
 import type { Chore, Profile } from "@/types";
 
 const members: Profile[] = [

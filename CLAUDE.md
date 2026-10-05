@@ -34,17 +34,12 @@ adding a new external dependency) before just doing it.
   fixes happen directly on whatever branch is currently checked out —
   don't branch reflexively for every change. Branch (and open a PR) when
   something is a real chore that needs build/CI testing before landing.
-- CI/workflow changes (`.github/workflows/*`) are committed directly to
-  `main` for now, since that's the branch CI actually runs on and needs
-  to reflect immediately — `propagate-main-to-development.yml` carries
-  them down to `development` automatically. Once the project is more
-  mature this will switch to normal PRs against `development` like
-  everything else; ask if it's unclear which regime is current.
-  Exception: if a workflow file is actively broken in a way that's
-  failing checks on an already-open PR, fix it directly on that PR's
-  branch instead — `pull_request`-triggered checks run using the
-  workflow file from the PR's own head branch, not from `main`, so a
-  fix on `main` alone won't turn the open PR's checks green.
+- CI/workflow changes (`.github/workflows/*`) go through normal PRs
+  against `development` like everything else. (They used to be committed
+  directly to `main`; that was dropped because the project has no real
+  users yet, so there's nothing on `main` that needs CI fixes to land
+  immediately.) Note `pull_request`-triggered checks run using the
+  workflow file from the PR's own head branch.
 - Otherwise, open PRs against `development`, not `main`. `main` is the
   release/stable branch; `development` is the integration branch,
   periodically synced back into `main`.

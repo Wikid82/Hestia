@@ -237,9 +237,9 @@ jobs:
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create \
-            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf "${{ env.REGISTRY_IMAGE }}@sha256:%s " *)
+          mapfile -t tag_args < <(jq -r '.tags[] | "-t", .' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          mapfile -t image_refs < <(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s\n' *)
+          docker buildx imagetools create "${tag_args[@]}" "${image_refs[@]}"
         env:
           DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}
 
@@ -248,7 +248,7 @@ jobs:
         run: |
           # Either single-platform digest is representative for scanning —
           # OS package and npm dependency findings don't differ by arch.
-          echo "digest=sha256:$(ls /tmp/digests | head -n1)" >> "$GITHUB_OUTPUT"
+          echo "digest=sha256:$(find /tmp/digests -type f -printf '%f\n' | sort | head -n1)" >> "$GITHUB_OUTPUT"
 
       - name: Trivy vulnerability scan (table)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -287,7 +287,7 @@ jobs:
       # scanners now take the image digest independently, like the Trivy
       # steps above.
       - name: Generate SBOM
-        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           image: ${{ env.REGISTRY_IMAGE }}@${{ steps.scan.outputs.digest }}
           format: cyclonedx-json

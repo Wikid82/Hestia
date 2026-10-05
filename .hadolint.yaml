@@ -1,0 +1,5 @@
+# Hadolint configuration — used by `lefthook run lint-full`.
+ignored:
+  # DL3018: Pin versions in apk add. Alpine drops old package revisions from
+  # its repos, so exact pins break rebuilds and multi-arch (arm64) builds.
+  - DL3018

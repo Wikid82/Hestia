@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { listProfiles } from "@/api/profiles";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { ApiError } from "@/api/client";
 import type { Profile } from "@/types";
 

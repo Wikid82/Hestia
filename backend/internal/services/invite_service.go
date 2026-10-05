@@ -130,8 +130,8 @@ func (s *InviteService) AcceptInvite(rawToken, name, password, householdName str
 	}
 
 	var userCount int64
-	if err := s.db.Model(&models.User{}).Where("email = ?", invite.Email).Count(&userCount).Error; err != nil {
-		return nil, nil, err
+	if countErr := s.db.Model(&models.User{}).Where("email = ?", invite.Email).Count(&userCount).Error; countErr != nil {
+		return nil, nil, countErr
 	}
 	if userCount > 0 {
 		return nil, nil, ErrEmailTaken
@@ -155,20 +155,20 @@ func (s *InviteService) AcceptInvite(rawToken, name, password, householdName str
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if invite.Role == "hoh" {
 			household = models.Household{ID: uuid.NewString(), Name: householdName, ThemePreference: "system"}
-			if err := tx.Create(&household).Error; err != nil {
-				return err
+			if txErr := tx.Create(&household).Error; txErr != nil {
+				return txErr
 			}
 		} else {
 			if invite.HouseholdID == nil {
 				return fmt.Errorf("member invite is missing its household")
 			}
-			if err := tx.Where("id = ?", *invite.HouseholdID).First(&household).Error; err != nil {
-				return err
+			if txErr := tx.Where("id = ?", *invite.HouseholdID).First(&household).Error; txErr != nil {
+				return txErr
 			}
 		}
 		user.HouseholdID = household.ID
-		if err := tx.Create(&user).Error; err != nil {
-			return err
+		if txErr := tx.Create(&user).Error; txErr != nil {
+			return txErr
 		}
 		now := time.Now()
 		return tx.Model(&models.Invite{}).Where("id = ?", invite.ID).
@@ -218,7 +218,7 @@ func (s *InviteService) Revoke(id string, householdScope *string) error {
 	return s.db.Model(&invite).Update("status", "revoked").Error
 }
 
-func generateInviteToken() (raw string, hash string, err error) {
+func generateInviteToken() (raw, hash string, err error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", "", err

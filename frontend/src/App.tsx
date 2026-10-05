@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { useRealtime } from "@/hooks/useRealtime";
 import AppShell from "@/components/AppShell";
 import LoginPage from "@/pages/LoginPage";

@@ -8,24 +8,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Go modules
 # ---------------------------------------------------------------------------
 
-update_go() {(
-    cd "$REPO_ROOT" || exit 1
-
-    echo "============================================================================"
-    echo "Updating Go Modules"
-    echo "============================================================================"
-
-    # Update the Go toolchain to the latest version, and update all dependencies
-    # in the backend/ module. This is a single-module repo, so we don't need to
-    # iterate over multiple modules.
-    go get go@latest toolchain@latest
-    go get -u -t ./backend/...
-    go mod tidy
-    go mod verify
-    go vet ./backend/...
-    go build ./backend/...
-    go test ./backend/...
-)
+update_go() {
 GOPATH_BIN="$(go env GOPATH)/bin"
 export PATH="$GOPATH_BIN:$PATH"
 command -v govulncheck >/dev/null || go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -82,13 +65,21 @@ echo "Installing latest global npm..."
 npm install -g npm@latest
 echo ""
 
+# The global prefix's bin dir can sit behind the Node manager's bundled npm
+# on PATH (fnm/nvm), so the upgrade above would be invisible. Put it first.
+NPM_GLOBAL_BIN="$(npm prefix -g)/bin"
+export PATH="$NPM_GLOBAL_BIN:$PATH"
+hash -r
+echo "Now using npm $(npm -v) ($(command -v npm))"
+
 export PATH="/usr/share/nodejs/corepack/shims:$PATH"
 
-# Hestia has two npm packages: the Vite frontend and the Docusaurus docs
-# site (docs-site/, published to GitHub Pages). The Go backend has no
-# package.json (see the Go modules section above), and there's no root
-# package.json anymore since the Next.js app was removed.
+# Hestia has three npm packages: the Vite frontend, the Docusaurus docs
+# site (docs-site/, published to GitHub Pages), and the repo root, whose
+# package.json only carries lefthook (git hooks) as a devDependency. The
+# Go backend has no package.json (see the Go modules section above).
 NPM_MODULES=(
+    "$REPO_ROOT"
     "$REPO_ROOT/frontend"
     "$REPO_ROOT/docs-site"
 )
@@ -116,7 +107,7 @@ for MODULE in "${NPM_MODULES[@]}"; do
     # for the allowlist pattern if Hestia ever needs to carve out a specific
     # known-unfixable finding. For now, any high/critical finding fails the
     # script outright.
-    npm run audit:ci
+    npm run --if-present audit:ci
     npm audit --audit-level=high
     npm audit fix || true
     npm outdated || true
@@ -132,9 +123,12 @@ echo "All npm dependencies updated successfully."
 # Dispatch
 # ---------------------------------------------------------------------------
 
+PHASE="${1:-all}"
+
 case "$PHASE" in
     go) update_go ;;
     npm) update_npm ;;
     all) update_go && update_npm ;;
+    *) echo "Usage: $0 [go|npm|all]" >&2; exit 2 ;;
 esac
 

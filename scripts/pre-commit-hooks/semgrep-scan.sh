@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+readonly REPO_ROOT
+
+if ! command -v semgrep >/dev/null 2>&1; then
+  echo "Error: semgrep is not installed or not in PATH" >&2
+  echo "Install: https://semgrep.dev/docs/getting-started/" >&2
+  exit 127
+fi
+
+cd "${REPO_ROOT}"
+
+# Default: full security ruleset covering Go backend, JS/TS/React frontend, secrets.
+# Override with: SEMGREP_CONFIG=auto git commit (runs all Semgrep rules, ~3-5 min)
+if [ -n "${SEMGREP_CONFIG:-}" ]; then
+  SEMGREP_CONFIGS=(--config "${SEMGREP_CONFIG}")
+  echo "Running Semgrep with override config: ${SEMGREP_CONFIG}"
+else
+  SEMGREP_CONFIGS=(
+    --config p/golang
+    --config p/javascript
+    --config p/typescript
+    --config p/react
+    --config p/secrets
+    --config p/dockerfile
+  )
+  echo "Running Semgrep with configs: p/golang, p/javascript, p/typescript, p/react, p/secrets, p/dockerfile"
+fi
+
+# Use staged files passed by lefthook if provided; fall back to full scan.
+if [ "$#" -gt 0 ]; then
+  TARGETS=("$@")
+else
+  TARGETS=(Dockerfile backend frontend/src docs-site/src scripts .github/workflows)
+fi
+
+if [ -n "${SEMGREP_SARIF_OUTPUT:-}" ]; then
+  OUTPUT_FLAGS=(--sarif --output "${SEMGREP_SARIF_OUTPUT}")
+else
+  OUTPUT_FLAGS=(--error)
+fi
+
+semgrep scan \
+  "${SEMGREP_CONFIGS[@]}" \
+  --severity ERROR \
+  --severity WARNING \
+  "${OUTPUT_FLAGS[@]}" \
+  --exclude "frontend/node_modules" \
+  --exclude "frontend/coverage" \
+  --exclude "frontend/dist" \
+  --exclude "docs-site/node_modules" \
+  --exclude "docs-site/build" \
+  "${TARGETS[@]}"

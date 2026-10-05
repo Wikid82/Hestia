@@ -27,7 +27,6 @@ RUN npm run build
 # CGO_ENABLED=0 cross-compile from the Go toolchain's own GOARCH support is
 # sufficient — no C cross-compiler or the `tonistiigi/xx` toolchain needed.
 FROM --platform=$BUILDPLATFORM golang:1.27.1-alpine@sha256:8a5910f31396cd4d89662f56c68b3ae31d374308270a1c3bd96672ee5ed43414 AS backend
-WORKDIR /app
 # go.mod can require a newer Go version than this base image ships (e.g.
 # go.mod's own "go 1.27.0" directive vs. this image's 1.26.6) — GOTOOLCHAIN
 # defaults to "local" in the official images, which refuses to build
@@ -35,12 +34,13 @@ WORKDIR /app
 # toolchain itself download and use the right version transparently, the
 # same mechanism `go build`/`go test` already fall back to outside Docker.
 ENV GOTOOLCHAIN=auto
-COPY backend/go.mod backend/go.sum ./backend/
-RUN cd backend && go mod download
-COPY backend/ ./backend/
+WORKDIR /app/backend
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+COPY backend/ ./
 ARG TARGETARCH
 ENV CGO_ENABLED=0
-RUN cd backend && GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/hestia ./cmd/api
+RUN GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/hestia ./cmd/api
 
 # --- runner: minimal production image ---
 # Pinned by manifest-list digest for the same reason as the node stage above:
@@ -86,7 +86,8 @@ RUN addgroup -g 1000 hestia && adduser -D -u 1000 -G hestia hestia \
 COPY --from=backend /out/hestia /app/hestia
 COPY --from=frontend --chown=hestia:hestia /app/frontend/dist /app/web
 
-USER hestia
+# Numeric UID (matches the adduser above) so the host/orchestrator can verify non-root.
+USER 1000:1000
 VOLUME ["/data"]
 EXPOSE 8080
 

@@ -3,7 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createChore } from "@/api/chores";
 import { ApiError } from "@/api/client";
 import type { Profile } from "@/types";
-import { ChoreFields, defaultChoreFieldsValue, type ChoreFieldsValue } from "./ChoreFields";
+import { ChoreFields } from "./ChoreFields";
+import { defaultChoreFieldsValue, type ChoreFieldsValue } from "./choreFieldsValue";
 
 export function ChoreForm({ members }: { members: Profile[] }) {
   const queryClient = useQueryClient();

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listRewards } from "@/api/rewards";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { RewardCard } from "@/components/RewardCard";
 import { RewardRow } from "@/components/RewardRow";
 import { RewardForm } from "@/components/RewardForm";

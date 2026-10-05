@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { setOwnCredentials } from "@/api/members";
 import { ApiError } from "@/api/client";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/useAuth";
 import { PushNotificationSettings } from "@/components/PushNotificationSettings";
 
 export default function AccountPage() {

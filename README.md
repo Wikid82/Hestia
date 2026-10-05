@@ -121,14 +121,20 @@ backend — no separate migration-generation step needed.
 ### Git hooks
 
 This repo uses [lefthook](https://github.com/evilmartians/lefthook) for local git hooks —
-fast checks (`go vet`, `golangci-lint`, `tsc --noEmit`, `eslint`) before every commit, and a
-full build+test before every push. One-time setup after cloning:
+fast checks (`go vet`, `golangci-lint`, `tsc --noEmit`, `eslint`, `shellcheck`, `actionlint`,
+`semgrep`, file hygiene) before every commit, and a full build+test before every push.
+`shellcheck`, `actionlint`, and `semgrep` need to be installed locally. One-time setup after
+cloning:
 
 ```bash
 go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 go install github.com/evilmartians/lefthook@latest
 lefthook install
 ```
+
+Slower checks are manual pipelines: `lefthook run security-full` (gitleaks + semgrep),
+`lefthook run codeql`, `lefthook run testing` (coverage + race detector), and
+`lefthook run lint-full`. See the header of `lefthook.yml` for each one's tool requirements.
 
 ## License
 
