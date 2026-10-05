@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.2](https://github.com/Wikid82/Hestia/compare/v0.6.1...v0.6.2) (2026-10-05)
+
+
+### Bug Fixes
+
+* clear lint, semgrep, actionlint and hadolint findings ([29d6016](https://github.com/Wikid82/Hestia/commit/29d60161d37fb8f7221e8ab1c90e611da21d16f6))
+* **scripts:** prefer upgraded global npm on PATH after self-update ([7c5a56b](https://github.com/Wikid82/Hestia/commit/7c5a56b39cb983bd608c2a64618db1084123b13d))
+
 ## [0.6.1](https://github.com/Wikid82/Hestia/compare/v0.6.0...v0.6.1) (2026-09-28)
 
 
