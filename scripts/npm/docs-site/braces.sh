@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-PACKAGE="feed"
+PACKAGE="braces"
 
 # Only modules that already declare this override. `npm pkg get` prints "{}"
 # for a missing key, so it cannot be used as an existence check.
