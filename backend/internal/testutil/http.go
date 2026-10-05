@@ -3,10 +3,30 @@ package testutil
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
 	"testing"
 )
+
+// validateTestURL restricts Do to the in-process test app: http(s) to a
+// loopback host only, so the helper can never be pointed at an arbitrary
+// destination.
+func validateTestURL(raw string) error {
+	u, err := neturl.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("parsing url %q: %w", raw, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("url %q: scheme must be http or https", raw)
+	}
+	switch u.Hostname() {
+	case "127.0.0.1", "::1", "localhost":
+		return nil
+	}
+	return fmt.Errorf("url %q: host must be loopback", raw)
+}
 
 // Do performs an HTTP request against the app using client, JSON-encoding
 // body (if non-nil) and JSON-decoding the response into out (if non-nil).
@@ -22,6 +42,10 @@ func Do(t *testing.T, client *http.Client, method, url string, body, out any) *h
 			t.Fatalf("marshaling request body: %v", err)
 		}
 		reqBody = bytes.NewReader(b)
+	}
+
+	if err := validateTestURL(url); err != nil {
+		t.Fatalf("refusing request: %v", err)
 	}
 
 	req, err := http.NewRequest(method, url, reqBody)
