@@ -53,7 +53,8 @@
     "serialize-javascript": "^7.1.2",
     "feed": "^6.0.0",
     "http-cache-semantics": "^4.3.0",
-    "braces": "^3.0.3",
-    "sitemap": "^9.0.1"
+    "sitemap": "^9.0.1",
+    "tinypool": "^2.2.0",
+    "braces": "^3.0.3"
   }
 }
