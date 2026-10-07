@@ -65,7 +65,7 @@ WORKDIR /app
 # (and drop the matching SECURITY.md/.trivyignore/.grype.yaml suppression)
 # once a fixed version lands.
 # renovate: datasource=apk depName=zlib versioning=apk
-ENV ZLIB_VERSION="1.3.2-r0"
+ENV ZLIB_VERSION="1.3.2-r1"
 RUN apk update && apk upgrade --no-cache && \
     apk add --no-cache tzdata ca-certificates "zlib=${ZLIB_VERSION}"
 
