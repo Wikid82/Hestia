@@ -66,11 +66,28 @@ jobs:
         timeout-minutes: 10
         run: |
           PW_VERSION=$(jq -r '.packages["node_modules/@playwright/test"].version' frontend/package-lock.json)
-          echo "Using Playwright image mcr.microsoft.com/playwright:v${PW_VERSION}-noble"
+          IMAGE="mcr.microsoft.com/playwright:v${PW_VERSION}-noble"
+          # Microsoft sometimes publishes a release's arm64 tags before the
+          # multi-arch/amd64 ones (v1.64.0 sat in that state), which leaves
+          # the exact tag missing for hours. Fall back to the newest fully
+          # published image; the `playwright install` below then fetches
+          # the matching chromium build on top of its system deps.
+          if ! docker manifest inspect "$IMAGE" >/dev/null 2>&1; then
+            FALLBACK=$(curl -sf https://mcr.microsoft.com/v2/playwright/tags/list \
+              | jq -r '.tags[] | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+-noble$"))' \
+              | sort -V | tail -n1)
+            if [ -z "$FALLBACK" ]; then
+              echo "$IMAGE not found and no fallback tag could be resolved" >&2
+              exit 1
+            fi
+            echo "::warning::$IMAGE is not published yet; falling back to mcr.microsoft.com/playwright:$FALLBACK"
+            IMAGE="mcr.microsoft.com/playwright:$FALLBACK"
+          fi
+          echo "Using Playwright image $IMAGE"
           docker run --rm --network host \
             -v "$PWD/frontend:/work" -w /work \
             -e PLAYWRIGHT_BASE_URL \
-            "mcr.microsoft.com/playwright:v${PW_VERSION}-noble" \
+            "$IMAGE" \
             bash -c '
               for i in 1 2 3; do
                 npm ci && exit_code=0 && break || exit_code=$?
@@ -78,6 +95,8 @@ jobs:
                 sleep 5
               done
               [ "$exit_code" = 0 ] || exit "$exit_code"
+              # No-op when the image already ships the matching browser.
+              npx playwright install chromium
               npx playwright test
             '
 
