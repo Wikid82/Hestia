@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.3](https://github.com/Wikid82/Hestia/compare/v0.6.2...v0.6.3) (2026-10-12)
+
+
+### Bug Fixes
+
+* **docs-site:** set braces script package name to braces ([48a8b50](https://github.com/Wikid82/Hestia/commit/48a8b50bdfffb704844767f8ac64fff643fec54c))
+
 ## [0.6.2](https://github.com/Wikid82/Hestia/compare/v0.6.1...v0.6.2) (2026-10-05)
 
 
