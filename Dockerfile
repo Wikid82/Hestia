@@ -26,7 +26,7 @@ RUN npm run build
 # pure-Go transpile of SQLite with no cgo involved, so a plain
 # CGO_ENABLED=0 cross-compile from the Go toolchain's own GOARCH support is
 # sufficient — no C cross-compiler or the `tonistiigi/xx` toolchain needed.
-FROM --platform=$BUILDPLATFORM golang:1.27.2-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS backend
+FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine@sha256:f2c872bcee949b7be9c490efd02b48a8a2fbf947cdf533f1c58525ec9d8170fd AS backend
 # go.mod can require a newer Go version than this base image ships (e.g.
 # go.mod's own "go 1.27.0" directive vs. this image's 1.26.6) — GOTOOLCHAIN
 # defaults to "local" in the official images, which refuses to build
