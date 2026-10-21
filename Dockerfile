@@ -14,7 +14,7 @@
 # platform in manifest: not found". Only bump this to a tag whose
 # manifest list already carries linux/amd64 AND linux/arm64, and update
 # the digest with it. 24.19.0-alpine is the newest fully multi-arch tag.
-FROM node:24.22.0-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS frontend
+FROM node:24.22.1-alpine@sha256:6a1c190e17215d844926b0677f4bf87273ff7d5e54db06d3b5b5863ab0b09a3d AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
