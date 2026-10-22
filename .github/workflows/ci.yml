@@ -48,7 +48,7 @@ jobs:
       # tests a second time for no benefit at Hestia's scale.
       - name: Upload coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        uses: step-security/codecov-action@367bf7e789f1b8e452a759be81c791de8d69b2f6 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./backend/coverage.txt
@@ -110,7 +110,7 @@ jobs:
       # inline rather than a separate codecov-upload.yml workflow.
       - name: Upload coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        uses: step-security/codecov-action@367bf7e789f1b8e452a759be81c791de8d69b2f6 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./frontend/coverage
