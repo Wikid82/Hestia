@@ -1,9 +1,9 @@
 module hestia/backend
 
-go 1.27.2
+go 1.27.3
 
 require (
-	github.com/Wikid82/go_notify_yourself v0.3.1
+	github.com/Wikid82/go_notify_yourself v0.3.2
 	github.com/gin-contrib/static v1.1.8
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
@@ -17,7 +17,7 @@ require (
 require (
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.4 // indirect
-	github.com/bytedance/sonic/loader v0.5.2 // indirect
+	github.com/bytedance/sonic/loader v0.5.3 // indirect
 	github.com/cloudwego/base64x v0.1.7 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
@@ -39,7 +39,7 @@ require (
 	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
-	github.com/quic-go/quic-go v0.64.0 // indirect
+	github.com/quic-go/quic-go v0.64.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.2 // indirect
@@ -52,5 +52,5 @@ require (
 	modernc.org/libc v1.79.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
-	modernc.org/sqlite v1.60.1 // indirect
+	modernc.org/sqlite v1.61.0 // indirect
 )
