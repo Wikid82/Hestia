@@ -46,7 +46,7 @@ RUN GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/hestia ./cmd/
 # Pinned by manifest-list digest for the same reason as the node stage above:
 # this image ships in the final multi-arch build, so amd64/arm64 publish skew
 # under a floating tag can otherwise fail one leg of the build.
-FROM alpine:3.24.3@sha256:6708ca119efec5c3fdcad5dc95d8a28a529aad8debc95872b7e12b3941882f55 AS runner
+FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS runner
 WORKDIR /app
 
 # tzdata: lets the TZ env var control time.Local (chore due-dates are
