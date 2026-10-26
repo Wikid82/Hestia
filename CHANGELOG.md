@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.4](https://github.com/Wikid82/Hestia/compare/v0.6.3...v0.6.4) (2026-10-26)
+
+
+### Bug Fixes
+
+* pin Alpine multi-arch index digest instead of 386 child manifest ([bedc99d](https://github.com/Wikid82/Hestia/commit/bedc99d7b5d1d0106960c7c06d2b2ecf350fd392))
+
 ## [0.6.3](https://github.com/Wikid82/Hestia/compare/v0.6.2...v0.6.3) (2026-10-12)
 
 
