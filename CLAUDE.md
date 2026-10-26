@@ -6,6 +6,13 @@ existing chore-chart apps are either subscription SaaS (e.g. Sweepy) or
 software-team task trackers repurposed for a use case they weren't designed
 for.
 
+## Git and Commit Guidelines
+
+- Do not append boilerplate text, disclaimers, or watermarks such as
+  "Claude Code helped produce this change." to commit messages, pull
+  request descriptions, or summaries.
+- Keep pull request summaries strictly focused on the changes introduced.
+
 ## Who's building this
 
 The user (Jeremy) is directing this as a "vibe coded" project: he sets

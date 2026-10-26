@@ -31,6 +31,7 @@
     "@docusaurus/types": "3.10.2",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
+    "@typescript/native": "npm:typescript@^7.1.0-dev.20261025.1",
     "audit-ci": "^7.1.0",
     "typescript": "~6.0.3"
   },
@@ -50,7 +51,7 @@
     "node": "24.22.1"
   },
   "overrides": {
-    "serialize-javascript": "^7.1.2",
+    "serialize-javascript": "^7.1.4",
     "feed": "^6.0.0",
     "http-cache-semantics": "^4.3.0",
     "sitemap": "^10.0.0",
