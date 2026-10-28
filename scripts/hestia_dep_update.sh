@@ -94,8 +94,7 @@ for MODULE in "${NPM_MODULES[@]}"; do
     # Update prod, dev, and peer dependencies.
     # Exclude typescript: v7 crashes @typescript-eslint until upstream
     # catches up; keep pinned to the ^5.x line until that's resolved.
-    npx --yes npm-check-updates -u --reject typescript
-
+    npx --yes npm-check-updates -u
     rm -rf node_modules package-lock.json
     npm install
     npm dedupe

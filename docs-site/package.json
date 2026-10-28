@@ -34,9 +34,9 @@
     "@docusaurus/types": "3.10.2",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
-    "@typescript/native": "npm:typescript@^7.1.0-dev.20261027.1",
+    "@typescript/native": "npm:typescript@^7.1.0-dev.20261028.1",
     "audit-ci": "^7.1.0",
-    "typescript": "~6.0.3"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "browserslist": {
     "production": [
