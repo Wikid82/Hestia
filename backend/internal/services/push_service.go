@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	notify "github.com/Wikid82/go_notify_yourself"
-	webpush "github.com/Wikid82/go_notify_yourself/providers/webpush"
-	"github.com/Wikid82/go_notify_yourself/transport"
+	notify "github.com/Wikid82/Hermes"
+	webpush "github.com/Wikid82/Hermes/providers/webpush"
+	"github.com/Wikid82/Hermes/transport"
 
 	"hestia/backend/internal/models"
 )
