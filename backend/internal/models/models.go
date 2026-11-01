@@ -128,7 +128,7 @@ type RewardRedemption struct {
 
 // NotificationSettings is a singleton row (always ID
 // NotificationSettingsID) holding the instance's admin-notification
-// channel: which go_notify_yourself provider to send through and its
+// channel: which Hermes provider to send through and its
 // provider-specific config (e.g. {"webhook_url": "..."}), stored as JSON.
 // System-admin-only, instance-wide — not per-household. An empty Provider
 // means notifications are unconfigured.

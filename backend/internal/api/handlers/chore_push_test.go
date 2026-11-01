@@ -16,7 +16,7 @@ import (
 
 // newFakePushServer starts a local push-service stand-in and returns a hit
 // counter — real delivery through the whole stack (handler -> ChoreService
-// -> PushService -> go_notify_yourself's webpush provider ->
+// -> PushService -> Hermes's webpush provider ->
 // transport.Wrapper) is only observable this way, since the default
 // SSRF-safe transport otherwise rejects loopback destinations (correct in
 // production; these tests build the app with testutil.Options.PushAllowHTTP

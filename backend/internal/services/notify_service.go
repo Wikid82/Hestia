@@ -45,7 +45,7 @@ var providerRequiredFields = map[string][]string{
 var ErrNotificationsNotConfigured = errors.New("no notification channel is configured")
 
 // NotifyService sends admin-facing notifications (e.g. "an invite was
-// accepted") through whichever go_notify_yourself provider the system
+// accepted") through whichever Hermes provider the system
 // admin has configured. Deliberately limited to the seven HTTP-webhook-
 // style providers (Discord, Slack, Gotify, Pushover, ntfy, Telegram,
 // generic webhook) rather than also wiring the module's "email" provider:
