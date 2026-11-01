@@ -1,0 +1,72 @@
+# Zensical configuration for the Hestia docs site (published to GitHub Pages
+# by .github/workflows/docs.yml). Build locally with:
+#   pip install -r requirements.txt && zensical build --strict
+# Output lands in docs-site/site/ (git-ignored).
+
+[project]
+site_name = "Hestia"
+site_url = "https://wikid82.github.io/Hestia/"
+site_description = "A free, self-hosted, family-focused chore chart — no subscription or cloud account required."
+repo_url = "https://github.com/Wikid82/Hestia"
+repo_name = "Wikid82/Hestia"
+copyright = "Hestia is free and open source software, MIT-licensed."
+
+# Explicit nav so page order is deliberate (replaces sidebars.ts).
+nav = [
+  { "Home" = "index.md" },
+  { "Quick start" = "quick-start.md" },
+  { "Features" = "features.md" },
+  { "Troubleshooting" = "troubleshooting.md" },
+  { "FAQ" = "faq.md" },
+]
+
+# Brand overrides (colors) live in the stylesheet; see docs/assets/stylesheets/custom.css.
+extra_css = ["assets/stylesheets/custom.css"]
+
+[project.theme]
+language = "en"
+favicon = "assets/images/favicon.ico"
+logo = "assets/images/hestia_banner.png"
+features = [
+  "content.code.copy",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+# Light/dark follow the system preference by default; the toggle lets a
+# reader override it.
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+primary = "green"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "green"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "green"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+md_in_html = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.superfences = {}
+pymdownx.highlight = {}

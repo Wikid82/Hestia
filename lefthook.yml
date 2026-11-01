@@ -29,7 +29,7 @@ pre-commit:
     # --- File hygiene (replaces pre-commit/pre-commit-hooks) ---
     - name: end-of-file-fixer
       glob: "*.{go,ts,tsx,js,jsx,yaml,yml,sh,md}"
-      exclude: "(^|/)(node_modules|coverage|dist|build|\\.vite|\\.docusaurus)/|.*\\.tsbuildinfo$"
+      exclude: "(^|/)(node_modules|coverage|dist|build|\\.vite)/|.*\\.tsbuildinfo$"
       run: |
         modified=0
         for file in {staged_files}; do
@@ -43,7 +43,7 @@ pre-commit:
 
     - name: trailing-whitespace
       glob: "*.{go,ts,tsx,js,jsx,yaml,yml,sh,md}"
-      exclude: "(^|/)(node_modules|coverage|dist|build|\\.vite|\\.docusaurus)/|.*\\.tsbuildinfo$"
+      exclude: "(^|/)(node_modules|coverage|dist|build|\\.vite)/|.*\\.tsbuildinfo$"
       run: |
         modified=0
         for file in {staged_files}; do
@@ -110,7 +110,7 @@ pre-commit:
     # --- Security ---
     - name: semgrep
       glob: "{**/*.{go,ts,tsx,js,jsx,sh,yml,yaml,json},Dockerfile*}"
-      exclude: "(^|/)(node_modules|coverage|dist|build|\\.vite|\\.docusaurus)/|package-lock\\.json$"
+      exclude: "(^|/)(node_modules|coverage|dist|build|\\.vite)/|package-lock\\.json$"
       run: scripts/pre-commit-hooks/semgrep-scan.sh {staged_files}
 
 # ============================================================

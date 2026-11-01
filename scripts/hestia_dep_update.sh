@@ -74,14 +74,14 @@ echo "Now using npm $(npm -v) ($(command -v npm))"
 
 export PATH="/usr/share/nodejs/corepack/shims:$PATH"
 
-# Hestia has three npm packages: the Vite frontend, the Docusaurus docs
-# site (docs-site/, published to GitHub Pages), and the repo root, whose
+# Hestia has two npm packages: the Vite frontend and the repo root, whose
 # package.json only carries lefthook (git hooks) as a devDependency. The
-# Go backend has no package.json (see the Go modules section above).
+# Go backend has no package.json (see the Go modules section above). The
+# docs site (docs-site/) is Python-based Zensical and is updated via
+# Renovate's pip_requirements manager, not here.
 NPM_MODULES=(
     "$REPO_ROOT"
     "$REPO_ROOT/frontend"
-    "$REPO_ROOT/docs-site"
 )
 
 for MODULE in "${NPM_MODULES[@]}"; do

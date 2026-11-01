@@ -1,8 +1,6 @@
 ---
-id: index
 title: Hestia
 description: A free, self-hosted, family-focused chore chart — no subscription, no cloud account, your data stays on your own server.
-slug: /
 ---
 
 # Hestia

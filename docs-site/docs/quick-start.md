@@ -1,5 +1,4 @@
 ---
-id: quick-start
 title: Quick start
 description: Get a Hestia instance running with Docker in a few minutes.
 ---

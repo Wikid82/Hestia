@@ -1,5 +1,4 @@
 ---
-id: troubleshooting
 title: Troubleshooting
 description: Fixes for common self-hosting issues with Hestia.
 ---

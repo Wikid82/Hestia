@@ -36,7 +36,7 @@ fi
 if [ "$#" -gt 0 ]; then
   TARGETS=("$@")
 else
-  TARGETS=(Dockerfile backend frontend/src docs-site/src scripts .github/workflows)
+  TARGETS=(Dockerfile backend frontend/src scripts .github/workflows)
 fi
 
 if [ -n "${SEMGREP_SARIF_OUTPUT:-}" ]; then
@@ -53,6 +53,4 @@ semgrep scan \
   --exclude "frontend/node_modules" \
   --exclude "frontend/coverage" \
   --exclude "frontend/dist" \
-  --exclude "docs-site/node_modules" \
-  --exclude "docs-site/build" \
   "${TARGETS[@]}"
