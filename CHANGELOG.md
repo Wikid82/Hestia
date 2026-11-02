@@ -93,7 +93,7 @@
 * self-serve password set/change on existing profiles ([#70](https://github.com/Wikid82/Hestia/issues/70)) ([63918e2](https://github.com/Wikid82/Hestia/commit/63918e212de025cf3b59b2101e4ababca3d08b06))
 * SMTP config and mailer service ([#66](https://github.com/Wikid82/Hestia/issues/66)) ([f66f3aa](https://github.com/Wikid82/Hestia/commit/f66f3aac4ab916e3cf790920f2eeec1d9435d2e8))
 * split admin into system-admin and household-owner (hoh) roles ([#65](https://github.com/Wikid82/Hestia/issues/65)) ([21e3239](https://github.com/Wikid82/Hestia/commit/21e3239fecd3aa4e13ff4f561f469b245748e485))
-* wire go_notify_yourself for admin notifications ([#67](https://github.com/Wikid82/Hestia/issues/67)) ([10e4990](https://github.com/Wikid82/Hestia/commit/10e49904b91197adabdbe296b820bad3eb2c6ca6))
+* wire Hermes for admin notifications ([#67](https://github.com/Wikid82/Hestia/issues/67)) ([10e4990](https://github.com/Wikid82/Hestia/commit/10e49904b91197adabdbe296b820bad3eb2c6ca6))
 
 
 ### Bug Fixes

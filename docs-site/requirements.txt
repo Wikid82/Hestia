@@ -1,0 +1,3 @@
+# Docs tooling only (Zensical static site generator). Pinned exactly; Renovate
+# bumps this via the pip_requirements rule in .github/renovate.json.
+zensical==0.0.74

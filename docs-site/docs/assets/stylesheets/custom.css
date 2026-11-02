@@ -1,0 +1,30 @@
+/*
+ * Hestia brand colors. Zensical/Material exposes the primary color through
+ * CSS variables that are re-declared per palette. Selectors are scoped to
+ * html[...][data-md-color-primary] so they out-specify the theme's own
+ * per-primary rules, regardless of stylesheet load order.
+ */
+
+/* Light scheme: deep green. */
+html[data-md-color-scheme="default"][data-md-color-primary] {
+  --md-primary-fg-color: #2e8555;
+  --md-primary-fg-color--light: #33925d;
+  --md-primary-fg-color--dark: #29784c;
+  --md-typeset-a-color: #2e8555;
+}
+
+/* Dark scheme: lighter teal for readability on dark backgrounds. */
+html[data-md-color-scheme="slate"][data-md-color-primary] {
+  --md-primary-fg-color: #25c2a0;
+  --md-primary-fg-color--light: #29d5b0;
+  --md-primary-fg-color--dark: #21af90;
+  --md-typeset-a-color: #25c2a0;
+}
+
+/* The header logo is a tall crest with the wordmark inside; cap its height
+ * so it sits in the header bar instead of dominating it. */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 2rem;
+  width: auto;
+}

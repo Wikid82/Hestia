@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	notify "github.com/Wikid82/go_notify_yourself"
-	webpush "github.com/Wikid82/go_notify_yourself/providers/webpush"
-	"github.com/Wikid82/go_notify_yourself/transport"
+	notify "github.com/Wikid82/Hermes"
+	webpush "github.com/Wikid82/Hermes/providers/webpush"
+	"github.com/Wikid82/Hermes/transport"
 
 	"hestia/backend/internal/models"
 )
@@ -30,7 +30,7 @@ var ErrInvalidSubscription = errors.New("endpoint, p256dh, and auth are all requ
 // system-admin-facing alert channel. Each household member who opts in
 // gets their own browser PushSubscription row(s); PushService fans a
 // message out to every subscription a user has, via
-// go_notify_yourself's "webpush" provider (direct RFC 8030/8291/8292
+// Hermes's "webpush" provider (direct RFC 8030/8291/8292
 // delivery, no third-party relay).
 type PushService struct {
 	db      *gorm.DB

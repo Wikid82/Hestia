@@ -14,7 +14,7 @@ fi
 # Generated artifacts create noisy/false findings if present during analysis.
 # Best-effort: root-owned leftovers (e.g. from a Docker-run Playwright job)
 # can't be removed without sudo and shouldn't abort the scan.
-rm -rf frontend/coverage frontend/dist frontend/playwright-report frontend/test-results docs-site/build 2>/dev/null \
+rm -rf frontend/coverage frontend/dist frontend/playwright-report frontend/test-results 2>/dev/null \
   || echo "WARNING: could not remove some generated artifacts (permissions); continuing" >&2
 
 rm -rf codeql-db-js

@@ -42,9 +42,7 @@ rsync -a --delete \
   --exclude='playwright-report/' \
   --exclude='.private/' \
   --exclude='data/' \
-  --exclude='docs-site/build/' \
-  --exclude='docs-site/node_modules/' \
-  --exclude='.docusaurus/' \
+  --exclude='docs-site/site/' \
   --exclude='dist/' \
   --exclude='build/' \
   --exclude='coverage/' \

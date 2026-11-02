@@ -13,7 +13,7 @@ import (
 	"hestia/backend/internal/database"
 	"hestia/backend/internal/models"
 
-	"github.com/Wikid82/go_notify_yourself/transport"
+	"github.com/Wikid82/Hermes/transport"
 	"gorm.io/gorm"
 )
 

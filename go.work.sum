@@ -1,3 +1,5 @@
+github.com/Wikid82/Hermes v0.3.5 h1:wVlHNaRaHMyVqtXnW3mHsEcUwoFmun81+3ooSY2KfzI=
+github.com/Wikid82/Hermes v0.3.5/go.mod h1:A2fFibmMT+lFy68VeBK8fWl1Ry0tCqqiDoK+w0XwcLI=
 github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=
 github.com/jordanlewis/gcassert v0.0.0-20250430164644-389ef753e22e/go.mod h1:ZybsQk6DWyN5t7An1MuPm1gtSZ1xDaTXS9ZjIOxvQrk=
 github.com/klauspost/compress v1.17.6/go.mod h1:/dCuZOvVtNoHsyb+cuJD3itjs3NbnF6KH9zAO4BDxPM=

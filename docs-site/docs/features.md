@@ -1,5 +1,4 @@
 ---
-id: features
 title: Features
 description: What Hestia does today and what's planned for v1.
 ---

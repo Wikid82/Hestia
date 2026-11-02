@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"strings"
 
-	notify "github.com/Wikid82/go_notify_yourself"
-	_ "github.com/Wikid82/go_notify_yourself/providers/discord"
-	_ "github.com/Wikid82/go_notify_yourself/providers/gotify"
-	_ "github.com/Wikid82/go_notify_yourself/providers/ntfy"
-	_ "github.com/Wikid82/go_notify_yourself/providers/pushover"
-	_ "github.com/Wikid82/go_notify_yourself/providers/slack"
-	_ "github.com/Wikid82/go_notify_yourself/providers/telegram"
-	_ "github.com/Wikid82/go_notify_yourself/providers/webhook"
-	"github.com/Wikid82/go_notify_yourself/transport"
+	notify "github.com/Wikid82/Hermes"
+	_ "github.com/Wikid82/Hermes/providers/discord"
+	_ "github.com/Wikid82/Hermes/providers/gotify"
+	_ "github.com/Wikid82/Hermes/providers/ntfy"
+	_ "github.com/Wikid82/Hermes/providers/pushover"
+	_ "github.com/Wikid82/Hermes/providers/slack"
+	_ "github.com/Wikid82/Hermes/providers/telegram"
+	_ "github.com/Wikid82/Hermes/providers/webhook"
+	"github.com/Wikid82/Hermes/transport"
 	"gorm.io/gorm"
 
 	"hestia/backend/internal/models"
@@ -45,7 +45,7 @@ var providerRequiredFields = map[string][]string{
 var ErrNotificationsNotConfigured = errors.New("no notification channel is configured")
 
 // NotifyService sends admin-facing notifications (e.g. "an invite was
-// accepted") through whichever go_notify_yourself provider the system
+// accepted") through whichever Hermes provider the system
 // admin has configured. Deliberately limited to the seven HTTP-webhook-
 // style providers (Discord, Slack, Gotify, Pushover, ntfy, Telegram,
 // generic webhook) rather than also wiring the module's "email" provider:

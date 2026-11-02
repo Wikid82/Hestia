@@ -45,6 +45,12 @@
       ]
     },
     {
+      "description": "Zensical (docs-site/requirements.txt) is docs-site tooling only — it doesn't ship in the binary or image — so keep its bumps as chore: (non-releasable) rather than deps: (cuts a release).",
+      "matchManagers": ["pip_requirements"],
+      "matchFileNames": ["docs-site/requirements.txt"],
+      "semanticCommitType": "chore"
+    },
+    {
       "description": "GitHub Actions bumps are CI-only — they don't change the shipped binary or image, so keep them as chore: (non-releasable) rather than deps: (cuts a release).",
       "matchManagers": ["github-actions"],
       "semanticCommitType": "chore"

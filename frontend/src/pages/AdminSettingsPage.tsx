@@ -13,7 +13,7 @@ import { InviteEmailForm } from "@/components/InviteEmailForm";
 import { InviteList } from "@/components/InviteList";
 import type { NotificationProvider } from "@/types";
 
-// Provider -> its config fields, matching the keys each go_notify_yourself
+// Provider -> its config fields, matching the keys each Hermes
 // provider package documents in its register.go (see backend
 // notify_service.go). Fields not listed here (e.g. pushover/telegram's
 // optional base_url, used only for that package's own tests) aren't

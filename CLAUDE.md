@@ -156,6 +156,11 @@ adding a new external dependency) before just doing it.
 - **Auth**: JWT (`golang-jwt/jwt/v5`) + bcrypt implementing the two-tier
   household/profile session model described above — one household-account
   session, then a lighter profile-switch session layered on top.
+- **Docs site**: [Zensical](https://zensical.org/) (`docs-site/zensical.toml`,
+  pinned in `docs-site/requirements.txt`) builds the GitHub Pages site. This
+  is a user-approved exception to the Go + TypeScript-only stack: Python is
+  allowed **only** as docs tooling. No Python in the app, backend, frontend,
+  or CI test/build paths. Bumps are Renovate-managed (`chore:`, non-releasable).
 - **Docker**, a single multi-stage Dockerfile that cross-compiles the Go
   binary for amd64 + arm64 — a lot of the self-hosted audience runs on
   Raspberry Pi or ARM NAS boxes. Keep the image and runtime footprint light;
