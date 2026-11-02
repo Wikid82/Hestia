@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.7.0](https://github.com/Wikid82/Hestia/compare/v0.6.4...v0.7.0) (2026-11-02)
+
+
+### Features
+
+* update react-router and related packages in frontend and docs-site ([bf85123](https://github.com/Wikid82/Hestia/commit/bf85123f51b1c08bb20fae72423f8ba122b203c7))
+
+
+### Bug Fixes
+
+* **deps:** replace go_notify_yourself with Hermes dependency in go.mod and related files ([f5244c4](https://github.com/Wikid82/Hestia/commit/f5244c4e9f318bbd8765eb7ebc45f7af6b9951b6))
+* **deps:** update @tanstack/react-query to version 5.105.1 ([106d229](https://github.com/Wikid82/Hestia/commit/106d22923375e4352b0e527f53b80a6a7c5e01a9))
+* **deps:** update bytedance/sonic to version 1.15.5 ([dbabbfe](https://github.com/Wikid82/Hestia/commit/dbabbfe63f1faf26990e1cc15c9b1a3499695188))
+* **deps:** update globals package to version 17.14.0 ([7df3018](https://github.com/Wikid82/Hestia/commit/7df301800a67767d163b59028b1f643026646a9c))
+* **deps:** update go-json to version 0.12.0 ([20016a6](https://github.com/Wikid82/Hestia/commit/20016a65d8dc27c39c1d4d8cb1667b5a4a3b84e3))
+* **deps:** update golang.org/x/net to v0.62.0 ([c2192ab](https://github.com/Wikid82/Hestia/commit/c2192ab12192ccb4d563ea94528bb1d3dbee2edb))
+* **deps:** update modernc.org/sqlite to v1.61.1 ([c95a6ac](https://github.com/Wikid82/Hestia/commit/c95a6ac34ded5688e6570dc348a551f6d03061e4))
+* **deps:** update TypeScript to version 7.1.0-dev.20261029.1 and bump caniuse-lite and node-releases versions ([5d6b0b9](https://github.com/Wikid82/Hestia/commit/5d6b0b9320c4840b250f5526ccf0be4794daba87))
+* **deps:** update TypeScript to version 7.1.0-dev.20261101.1 ([d1952fe](https://github.com/Wikid82/Hestia/commit/d1952feb63beba81f1e0b737933d2003791c7c97))
+* migrate docs site from Docusaurus to Zensical ([fad4113](https://github.com/Wikid82/Hestia/commit/fad41133f06ea44130cf30677ba61a5abc27e01e))
+* update Python version to 3.15.2 in workflow ([d071e6b](https://github.com/Wikid82/Hestia/commit/d071e6b2beb24e22617dd07d4754d9e88fd89db1))
+
 ## [0.6.4](https://github.com/Wikid82/Hestia/compare/v0.6.3...v0.6.4) (2026-10-26)
 
 
