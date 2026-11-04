@@ -13,5 +13,5 @@ for MODULE in "${NPM_MODULES[@]}"; do
     echo "============================================================================"
 
     cd "$MODULE" || exit 1
-    npm install @tanstack/react-query --save-prod
+    npm install @tanstack/react-query@latest --save-prod
 done
