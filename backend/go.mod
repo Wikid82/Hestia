@@ -4,7 +4,7 @@ go 1.27.3
 
 require (
 	github.com/Wikid82/Hermes v0.3.7
-	github.com/gin-contrib/static v1.1.9
+	github.com/gin-contrib/static v1.1.10
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
