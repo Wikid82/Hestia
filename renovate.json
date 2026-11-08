@@ -1,0 +1,113 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":separateMultipleMajorReleases",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "baseBranchPatterns": ["development"],
+  "semanticCommitType": "deps",
+  "semanticCommitScope": null,
+  "postUpdateOptions": ["npmDedupe"],
+  "skipInstalls": false,
+  "timezone": "America/New_York",
+  "dependencyDashboard": true,
+  "dependencyDashboardApproval": true,
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 0,
+  "labels": ["dependencies"],
+  "minimumReleaseAge": null,
+  "rebaseWhen": "auto",
+  "rangeStrategy": "bump",
+  "automerge": false,
+  "automergeType": "pr",
+  "platformAutomerge": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "dependencyDashboardApproval": false,
+    "automerge": false,
+    "labels": ["security", "vulnerability"]
+  },
+  "packageRules": [
+    {
+      "description": "Group GitHub Actions non-major updates into one PR",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["major","minor", "patch", "pin", "digest"],
+      "groupName": "github-actions",
+      "groupSlug": "github-actions"
+      },
+    {
+      "description": "Configure Alpine v3.24 registry for APK packages",
+      "matchDatasources": ["apk"],
+      "registryUrls": [
+        "https://dl-cdn.alpinelinux.org/alpine?branch=v3.24&components=main,community&arch=x86_64"
+      ]
+    },
+    {
+      "description": "Zensical (docs-site/requirements.txt) is docs-site tooling only — it doesn't ship in the binary or image — so keep its bumps as chore: (non-releasable) rather than deps: (cuts a release).",
+      "matchManagers": ["pip_requirements"],
+      "matchFileNames": ["docs-site/requirements.txt"],
+      "semanticCommitType": "chore"
+    },
+    {
+      "description": "GitHub Actions bumps are CI-only — they don't change the shipped binary or image, so keep them as chore: (non-releasable) rather than deps: (cuts a release).",
+      "matchManagers": ["github-actions"],
+      "semanticCommitType": "chore"
+    },
+    {
+      "description": "Group npm non-major updates into one PR",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "npm-non-major",
+      "groupSlug": "npm-non-major"
+    },
+    {
+      "description": "Group Dockerfile base image non-major updates into one PR",
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "dockerfile-non-major",
+      "groupSlug": "dockerfile-non-major"
+    },
+    {
+      "description": "node and golang are discarded multi-stage build images (only alpine, the runner stage, ships) — keep their bumps as chore: (non-releasable) rather than deps:, matching the shipped-vs-build-only distinction used for GitHub Actions above.",
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["node", "golang"],
+      "semanticCommitType": "chore"
+    },
+    {
+      "description": "The bundled powerdns plugin consumes the in-repo backend module through a local replace directive; never let Renovate resolve or bump it.",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchDepTypes"
+      : [
+        "indirect"
+      ],
+        "enabled": true
+    },  
+    {
+      "description": "Safety: keep major updates separate and require manual review",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["manual-review"]
+    },
+    {
+      "description": "Block eslint v10 — changed the rule-context API (e.g. getFilename()) in a way eslint-config-next's bundled eslint-plugin-react doesn't support yet, which crashes `npm run lint`. Re-enable once eslint-config-next ships a compatible eslint-plugin-react. Non-major 9.x updates still flow through.",
+      "matchPackageNames": ["eslint"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>.*?)\\s+depName=(?<depName>.*?)\\s+versioning=(?<versioning>.*?)\\s+ENV\\s+[A-Z0-9_]+_VERSION=\"(?<currentValue>.*)\""
+      ]
+    }
+  ]
+}
