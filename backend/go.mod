@@ -3,7 +3,7 @@ module hestia/backend
 go 1.27.3
 
 require (
-	github.com/Wikid82/Hermes v0.3.6
+	github.com/Wikid82/Hermes v0.3.7
 	github.com/gin-contrib/static v1.1.9
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
