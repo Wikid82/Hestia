@@ -13,5 +13,8 @@ for MODULE in "${NPM_MODULES[@]}"; do
     echo "============================================================================"
 
     cd "$MODULE" || exit 1
-    npm install @tanstack/react-query --save-prod
+    # Keep the existing package-lock.json: regenerating it from scratch drops the
+    # optional @tailwindcss/oxide-wasm32-wasi entry, which breaks `npm ci` in Docker.
+    rm -rf node_modules
+    npm install tailwindcss @tailwindcss/postcss @tailwindcss/vite --save-dev
 done

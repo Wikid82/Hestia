@@ -14,3 +14,5 @@ backend/hestia
 backend/*.db
 backend/*.db-*
 **/*.test
+
+scripts/deps
