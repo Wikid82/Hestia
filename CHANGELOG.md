@@ -1,5 +1,49 @@
 # Changelog
 
+## [0.7.2](https://github.com/Wikid82/Hestia/compare/v0.7.1...v0.7.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **deps:** update gin-contrib/sse to version v1.2.1 and add update script for Go modules ([47affcb](https://github.com/Wikid82/Hestia/commit/47affcba8facb97d8a47f29cc610e276e54cf6ef))
+* **deps:** update gin-contrib/static to version v1.1.10 and add update script for Go modules ([11de06a](https://github.com/Wikid82/Hestia/commit/11de06af52552ee9396ee99258267e036abfea99))
+* **deps:** update Hermes to version v0.3.7 and add update script for Go modules ([42f1c57](https://github.com/Wikid82/Hestia/commit/42f1c57d4967fd2637e06f36134cee45f5e0677c))
+* **deps:** update typescript to version 7.1.0-dev.20261108.1 ([e559ada](https://github.com/Wikid82/Hestia/commit/e559ada0cef9accaef79a2c410fb98eb20090f02))
+
+## [0.7.1](https://github.com/Wikid82/Hestia/compare/v0.7.0...v0.7.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* **ci:** bump step-security/harden-runner to v2.22.4 ([655c13b](https://github.com/Wikid82/Hestia/commit/655c13bc729cb16df15fe8d2bb5657f5ef1c16f3))
+* **ci:** update CodeQL action versions to v4.39.3 ([7b180b2](https://github.com/Wikid82/Hestia/commit/7b180b292010fdae49b70a4f370c566abc2562dc))
+* **deps:** update @tanstack/react-query to version 5.105.2 ([5e1b8cc](https://github.com/Wikid82/Hestia/commit/5e1b8ccd0ca9988acecc2c9163c0a10bfdf86072))
+* **deps:** update @tanstack/react-query to version 5.105.3 ([0a0bc59](https://github.com/Wikid82/Hestia/commit/0a0bc59d78f9ae5b84b28eb1710db65678994cde))
+* **deps:** update @tanstack/react-query to version 5.106.0 ([3931b0a](https://github.com/Wikid82/Hestia/commit/3931b0aa5f4f1123a67e8ba1e8bdd4a1d8e65226))
+* **deps:** update @tanstack/react-query to version 5.107.0 ([bcc51c3](https://github.com/Wikid82/Hestia/commit/bcc51c3cb61a94110385d60c212d306674d8814d))
+* **deps:** update @tanstack/react-query to version 5.107.1 ([cf94d32](https://github.com/Wikid82/Hestia/commit/cf94d323e8bd9efb1ee5cc9677da57bc5b08c280))
+* **deps:** update @typescript/native to version 7.1.0-dev.20261103.1 and reorganize update script ([71661db](https://github.com/Wikid82/Hestia/commit/71661dbe1c936358c7621b1aecadbe63e91b5081))
+* **deps:** update @typescript/native to version 7.1.0-dev.20261104.1 ([0ff5f6f](https://github.com/Wikid82/Hestia/commit/0ff5f6ffd4393db6782d83dbfea8f4e6ca7e3d18))
+* **deps:** update @typescript/native to version 7.1.0-dev.20261105.1 ([aa371b8](https://github.com/Wikid82/Hestia/commit/aa371b853577dcd8e0f8f4e0f0023a39bbaef69e))
+* **deps:** update @vitejs/plugin-react to version 6.2.1 ([f873f48](https://github.com/Wikid82/Hestia/commit/f873f48295fbdb262fd24501655420a1f86303a0))
+* **deps:** update CodeQL action to version 4.39.2 ([696afbb](https://github.com/Wikid82/Hestia/commit/696afbb7076332f5e3563d51589febceef5d8aea))
+* **deps:** update go-playground/validator and other dependencies to latest versions ([a4e4a10](https://github.com/Wikid82/Hestia/commit/a4e4a10111909187d845545e9fb977de07ffdc7a))
+* **deps:** update Hermes to version 0.3.6 and libc to version 1.80.0 ([3e6ebd8](https://github.com/Wikid82/Hestia/commit/3e6ebd823c8e7d20f737b83ceacab2d7fe58bcfa))
+* **deps:** update jsdom to version 31.0.0 and add update script ([9d915cd](https://github.com/Wikid82/Hestia/commit/9d915cd7160923767b591619e4796b59fc6e5683))
+* **deps:** update mailpit image to version v1.33.1 ([d9b19fd](https://github.com/Wikid82/Hestia/commit/d9b19fd8ad4abf0b05d0a1a8c0da38751d028590))
+* **deps:** update mongo-driver to version 2.10.0 and sqlite to version 1.62.0 ([6d82635](https://github.com/Wikid82/Hestia/commit/6d8263526ee12c01add47834864e4303792d5e75))
+* **deps:** update Playwright and related packages to version 1.65.0 ([37a36a0](https://github.com/Wikid82/Hestia/commit/37a36a0b592cc65add1a4477c2e7fb5bebdd400a))
+* **deps:** update tailwindcss and related packages to version 4.3.5 ([3b8641f](https://github.com/Wikid82/Hestia/commit/3b8641fa0876f811b21d3bdde2b0c7d61d44e2b7))
+* **deps:** update tailwindcss installation script to preserve package-lock.json ([c1673fb](https://github.com/Wikid82/Hestia/commit/c1673fbbe6abfa302b8d16e3e0f85aed480d6c13))
+* **deps:** update tailwindcss to version 4.3.4 and add update script ([a94ada2](https://github.com/Wikid82/Hestia/commit/a94ada221d69552679d3b10d1e131b6ba7249f5e))
+* **deps:** update TypeScript to version 7.1.0-dev.20261102.1 ([84e3886](https://github.com/Wikid82/Hestia/commit/84e388697cd6b6472a126e19dff093dc10f79856))
+* **deps:** update TypeScript to version 7.1.0-dev.20261106.1 ([ed3fecf](https://github.com/Wikid82/Hestia/commit/ed3fecff5f345e8c9f5affb4b421f856325f7eb4))
+* **deps:** update typescript to version 7.1.0-dev.20261107.1 ([b494502](https://github.com/Wikid82/Hestia/commit/b4945028b9aee6ce25886abac9cbcf323751cf03))
+* **deps:** update vite to version 8.3.6 ([763ae96](https://github.com/Wikid82/Hestia/commit/763ae96d3652b69c7bc6588cf48f08cbfa556d55))
+* **deps:** update vitest dependencies to version 5.1.0 ([a1440cc](https://github.com/Wikid82/Hestia/commit/a1440cc63c83417a46663dfa46bb16540d9e73a9))
+* **deps:** update zensical to version 0.1.0 and add zensicle script for automated updates ([fb02cc7](https://github.com/Wikid82/Hestia/commit/fb02cc7719673829133cd5cee3558f4044ff1d78))
+* **deps:** update zlib version to 1.4-r0 ([301c13a](https://github.com/Wikid82/Hestia/commit/301c13ad1bda84189068d803f50cc921a9f1409f))
+
 ## [0.7.0](https://github.com/Wikid82/Hestia/compare/v0.6.4...v0.7.0) (2026-11-02)
 
 

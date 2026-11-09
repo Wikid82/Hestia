@@ -64,7 +64,7 @@ adding a new external dependency) before just doing it.
     or image — Go modules, npm packages, the Dockerfile base image.
     These cut a patch release and land in the changelog's "Dependencies"
     section, which is the point: a vuln fix in a dependency should ship.
-    Renovate emits this prefix automatically (`.github/renovate.json` →
+    Renovate emits this prefix automatically (`renovate.json` →
     `semanticCommitType: deps`).
   - `chore:` for dependency bumps that don't change what a self-hoster
     runs — GitHub Actions digest pins, CI-only tooling. Non-releasable
