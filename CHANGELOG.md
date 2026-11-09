@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.2](https://github.com/Wikid82/Hestia/compare/v0.7.1...v0.7.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **deps:** update gin-contrib/sse to version v1.2.1 and add update script for Go modules ([47affcb](https://github.com/Wikid82/Hestia/commit/47affcba8facb97d8a47f29cc610e276e54cf6ef))
+* **deps:** update gin-contrib/static to version v1.1.10 and add update script for Go modules ([11de06a](https://github.com/Wikid82/Hestia/commit/11de06af52552ee9396ee99258267e036abfea99))
+* **deps:** update Hermes to version v0.3.7 and add update script for Go modules ([42f1c57](https://github.com/Wikid82/Hestia/commit/42f1c57d4967fd2637e06f36134cee45f5e0677c))
+* **deps:** update typescript to version 7.1.0-dev.20261108.1 ([e559ada](https://github.com/Wikid82/Hestia/commit/e559ada0cef9accaef79a2c410fb98eb20090f02))
+
 ## [0.7.1](https://github.com/Wikid82/Hestia/compare/v0.7.0...v0.7.1) (2026-11-08)
 
 
