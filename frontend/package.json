@@ -24,7 +24,7 @@
     "react-router-hash-link": "^2.4.3"
   },
   "engines": {
-    "node": "26.13.0"
+    "node": "26.13.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
